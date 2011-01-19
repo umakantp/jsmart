@@ -44,7 +44,25 @@
 					'prop1': 'prop1', 
 					'prop2': { 'txt':'txt', 'num':777, 'bool_true': 1 }
 				},
-				'code' : '[$ob.prop2.txt]'
+				'code' : '[$ob.prop2.txt]',
+				
+				'books': [
+							{
+								'title'  : 'JavaScript: The Definitive Guide',          
+								'author' : 'David Flanagan',                            
+								'price'  : '31.18'
+							},
+							{
+								'title'  : 'Murach JavaScript and DOM Scripting',
+								'author' : 'Ray Harris',
+								'price' : ''
+							},
+							{
+								'title'  : 'Head First JavaScript',
+								'author' : 'Michael Morrison',
+								'price'  : '29.54'
+							}
+				]
 			});
 			var res = res_{$nm};
 		} catch(e) 
@@ -95,6 +113,8 @@
 		equal(res_block, $('#block_php').val())
 	} );
 </script>
+
+{runTest nm='examples'}
 
 </body>
 </html>

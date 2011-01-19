@@ -1,8 +1,10 @@
 /**
-	jSmart
-
-	@link http://code.google.com/p/jsmart/
-	@author Max Miroshnikov <miroshnikov at gmail dot com> 
+ *	jSmart Javascript template engine
+ * http://code.google.com/p/jsmart/
+ *
+ * Copyright 2011, Maxim Miroshnikov <miroshnikov at gmail dot com> 
+ * jSmart is licensed under the GNU General Public License
+ * http://www.apache.org/licenses/LICENSE-2.0
 */
 
 
@@ -153,7 +155,7 @@
         for (var elseTag=s.match(reElse); elseTag; elseTag=s.match(reElse))
         {
             var openTag = s.match(reOpen);
-            if (openTag == null || openTag.index > elseTag.index)
+            if (!openTag || openTag.index > elseTag.index)
             {
                 elseTag.index += offset;
                 return elseTag;
@@ -173,7 +175,7 @@
     function stripTags(reOpen, reClose, s)
     {
         var sRes = '';
-        for (var openTag=s.match(reOpen); openTag!=null; openTag=s.match(reOpen))
+        for (var openTag=s.match(reOpen); openTag; openTag=s.match(reOpen))
         {
             sRes += s.slice(0,openTag.index);
             s = s.slice(openTag.index+openTag[0].length);
@@ -238,7 +240,7 @@
                     });
 
                     var findElse = findElseTag(/{ *section [^}]+}/, /{ *\/section *}/, /{ *sectionelse *}/, content);
-                    if (findElse == null)
+                    if (!findElse)
                     {
                         parse(content, subTree);
                     }
@@ -260,9 +262,9 @@
                         return process(node.subTreeElse, data);
                     }
 
+                    var s = '';
                     if (params.loop instanceof Object)
                     {
-                        var s = '';
                         if( this.foreach(
                             params.name, 
                             params.__get('start',0),
@@ -281,7 +283,6 @@
                     }
                     else if (parseInt(params.loop))
                     {
-                        var s = '';
                         if( this.foreach(
                             params.name, 
                             params.__get('start',0),
@@ -315,7 +316,8 @@
 
                     var count = 0;
                     var loop = 0;
-                    for (var i=from; i>=0 && i<to && count<max; i+=step,++count) 
+                    var i = from;
+                    for (; i>=0 && i<to && count<max; i+=step,++count) 
                     {
                         loop = i;
                     }
@@ -323,7 +325,7 @@
                     data[nm+'@loop'] = count;
 
                     count = 0;
-                    for (var i=from; i>=0 && i<to && count<max; i+=step,++count)
+                    for (i=from; i>=0 && i<to && count<max; i+=step,++count)
                     {
                         data[nm+'@first'] = (i==from);
                         data[nm+'@last'] = ((i+step)<0 || (i+step)>=to);
@@ -341,12 +343,12 @@
             'for':
             {
                 'type':'block',
-                'parse': function(params, tree, content)
+                'parse': function(paramstr, tree, content)
                 {
-                    var res = params.match(/^ *\$(\w+) *= *([^ ]+) *to *([^ ]+) *(step *([^ ]+))? *(.*)$/);
-                    if (res == null)
+                    var res = paramstr.match(/^ *\$(\w+) *= *([^ ]+) *to *([^ ]+) *(step *([^ ]+))? *(.*)$/);
+                    if (!res)
                     {
-                        throw new Error('Invalid for parameters: '+params);
+                        throw new Error('Invalid {for} parameters: '+paramstr);
                     }
 
                     var params = parseParams(' '+res[6]);
@@ -366,7 +368,7 @@
                     });
 
                     var findElse = findElseTag(/{ *for [^}]+}/, /{ *\/for *}/, /{ *forelse *}/, content);
-                    if (findElse == null)
+                    if (!findElse)
                     {
                         parse(content, subTree);
                     }
@@ -417,7 +419,7 @@
                     });
 
                     var findElse = findElseTag(/{ *if[^}]+}/, /{ *\/if *}/, /{ *else([^}]*)}/, content);
-                    if (findElse == null)
+                    if (!findElse)
                     {
                         parse(content, subTreeIf);
                     }
@@ -427,7 +429,7 @@
 
                         content = content.slice(findElse.index+findElse[0].length);
                         var findElseIf = findElse[1].match(/^if(.*)/);
-                        if (findElseIf == null)
+                        if (!findElseIf)
                         {
                             parse(content.replace(/^[\r\n]/,''), subTreeElse);
                         }
@@ -457,7 +459,7 @@
                 'parse': function(params, tree, content)
                 {
                     var res = params.match(/^ *\$(\w+) *as *\$(\w+) *(=> *\$(\w+))? *$/i);
-                    if (res == null)
+                    if (!res)
                     {
                         throw new Error('Invalid foreach parameters: '+params);
                     }
@@ -478,7 +480,7 @@
                     });
 
                     var findElse = findElseTag(/{ *foreach [^}]+}/, /{ *\/foreach *}/, /{ *foreachelse *}/, content);
-                    if (findElse == null)
+                    if (!findElse)
                     {
                         parse(content, subTree);
                     }
@@ -498,23 +500,24 @@
                         {
                             var s = '';
                             var total = 0;
-                            for (var nm in a)
+                            var nm = null;
+                            for (nm in a)
                             {
                                 ++total;
                             }
                             data[node.varName+'@total'] = total;
                             var i=0;
-                            for (var nm in a)
+                            for (nm in a)
                             {
+                                data[node.varName+'@key'] = (a instanceof Array) ? parseInt(nm) : nm;
                                 if (node.keyName)
                                 {
-                                    data[node.keyName] = nm;
+                                    data[node.keyName] = data[node.varName+'@key'];
                                 }
                                 data[node.varName] = a[nm];
-                                data[node.varName+'@key'] = nm;
                                 data[node.varName+'@index'] = parseInt(i);
                                 data[node.varName+'@iteration'] = parseInt(i+1);
-                                data[node.varName+'@first'] = (i==0);
+                                data[node.varName+'@first'] = (i===0);
                                 data[node.varName+'@last'] = (i==total-1);
                                 s += process(node.subTree, data);
                                 ++i;
@@ -581,13 +584,13 @@
                     data[ 'capture@'+params.__get('name','default') ] = capture;
                     
                     var assign = params.__get('assign',null);
-                    if (assign != null)
+                    if (assign)
                     {
                         data[assign] = capture;
                     }
 
                     var append = params.__get('append',null);
-                    if (append != null)
+                    if (append)
                     {
 				            if (append in data)
 				            {
@@ -609,9 +612,9 @@
             'function': 
             {
                 'type':'block',
-                'parse': function(params, tree, content)
+                'parse': function(paramstr, tree, content)
                 {
-                    var params = parseParams(params);
+                    var params = parseParams(paramstr);
                     var subTree = [];
                     var funcName = eval(params.name);
                     delete params.name;
@@ -653,14 +656,14 @@
             'block':
             {
                 'type':'block',
-                'parse': function(params, tree, content)
+                'parse': function(paramstr, tree, content)
                 {
-                    var params = parseParams(params);
+                    var params = parseParams(paramstr);
 
                     tree.push({
                         'type'   : 'build-in',
                         'name'   : 'block',
-                        'blockName' : params.name,
+                        'blockName' : params.name
                     });
 
                     blocks[params.name] = [];
@@ -690,7 +693,7 @@
                 {
                     var params = getActualParamValues(node.params, data);
                     var tree = [];
-                    parse(params.var, tree);
+                    parse(params['var'], tree);
                     var s = process(tree, data);
                     var assignVar = params.__get('assign',false);
                     if (assignVar)
@@ -745,19 +748,19 @@
                 'process': function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
-                    if (!(params.var in data) || !(data[params.var] instanceof Array))
+                    if (!(params['var'] in data) || !(data[params['var']] instanceof Array))
                     {
-                        data[params.var] = [];
+                        data[params['var']] = [];
                     }
 
                     var index = params.__get('index',null);
-                    if (index == null)
+                    if (!index)
                     {
-                        data[params.var].push(params['value']);
+                        data[params['var']].push(params['value']);
                     }
                     else
                     {
-                        data[params.var][index] = params['value'];
+                        data[params['var']][index] = params['value'];
                     }
                     return '';
                 }
@@ -809,22 +812,22 @@
                     });
                 }
             }
-        }
+        };
 
-    var plugins = {}
+    var plugins = {};
 
-    var blocks = {}
+    var blocks = {};
 
     function parse(s, tree)
     {
         var reTag = '.+';
-        for (var openTag=findTag(reTag,s); openTag!=null; openTag=findTag(reTag,s))
+        for (var openTag=findTag(reTag,s); openTag; openTag=findTag(reTag,s))
         {
             parseText(s.slice(0,openTag.index),tree);
             s = s.slice(openTag.index + openTag[0].length);
 
             var res = openTag[1].match(/^ *(\w+)(.*)$/);
-            if (res != null)         //function
+            if (res)         //function
             {
                 var nm = res[1];
                 var params = (res.length>2) ? res[2] : '';
@@ -834,11 +837,7 @@
                     if (buildInFunctions[nm].type == 'block')
                     {
 					         s = s.replace(/^[\r\n]/, '');  	//remove new line after block open tag (like in Smarty)
-                        var closeTag = findCloseTag(
-                            new RegExp('{ *\/'+nm+' *}','i'),
-                            new RegExp('{ *'+nm+' +[^}]*}','i'),
-                            s
-                        );
+                        var closeTag = findCloseTag(new RegExp('{ *\/'+nm+' *}','i'), new RegExp('{ *'+nm+' +[^}]*}','i'), s);
                         buildInFunctions[nm].parse(params, tree, s.slice(0,closeTag.index));
                         s = s.slice(closeTag.index+closeTag[0].length);
                     }
@@ -863,8 +862,8 @@
             }
             else         //variable
             {
-                var res = openTag[1].match(/^ *(\$[\[\w'"\]]+ *= *.*) *$/);
-                if (res != null)    //variable assignment
+                res = openTag[1].match(/^ *(\$[\[\w'"\]]+ *= *.*) *$/);
+                if (res)    //variable assignment
                 {
                     buildInFunctions['assign'].parse(" code="+res[1], tree);
 				        s = s.replace(/^[\r\n]/, '');	//remove new line after any tag (like in Smarty)
@@ -928,7 +927,7 @@
         actualParams.__get = function(nm,defVal)
         {
             return (nm in actualParams && typeof(actualParams[nm]) != 'undefined') ? actualParams[nm] : defVal;
-        }
+        };
         return actualParams;
     }
 
@@ -948,7 +947,7 @@
             }
             else if (node.type == 'build-in')
             {
-                s += buildInFunctions[node.name].process(node,data)
+                s += buildInFunctions[node.name].process(node,data);
             }
             else if (node.type == 'plugin')
             {
@@ -970,12 +969,12 @@
             var tree = [];
             parse(arguments[i], tree);
         }
-    }
+    };
 
     jSmart.prototype.fetch = function(data)
     {
         return process(this.tree, data);
-    }
+    };
 
     /**
        @param type  valid values are 'function' or 'block'
@@ -988,7 +987,7 @@
                 'type': type,
                 'process': callback
             };
-    }
+    };
 
 
 
@@ -1030,7 +1029,7 @@
                     'skip' : params.__get('skip',1),
                     'direction' : params.__get('direction','up'),
                     'assign' : params.__get('assign',null)
-                }
+                };
             }
 
             

@@ -7,7 +7,6 @@
 {$k}
 {$v}
 
-_______________________________________
 
 {foreach $a as $i}{$i}{foreachelse}
 error
@@ -52,3 +51,8 @@ error
 index:[{$v@index}]
 iteration:[{$v@iteration}]
 total:[{$v@total}]
+
+
+{foreach $a as $k => $v}
+	{$k+1}: {$v}
+{/foreach}

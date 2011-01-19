@@ -23,6 +23,28 @@ $smarty->assign('o',array('0'=>'0','1'=>'1','2'=>'2','3'=>'3','4'=>'4','5'=>'5',
 $smarty->assign('ob', array('prop1'=>'prop1', 'prop2'=> array('txt'=>'txt', 'num'=>777, 'bool_true'=>true)));
 $smarty->assign('code','[$ob.prop2.txt]');
 
+$smarty->assign(
+	'books',
+	array(
+		array(
+			'title'  => 'JavaScript: The Definitive Guide',          
+			'author' => 'David Flanagan',                            
+			'price'  => '31.18'
+		),
+		array(
+			'title'  => 'Murach JavaScript and DOM Scripting',
+			'author' => 'Ray Harris',
+			'price' => '',
+		),
+		array(
+			'title'  => 'Head First JavaScript',
+			'author' => 'Michael Morrison',
+			'price'  => '29.54'
+		)
+	)
+);
+
+
 $smarty->display('main.tpl');
 
 ?>
