@@ -44,6 +44,8 @@ $smarty->assign(
 	)
 );
 
+$smarty->assign('use_compiled',defined('USE_COMPILED'));
+
 
 $smarty->display('main.tpl');
 

@@ -14,6 +14,8 @@
 	{$v} 
 {/foreach} 
 
+________________________________
+
 
 {* seems like index attribute is not supported in PHP Smarty 
 {append var='a' value='15' index=15}

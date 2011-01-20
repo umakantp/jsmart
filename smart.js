@@ -1,5 +1,5 @@
-/**
- *	jSmart Javascript template engine
+/** 
+ * @preserve jSmart Javascript template engine
  * http://code.google.com/p/jsmart/
  *
  * Copyright 2011, Maxim Miroshnikov <miroshnikov at gmail dot com> 
@@ -33,21 +33,27 @@
         return a;
     }
 
-
+    /**
+       merges two or more objects into one
+    */
     function obMerge(ob1, ob2 /*, ...*/)
     {
-        var res = {};
-        for (var i=0; i<arguments.length; ++i)
+        for (var i=1; i<arguments.length; ++i)
         {
-            if (typeof(arguments[i]) == 'object')
+            for (var nm in arguments[i]) 
             {
-                for (var nm in arguments[i]) 
-                { 
-                    res[nm] = arguments[i][nm]; 
+                if (typeof(arguments[i][nm]) == 'object')
+                {
+                    ob1[nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
+                    obMerge(ob1[nm], arguments[i][nm]);
+                }
+                else
+                {
+                    ob1[nm] = arguments[i][nm]; 
                 }
             }
         }
-        return res;
+        return ob1;
     }
 
     /**
@@ -626,7 +632,7 @@
                             'process': function(params, data)
                             {
                                 var defaults = getActualParamValues(this.defautParams,data);
-                                return process(this.subTree, obMerge(data,defaults,params));
+                                return process(this.subTree, obMerge({},data,defaults,params));
                             }
                         };
                     parse(content, subTree);
@@ -973,7 +979,7 @@
 
     jSmart.prototype.fetch = function(data)
     {
-        return process(this.tree, data);
+        return process(this.tree, obMerge({},data));
     };
 
     /**
@@ -1103,5 +1109,11 @@
             return '';
         }
     );
+
+    String.prototype.fetch = function(data) 
+    {
+        var tpl = new jSmart(this);
+        return tpl.fetch(data);
+    };
 
 })()

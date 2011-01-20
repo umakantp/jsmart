@@ -2,7 +2,7 @@
 <head>
 	<title>jSmart unit test</title>
 	
-	<script type="text/javascript" src="../smart.js"></script>
+	<script type="text/javascript" src="../smart{if $use_compiled}.min{/if}.js"></script>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 	<script type="text/javascript" src="http://github.com/jquery/qunit/raw/master/qunit/qunit.js"></script>
 	
@@ -35,7 +35,7 @@
 		try 
 		{
 			var tpl = new jSmart($('#{$nm}_js').val());
-			var res_{$nm} = tpl.fetch({
+			var data = {
 				'smarty' : {},
 				'a' : ['0','1','2','3','4','5','6','7','8','9'],
 				'aEmpty' : [],
@@ -63,14 +63,20 @@
 								'price'  : '29.54'
 							}
 				]
-			});
+			};
+			
+			var res_{$nm} = tpl.fetch(data);
 			var res = res_{$nm};
+			
+			var res2_{$nm} = $('#{$nm}_js').val().fetch(data);
+
 		} catch(e) 
 		{
 			alert(e.name + ' ' + e.message);
 		}
 		test("{$nm}", function() {
-			equal(res_{$nm}, $('#{$nm}_php').val())
+			equal(res_{$nm}, $('#{$nm}_php').val());
+			equal(res2_{$nm}, res_{$nm});
 		} );
 	</script>
 	
