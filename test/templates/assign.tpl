@@ -3,3 +3,15 @@
 
 {assign var='num'  value=777}
 {$num}
+
+{ assign var='num'  value=888 }
+  {    assign var='num'  value=999}
+  
+{
+assign var='num'  value=999 
+}
+
+{assign var='num'  value="111"}
+
+
+{$num}

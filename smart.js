@@ -74,11 +74,11 @@
 
     /**
        finds first {tag} in string
-       @param re  string with re
-       @return  null or s.match result object where 
-       [0] - full tag matched with curly braces (and whitespaces at begin and end): { tag }
-       [1] - found part from passed re
-       [index] - position of tag starting { in s
+       @param re  string with regular expression
+       @return  null or s.match(re) result object where 
+          [0] - full tag matched with curly braces (and whitespaces at begin and end): { tag }
+          [1] - found part from passed re
+          [index] - position of tag starting { in s
     */
     function findTag(re,s)
     {
@@ -110,7 +110,6 @@
                         found.index = offset;
                         return found;
                     }
-                    ++i;
                 }
                 if (openCount < 0) //ignore unmatched }
                 {
@@ -122,19 +121,23 @@
         return null;
     }
 
+    /**
+       finds matching closing tag
+    */
     function findCloseTag(reClose,reOpen,s)
     {
         var sInner = '';
         var closeTag = null;
         var openTag = null;
         var findIndex = 0;
-        do
+
+        do 
         {
             if (closeTag)
             {
                 findIndex += closeTag[0].length;
             }
-            closeTag = s.match( reClose );
+            closeTag = findTag(reClose,s);
             if (!closeTag)
             {
                 throw new Error('Unclosed {'+reOpen+'}');
@@ -142,15 +145,15 @@
             sInner += s.slice(0,closeTag.index);
             findIndex += closeTag.index;
             s = s.slice(closeTag.index+closeTag[0].length);
-
-            openTag = sInner.match( reOpen );
+            
+            openTag = findTag(reOpen,sInner);
             if (openTag)
             {
                 sInner = sInner.slice(openTag.index+openTag[0].length);
             }
-        }    
+        }
         while (openTag);
-        
+
         closeTag.index = findIndex;
         return closeTag;
     }
@@ -158,9 +161,9 @@
     function findElseTag(reOpen, reClose, reElse, s)
     {
         var offset = 0;
-        for (var elseTag=s.match(reElse); elseTag; elseTag=s.match(reElse))
+        for (var elseTag=findTag(reElse,s); elseTag; elseTag=findTag(reElse,s))
         {
-            var openTag = s.match(reOpen);
+            var openTag = findTag(reOpen,s);
             if (!openTag || openTag.index > elseTag.index)
             {
                 elseTag.index += offset;
@@ -176,19 +179,6 @@
             }
         }
         return null;
-    }
-
-    function stripTags(reOpen, reClose, s)
-    {
-        var sRes = '';
-        for (var openTag=s.match(reOpen); openTag; openTag=s.match(reOpen))
-        {
-            sRes += s.slice(0,openTag.index);
-            s = s.slice(openTag.index+openTag[0].length);
-            var closeTag = findCloseTag(reClose,reOpen,s);
-            s = s.slice(closeTag.index+closeTag[0].length);
-        }
-        return sRes + s;
     }
 
     function execute(code, __data)
@@ -245,7 +235,7 @@
                         'subTreeElse' : subTreeElse
                     });
 
-                    var findElse = findElseTag(/{ *section [^}]+}/, /{ *\/section *}/, /{ *sectionelse *}/, content);
+                    var findElse = findElseTag('section [^}]+', '\/section', 'sectionelse', content);
                     if (!findElse)
                     {
                         parse(content, subTree);
@@ -373,7 +363,7 @@
                         'subTreeElse' : subTreeElse
                     });
 
-                    var findElse = findElseTag(/{ *for [^}]+}/, /{ *\/for *}/, /{ *forelse *}/, content);
+                    var findElse = findElseTag('for [^}]+', '\/for', 'forelse', content);
                     if (!findElse)
                     {
                         parse(content, subTree);
@@ -424,7 +414,7 @@
                         'subTreeElse' : subTreeElse
                     });
 
-                    var findElse = findElseTag(/{ *if[^}]+}/, /{ *\/if *}/, /{ *else([^}]*)}/, content);
+                    var findElse = findElseTag('if [^}]+', '\/if', 'else[^}]*', content);
                     if (!findElse)
                     {
                         parse(content, subTreeIf);
@@ -485,7 +475,7 @@
                         'subTreeElse' : subTreeElse
                     });
 
-                    var findElse = findElseTag(/{ *foreach [^}]+}/, /{ *\/foreach *}/, /{ *foreachelse *}/, content);
+                    var findElse = findElseTag('foreach [^}]+', '\/foreach', 'foreachelse', content);
                     if (!findElse)
                     {
                         parse(content, subTree);
@@ -843,7 +833,7 @@
                     if (buildInFunctions[nm].type == 'block')
                     {
 					         s = s.replace(/^[\r\n]/, '');  	//remove new line after block open tag (like in Smarty)
-                        var closeTag = findCloseTag(new RegExp('{ *\/'+nm+' *}','i'), new RegExp('{ *'+nm+' +[^}]*}','i'), s);
+                        var closeTag = findCloseTag('\/'+nm, nm+' +[^}]*', s);
                         buildInFunctions[nm].parse(params, tree, s.slice(0,closeTag.index));
                         s = s.slice(closeTag.index+closeTag[0].length);
                     }
@@ -964,10 +954,28 @@
     }
 
 
+    function stripComments(s)
+    {
+        var sRes = '';
+        for (var openTag=s.match(/{\*/); openTag; openTag=s.match(/{\*/))
+        {
+            sRes += s.slice(0,openTag.index);
+            s = s.slice(openTag.index+openTag[0].length);
+            var closeTag = s.match(/\*}/);
+            if (!closeTag)
+            {
+                throw new Error('Unclosed {*');
+            }
+            s = s.slice(closeTag.index+closeTag[0].length);
+        }
+        return sRes + s;
+    }
+
+
     jSmart = function(tpl /*, tplChild1, tplChild2, ... */)
     {
         this.tree = [];
-        tpl = stripTags(/{\*/,/\*}/,tpl);   //strip comments
+        tpl = stripComments(tpl);
         parse(tpl, this.tree);
 
         for (var i=1; i<arguments.length; ++i)
