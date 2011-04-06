@@ -74,7 +74,7 @@
 
     /**
        finds first {tag} in string
-       @param re  string with regular expression
+       @param re string with regular expression
        @return  null or s.match(re) result object where 
           [0] - full tag matched with curly braces (and whitespaces at begin and end): { tag }
           [1] - found part from passed re
@@ -84,13 +84,20 @@
     {
         var openCount = 0;
         var offset = 0;
+        var skipInWS = jSmart.prototype.auto_literal;
 
         var reTag = new RegExp('^{ *('+re+') *}$','i');
+
+        var WS = " \n\r\t";
 
         for (var i=0; i<s.length; ++i)
         {
             if (s[i] == '{')
             {
+                if (skipInWS && i+1 < s.length && WS.indexOf(s[i+1]) >= 0)
+                {
+                    continue;
+                }
                 if (!openCount)
                 {
                     s = s.slice(i);
@@ -101,6 +108,10 @@
             }
             else if (s[i] == '}')
             {
+                if (skipInWS && i-1 >= 0 && WS.indexOf(s[i-1]) >= 0)
+                {
+                    continue;
+                }
                 if (!--openCount)
                 {
                     var sTag = s.slice(0,i+1).replace(/[\r\n]/g, ' ');
@@ -1002,6 +1013,11 @@
                 'process': callback
             };
     };
+
+    /**     
+       whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before
+    */
+    jSmart.prototype.auto_literal = true;
 
 
 

@@ -11,6 +11,9 @@
 assign var='num'  value=999 
 }
 
+{	assign var='num'  value=1		}
+
+
 {assign var='num'  value="111"}
 
 
