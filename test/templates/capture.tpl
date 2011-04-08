@@ -6,12 +6,7 @@ this will be captured
 {/for}
 {/capture}
 
-{if $smarty.capture}
-	[{$smarty.capture.testCapture1}]
-{else}
-	[{$capture@testCapture1}]
-{/if}
-
+[{$smarty.capture.testCapture1}]
 
 {capture name='testCapture2' assign='captureA'}
 this will be captured into variable
@@ -43,6 +38,6 @@ this will be captured into new array
 {foreach $o as $i}{$i}{/foreach}
 {/capture}
 
-
+--
 {foreach $newA as $i}{$i}{/foreach}
-
+--

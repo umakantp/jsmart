@@ -8,3 +8,7 @@
 
 {$ob['prop3'] = 'prop value'}
 {$ob.prop3}
+
+{$aaa = '$bbb'}
+
+{$aaa}

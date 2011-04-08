@@ -1,12 +1,15 @@
 
 -{function name="testFunc1"}
 	[this is function]
+	global variable $ob.prop2.txt is {$ob.prop2.txt}
+	
 {/function}-
 
 {testFunc1}
 
 -{function name="testFunc2" parStr='test' parNum=777}
 	[this is function with params {$parStr} {$parNum} ]
+	and global variable $ob.prop2.num is {$ob.prop2.num}
 {/function}-
 
 {testFunc2}

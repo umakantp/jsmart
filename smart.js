@@ -34,27 +34,28 @@
     }
 
     /**
-       merges two or more objects into one
+       merges two or more objects into one and add prefix at the beginning of every property name at the top level
     */
-    function obMerge(ob1, ob2 /*, ...*/)
+    function obMerge(prefix, ob1, ob2 /*, ...*/)
     {
-        for (var i=1; i<arguments.length; ++i)
+        for (var i=2; i<arguments.length; ++i)
         {
             for (var nm in arguments[i]) 
             {
                 if (typeof(arguments[i][nm]) == 'object')
                 {
-                    ob1[nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
-                    obMerge(ob1[nm], arguments[i][nm]);
+                    ob1[prefix+nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
+                    obMerge('', ob1[prefix+nm], arguments[i][nm]);
                 }
                 else
                 {
-                    ob1[nm] = arguments[i][nm]; 
+                    ob1[prefix+nm] = arguments[i][nm]; 
                 }
             }
         }
         return ob1;
     }
+
 
     /**
        @return  number of own properties in ob
@@ -192,17 +193,28 @@
         return null;
     }
 
-    function execute(code, __data)
+    function prepare(code)
     {
-        if (typeof(code) == 'string')
+        if (!code.match(/^ *['"].+["'] *$/))
         {
-            if (!code.match(/^ *['"].+["'] *$/))
-            {
-                code = code.replace(/\$([\w@]+)+/g,"__data['$1']");
-            }
-            return eval(code);
+            return code.replace(
+                new RegExp('\\$([\\w]+)@(index|iteration|first|last|show|total)','gi'),
+                "\$$$1__$2"
+            );
         }
         return code;
+    }
+
+    function execute(__code, __data)
+    {
+        if (typeof(__code) == 'string')
+        {
+            with (__data)
+            {
+                return eval(__code);
+            }
+        }
+        return __code;
     }
 
     function replaceSmartyQualifiers(s)
@@ -262,8 +274,11 @@
                 {
                     var params = getActualParamValues(node.params, data);
 
+                    var sectionProps = {};
+                    data['$smarty']['section'][params.name] = sectionProps;
+
                     var show = params.__get('show',true);
-                    data[params.name+'@show'] = show;
+                    sectionProps.show = show;
                     if (!show)
                     {
                         return process(node.subTreeElse, data);
@@ -279,6 +294,7 @@
                             params.__get('step',1),
                             params.__get('max',Number.MAX_VALUE),
                             data,
+                            sectionProps,
                             function(i) { 
                                 eval(params.name + ' = ' + i + ';'); 
                                 s += process(node.subTree, data);  
@@ -297,6 +313,7 @@
                             params.__get('step',1),
                             params.__get('max',Number.MAX_VALUE),
                             data,
+                            sectionProps,
                             function(i) { s += process(node.subTree, data);  }
                         ))
                         {
@@ -306,7 +323,7 @@
                     return process(node.subTreeElse, data);
                 },
 
-                'foreach' : function(nm, from, to, step, max, data, callback)
+                'foreach' : function(nm, from, to, step, max, data, props, callback)
                 {
                     if (from < 0)
                     {
@@ -328,18 +345,18 @@
                     {
                         loop = i;
                     }
-                    data[nm+'@total'] = count;
-                    data[nm+'@loop'] = count;
+                    props.total = count;
+                    props.loop = count;  //? - because it is so in Smarty
 
                     count = 0;
                     for (i=from; i>=0 && i<to && count<max; i+=step,++count)
                     {
-                        data[nm+'@first'] = (i==from);
-                        data[nm+'@last'] = ((i+step)<0 || (i+step)>=to);
-                        data[nm+'@index'] = i;
-                        data[nm+'@index_prev'] = i-step;
-                        data[nm+'@index_next'] = i+step;
-                        data[nm+'@iteration'] = data[nm+'@rownum'] = count+1;
+                        props.first = (i==from);
+                        props.last = ((i+step)<0 || (i+step)>=to);
+                        props.index = i;
+                        props.index_prev = i-step;
+                        props.index_next = i+step;
+                        props.iteration = props.rownum = count+1;
 
                         callback(i);
                     }
@@ -397,7 +414,7 @@
 			           
                     for (var i=params.from; count<total; i+=step,++count)
                     {
-                        data[params.varName] = i;
+                        data['$'+params.varName] = i;
                         s += process(node.subTree, data);
                     }
                     if (!count)
@@ -413,7 +430,7 @@
                 'type':'block',
                 'parse': function(params, tree, content)
                 {
-                    params = replaceSmartyQualifiers(params);
+                    params = prepare( replaceSmartyQualifiers(params) );
 
                     var subTreeIf = [];
                     var subTreeElse = [];
@@ -479,9 +496,9 @@
                     tree.push({
                         'type' : 'build-in',
                         'name' : 'foreach',
-                        'arr' : arrName,
-                        'keyName' : keyName,
-                        'varName' : varName,
+                        'arr' : '$'+arrName,
+                        'keyName' : '$'+keyName,
+                        'varName' : '$'+varName,
                         'subTree' : subTree,
                         'subTreeElse' : subTreeElse
                     });
@@ -512,24 +529,24 @@
                             {
                                 ++total;
                             }
-                            data[node.varName+'@total'] = total;
+                            data[node.varName+'__total'] = total;
                             var i=0;
                             for (nm in a)
                             {
-                                data[node.varName+'@key'] = (a instanceof Array) ? parseInt(nm) : nm;
+                                data[node.varName+'__key'] = (a instanceof Array) ? parseInt(nm) : nm;
                                 if (node.keyName)
                                 {
-                                    data[node.keyName] = data[node.varName+'@key'];
+                                    data[node.keyName] = data[node.varName+'__key'];
                                 }
                                 data[node.varName] = a[nm];
-                                data[node.varName+'@index'] = parseInt(i);
-                                data[node.varName+'@iteration'] = parseInt(i+1);
-                                data[node.varName+'@first'] = (i===0);
-                                data[node.varName+'@last'] = (i==total-1);
+                                data[node.varName+'__index'] = parseInt(i);
+                                data[node.varName+'__iteration'] = parseInt(i+1);
+                                data[node.varName+'__first'] = (i===0);
+                                data[node.varName+'__last'] = (i==total-1);
                                 s += process(node.subTree, data);
                                 ++i;
                             }
-                            data[node.varName+'@show'] = (i>0);
+                            data[node.varName+'__show'] = (i>0);
                             if (i>0)
                             {
                                 return s;                
@@ -588,17 +605,18 @@
                     var params = getActualParamValues(node.params, data);
                     var capture = process(node.subTree, data);
 
-                    data[ 'capture@'+params.__get('name','default') ] = capture;
-                    
+                    data['$smarty']['capture'][params.__get('name','default')] = capture;
+
                     var assign = params.__get('assign',null);
                     if (assign)
                     {
-                        data[assign] = capture;
+                        data['$'+assign] = capture;
                     }
 
                     var append = params.__get('append',null);
                     if (append)
                     {
+                        append = '$'+append;
 				            if (append in data)
 				            {
 					             if (data[append] instanceof Array)
@@ -611,7 +629,7 @@
 					             data[append] = [ capture ];
 				            }
                     }
-                    
+
                     return '';
                 }
             },
@@ -633,7 +651,7 @@
                             'process': function(params, data)
                             {
                                 var defaults = getActualParamValues(this.defautParams,data);
-                                return process(this.subTree, obMerge({},data,defaults,params));
+                                return process(this.subTree, obMerge('$',obMerge('',{},data),defaults,params));
                             }
                         };
                     parse(content, subTree);
@@ -705,7 +723,7 @@
                     var assignVar = params.__get('assign',false);
                     if (assignVar)
                     {
-                        data[assignVar] = s;
+                        data['$'+assignVar] = s;
                     }
                     else
                     {
@@ -755,20 +773,22 @@
                 'process': function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
-                    if (!(params['var'] in data) || !(data[params['var']] instanceof Array))
+                    var varName = '$' + params['var'];
+                    if (!(varName in data) || !(data[varName] instanceof Array))
                     {
-                        data[params['var']] = [];
+                        data[varName] = [];
                     }
 
                     var index = params.__get('index',null);
                     if (!index)
                     {
-                        data[params['var']].push(params['value']);
+                        data[varName].push(params['value']);
                     }
                     else
                     {
-                        data[params['var']][index] = params['value'];
+                        data[varName][index] = params['value'];
                     }
+
                     return '';
                 }
             },
@@ -899,7 +919,7 @@
     {
         tree.push({
             'type' : 'var',
-            'name' : name
+            'name' : prepare(name)
         });
     }
 
@@ -909,7 +929,7 @@
         var a = reSplit(/ +([\w]+) *=/, paramsStr);
         for (var i=1; i<a.length-1; i+=2)
         {
-            params[a[i]] = a[i+1];
+            params[a[i]] = prepare(a[i+1]);
         }
         return params;
     }
@@ -998,7 +1018,14 @@
 
     jSmart.prototype.fetch = function(data)
     {
-        return process(this.tree, obMerge({},data));
+        var smarty = {
+            'smarty' : 
+            {
+                'capture': {},
+                'section': {}
+            }
+        };
+        return process(this.tree, obMerge('$',{},data,smarty));
     };
 
     /**
@@ -1065,7 +1092,7 @@
             
             if (data[name].assign)
             {
-                data[data[name].assign] = data[name].value;
+                data['$'+data[name].assign] = data[name].value;
                 return '';
             }
 
@@ -1121,7 +1148,7 @@
 
             if (params.__get('assign',false))
             {
-                data[ params['assign'] ] = data[name].arr[ data[name].i ];
+                data[ '$'+params['assign'] ] = data[name].arr[ data[name].i ];
                 return '';
             }
 
