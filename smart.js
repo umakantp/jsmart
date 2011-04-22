@@ -696,7 +696,12 @@
                         return;
                     }
                     files[file] = [];
-                    parse(stripComments(jSmart.prototype.getTemplate(file)), files[file]);
+                    var tpl = jSmart.prototype.getTemplate(file);
+                    if (typeof(tpl) != 'string')
+                    {
+                        throw new Error('No template for '+ file);
+                    }
+                    parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
                 },
 
                 'process': function(node, data)
@@ -899,7 +904,7 @@
                 {
                     if (buildInFunctions[nm].type == 'block')
                     {
-					         s = s.replace(/^[\r\n]/, '');  	//remove new line after block open tag (like in Smarty)
+					         s = s.replace(/^\n/,'');  	//remove new line after block open tag (like in Smarty)
                         var closeTag = findCloseTag('\/'+nm, nm+' +[^}]*', s);
                         buildInFunctions[nm].parse(params, tree, s.slice(0,closeTag.index));
                         s = s.slice(closeTag.index+closeTag[0].length);
@@ -921,7 +926,7 @@
                 {
                     parseVar(openTag[1],tree);
                 }
-			       s = s.replace(/^[\r\n]/, '');	//remove new line after any tag (like in Smarty)
+			       s = s.replace(/^\n/,'');	//remove new line after any tag (like in Smarty)
             }
             else         //variable
             {
@@ -929,7 +934,7 @@
                 if (res)    //variable assignment
                 {
                     buildInFunctions['assign'].parse(" code="+res[1], tree);
-				        s = s.replace(/^[\r\n]/, '');	//remove new line after any tag (like in Smarty)
+				        s = s.replace(/^\n/,'');	//remove new line after any tag (like in Smarty)
                 }
                 else   //output variable
                 {
@@ -1042,7 +1047,7 @@
     jSmart = function(tpl /*, tplChild1, tplChild2, ... */)
     {
         this.tree = [];
-        tpl = stripComments(tpl);
+        tpl = stripComments(tpl.replace(/\r\n/g,'\n'));
         parse(tpl, this.tree);
 
         for (var i=1; i<arguments.length; ++i)
