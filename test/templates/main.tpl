@@ -111,29 +111,13 @@
 {runTest nm='strip'}
 {runTest nm='while'}
 {runTest nm='include'}
+<textarea class='test' id='parent_tpl'>{include_literal file='parent'}</textarea>
+<textarea class='test' id='child1_tpl'>{include_literal file='child1'}</textarea>
+{runTest nm='child2'}  {*extends*}
 
 
 {runTest nm='cycle'}
 {runTest nm='counter'}
-
-
-
-{* test block *}
-
-<textarea class='test' id='block_php'>{include file="child2.tpl"}</textarea>
-<textarea class='test' id='parent_js'>{include_literal file='parent'}</textarea>
-<textarea class='test' id='child1_js'>{include_literal file='child1'}</textarea>
-<textarea class='test' id='child2_js'>{include_literal file='child2'}</textarea>
-
-{literal}
-<script>
-	var tpl = new jSmart($('#parent_js').val(), $('#child1_js').val(), $('#child2_js').val());
-	var res_block = tpl.fetch();
-	test("block", function() {
-		equal(res_block, $('#block_php').val())
-	} );
-</script>
-{/literal}
 
 {runTest nm='examples'}
 

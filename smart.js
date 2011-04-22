@@ -717,6 +717,22 @@
                 }
             },
 
+            'extends':
+            {
+                'type': 'function',
+                'parse': function(params, tree)
+                {
+                    var params = parseParams(params);
+                    var file = eval(params.file);
+                    var tpl = jSmart.prototype.getTemplate(file);
+                    if (typeof(tpl) != 'string')
+                    {
+                        throw new Error('No template for '+ file);
+                    }
+                    parse(stripComments(tpl.replace(/\r\n/g,'\n')), tree);
+                }
+            },
+
             'block':
             {
                 'type':'block',
@@ -912,6 +928,10 @@
                     else
                     {
                         buildInFunctions[nm].parse(params, tree);
+                        if (nm == 'extends')
+                        {
+                            tree = []; //throw away further parsing except for {block}
+                        }
                     }
                 }
                 else if (nm in plugins)
