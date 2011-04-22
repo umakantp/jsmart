@@ -19,7 +19,7 @@
 {literal}
 <script>
 	var data = {
-		'smarty' : {},
+		'foo' : 'bar',
 		'a' : ['0','1','2','3','4','5','6','7','8','9'],
 		'aEmpty' : [],
 		'o' : { '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9' },
@@ -47,6 +47,11 @@
 					}
 		]
 	};
+	
+	jSmart.prototype.getTemplate = function(name) {
+		return document.getElementById(name.replace('.','_')).value;
+	}
+	
 </script>
 {/literal}
 
@@ -60,7 +65,7 @@
 
 {function name='includeTest'}
 <textarea class='test' id='{$nm}_php'>{include file="{$nm}.tpl"}</textarea>
-<textarea class='test' id='{$nm}_js'>{include_literal file=$nm}</textarea>
+<textarea class='test' id='{$nm}_tpl'>{include_literal file=$nm}</textarea>
 {/function}
 
 
@@ -71,9 +76,9 @@
 	<script>
 		try 
 		{
-			var tpl = new jSmart($('#{$nm}_js').val());
+			var tpl = new jSmart($('#{$nm}_tpl').val());
 			var res_{$nm} = tpl.fetch(data);
-			var res2_{$nm} = $('#{$nm}_js').val().fetch(data);
+			var res2_{$nm} = $('#{$nm}_tpl').val().fetch(data);
 
 		} catch(e) 
 		{
@@ -105,6 +110,8 @@
 {runTest nm='section'}
 {runTest nm='strip'}
 {runTest nm='while'}
+{runTest nm='include'}
+
 
 {runTest nm='cycle'}
 {runTest nm='counter'}

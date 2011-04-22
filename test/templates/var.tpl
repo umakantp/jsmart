@@ -1,3 +1,5 @@
+{$foo}
+
 {$zzz = "text value"}
 {$zzz}
 

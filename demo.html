@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<head>
+	<title>jSmart demo</title>
+	<script lang=javascript src='http://jsmart.googlecode.com/hg/smart.js' type='text/javascript'></script> 
+</head>
+<body>
+
+<!--
+copy of  http://sites.google.com/site/jsmartdemo/
+
+http://code.google.com/apis/gadgets/docs/tools.html#GGE    create gadgets
+-->
+
+<textarea id="tpl" rows=20 cols=80>
+{literal}                                                  
+   There are some {JScript} books you may find interesting:
+{/literal}                                                 
+
+{foreach $books as $i => $book}
+   <div style="background-color: {cycle values="cyan,yellow"};">
+      [{$i+1}] {$book.title} by {$book.author} 
+      {if $book.price}                                
+         Price: <span style="color:red">${$book.price}</span>
+      {/if}                                           
+   </div>
+{foreachelse}
+   No books
+{/foreach}
+
+Total: {$book@total}
+</textarea>
+
+<br> 
+<br> 
+<b>Input data:</b> 
+<br> 
+<textarea id='data' rows=10 cols=80> 
+var data = {
+   'books': [
+      {
+       'title'  : 'JavaScript: The Definitive Guide',          
+       'author' : 'David Flanagan',                            
+       'price'  : '31.18'
+      },
+      {
+       'title'  : 'Murach JavaScript and DOM Scripting',
+       'author' : 'Ray Harris',
+       'price' : ''
+      },
+      {
+       'title'  : 'Head First JavaScript',
+       'author' : 'Michael Morrison',
+       'price'  : '29.54'
+      }
+   ]      
+};
+</textarea> 
+
+<br> 
+<br> 
+<button onclick="fetch()"><b>Fetch</b></button> 
+<br><br> 
+<b>Result:</b> 
+<hr> 
+<div id='res'></div> 
+
+<script> 
+	function fetch()
+	{
+		var tpl = new jSmart(document.getElementById('tpl').value);
+		eval(document.getElementById('data').value);
+		var res = tpl.fetch(data);
+		document.getElementById('res').innerHTML = res;
+	}
+	fetch();
+</script> 
+	  
+	  
+</body>
+</html>

@@ -677,6 +677,40 @@
                 }
             },
 
+            'include':
+            {
+                'type': 'function',
+                'parse': function(params, tree)
+                {
+                    var params = parseParams(params);
+                    var file = eval(params.file);
+                    tree.push({
+                        'type'   : 'build-in',
+                        'name'   : 'include',
+                        'file'   : file,
+                        'params' : params
+                    });
+
+                    if (file in files)
+                    {
+                        return;
+                    }
+                    files[file] = [];
+                    parse(stripComments(jSmart.prototype.getTemplate(file)), files[file]);
+                },
+
+                'process': function(node, data)
+                {
+                    var params = getActualParamValues(node.params,data);
+                    var s = process(files[node.file], obMerge('$',obMerge('',{},data),params));
+                    if ('assign' in node.params)
+                    {
+                        data['$'+params.assign] = s;
+                        return '';
+                    }
+                    return s;
+                }
+            },
 
             'block':
             {
@@ -844,6 +878,8 @@
     var plugins = {};
 
     var blocks = {};
+
+    var files = {};
 
     function parse(s, tree)
     {
@@ -1040,6 +1076,16 @@
                 'process': callback
             };
     };
+
+    /**
+       override this function
+       @param
+    */
+    jSmart.prototype.getTemplate = function(name)
+    {
+        throw new Error('No template for '+ name);
+    }
+
 
     /**     
        whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before
