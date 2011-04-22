@@ -4,6 +4,9 @@
 {assign var='num'  value=777}
 {$num}
 
+{assign var=$foo  value='new_value_of_foo'}
+[{$foo}][{$bar}]
+
 { assign var='num'  value=888 }
   {    assign var='num'  value=999}
   
@@ -18,3 +21,23 @@ assign var='num'  value=999
 
 
 {$num}
+
+{assign var="test_with_code" value=$foo}
+{$test_with_code}
+
+
+{assign var="test_with_code" value="{if $foo}aaa{else}zzzz{/if}"}
+{$test_with_code}
+
+
+{assign var="test_with_code" value="{for $z=1 to 5}[{$z}]{/for}"}
+{$test_with_code}
+
+
+{assign var="test_with_code" value="| {$ob.prop2.txt} + [{$foo}]"}
+{$test_with_code}
+
+
+{assign var="test_with_code" value="{foreach $o as $k => $v}[{$k}]({$v}) {/foreach}"}
+{$test_with_code}
+

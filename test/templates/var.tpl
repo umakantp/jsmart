@@ -1,5 +1,7 @@
 {$foo}
 
+{'abcdef'}
+
 {$zzz = "text value"}
 {$zzz}
 
@@ -14,3 +16,24 @@
 {$aaa = '$bbb'}
 
 {$aaa}
+
+{$test_with_code = $foo}
+{$test_with_code}
+
+{$test_with_code = '$foo'}
+{$test_with_code}
+
+{$test_with_code = '{$foo}'}
+{$test_with_code}
+
+{$test_with_code = "{$foo}"}
+{$test_with_code}
+
+{$test_with_code = "{$foo} + '123'"}
+{$test_with_code}
+
+{$test_with_code = '{for $z=1 to 5}[{$z}]{/for}'}
+{$test_with_code}
+
+{$test_with_code = "{for $z=1 to 5}[{$z}]{/for}"}
+{$test_with_code}

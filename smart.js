@@ -792,22 +792,34 @@
             'assign':
             {
                 'type': 'function',
-                'parse': function(params, tree)
+                'parse': function(paramsStr, tree)
                 {
+                    var params = parseParams(paramsStr);
+                    var subTree = [];
                     tree.push({
                         'type'   : 'build-in',
                         'name'   : 'assign',
-                        'params' : parseParams(params)
+                        'params' : params,
+                        'subTree' : subTree
                     });
+                    
+                    if (params.value.match(/^ *".*" *$/))
+                    {
+//                      params.value.replace(/([^{])(\$[\w]+)([^}])/g,'$1{$2}$3');
+                        parse(eval(params.value), subTree);
+                    }
+                    else
+                    {
+                        parseVar(params.value, subTree);
+                    }
                 },
 
                 'process': function(node, data)
                 {
-			           var params = getActualParamValues(node.params, data);
-			           if ('var' in params)
-			           {
-				            execute('$'+params['var']+'='+node.params['value'], data);
-			           }
+                    var varName = ('shorthand' in node.params) ? 
+                        node.params['var'] :
+                        execute(node.params['var'], data);
+                    execute('$'+varName+'="'+process(node.subTree, data)+'"',data);
                     return '';
                 }
             },
@@ -950,10 +962,10 @@
             }
             else         //variable
             {
-                res = openTag[1].match(/^ *(\$[\[\w'"\]]+ *= *.*) *$/);
+                res = openTag[1].match(/^ *\$([\[\w'"\]]+) *= *(.*) *$/);
                 if (res)    //variable assignment
                 {
-                    buildInFunctions['assign'].parse(" code="+res[1], tree);
+                    buildInFunctions['assign'].parse(' var='+res[1]+' value='+res[2]+' shorthand=1', tree);
 				        s = s.replace(/^\n/,'');	//remove new line after any tag (like in Smarty)
                 }
                 else   //output variable
@@ -1064,17 +1076,11 @@
     }
 
 
-    jSmart = function(tpl /*, tplChild1, tplChild2, ... */)
+    jSmart = function(tpl)
     {
         this.tree = [];
         tpl = stripComments(tpl.replace(/\r\n/g,'\n'));
         parse(tpl, this.tree);
-
-        for (var i=1; i<arguments.length; ++i)
-        {
-            var tree = [];
-            parse(arguments[i], tree);
-        }
     };
 
     jSmart.prototype.fetch = function(data)
@@ -1104,7 +1110,8 @@
 
     /**
        override this function
-       @param
+       @param name  value of 'file' parameter in {include} and {extends}
+       @return template text
     */
     jSmart.prototype.getTemplate = function(name)
     {
@@ -1133,7 +1140,7 @@
             {
                 if ('start' in params)
                 {
-                    data[name].value = params['start'];
+                    data[name].value = parseInt(params['start']);
                 }
                 else
                 {
@@ -1153,7 +1160,7 @@
             else
             {
                 data[name] = {
-                    'value' : params.__get('start',1),
+                    'value' : parseInt(params.__get('start',1)),
                     'skip' : params.__get('skip',1),
                     'direction' : params.__get('direction','up'),
                     'assign' : params.__get('assign',null)
