@@ -93,7 +93,7 @@
 
         for (var i=0; i<s.length; ++i)
         {
-            if (s[i] == '{')
+            if (s.substr(i,1) == '{')
             {
                 if (skipInWS && i+1 < s.length && WS.indexOf(s[i+1]) >= 0)
                 {
@@ -107,7 +107,7 @@
                 }
                 ++openCount;
             }
-            else if (s[i] == '}')
+            else if (s.substr(i,1) == '}')
             {
                 if (skipInWS && i-1 >= 0 && WS.indexOf(s[i-1]) >= 0)
                 {
