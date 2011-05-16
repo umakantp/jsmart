@@ -74,6 +74,14 @@
     }
 
     /**
+       @return  s trimmed and without quotes
+    */
+    function trimQuotes(s)
+    {
+        return s.replace(/^\s+|\s+$/g,'').replace(/^['"]{1}|['"]{1}$/g,'');
+    }
+
+    /**
        finds first {tag} in string
        @param re string with regular expression
        @return  null or s.match(re) result object where 
@@ -480,26 +488,45 @@
             'foreach': 
             {
                 'type': 'block',
-                'parse': function(params, tree, content)
+                'parse': function(paramStr, tree, content)
                 {
-                    var res = params.match(/^ *\$(\w+) *as *\$(\w+) *(=> *\$(\w+))? *$/i);
-                    if (!res)
+                    var arrName = null;
+                    var varName = null;
+                    var keyName = null;
+                    var loopName = null;
+
+                    var res = paramStr.match(/^ *\$(\w+) *as *\$(\w+) *(=> *\$(\w+))? *$/i);
+                    if (res)
                     {
-                        throw new Error('Invalid foreach parameters: '+params);
+                        arrName = '$'+res[1];
+                        varName = res[4] ? res[4] : res[2];
+                        keyName = res[4] ? res[2] : null;
                     }
-                    var arrName = res[1];
-                    var varName = res[4] ? res[4] : res[2];
-                    var keyName = res[4] ? res[2] : null;
+                    else    //Smarty 2.x syntax
+                    {
+                        var params = parseParams(paramStr);
+                        arrName = params['from'];
+                        varName = trimQuotes(params['item']);
+                        if ('key' in params)
+                        {
+                            keyName = trimQuotes(params['key']);
+                        }
+                        if ('name' in params)
+                        {
+                            loopName = trimQuotes(params['name']);
+                        }
+                    }
 
                     var subTree = [];
                     var subTreeElse = [];
                     tree.push({
-                        'type' : 'build-in',
-                        'name' : 'foreach',
-                        'arr' : '$'+arrName,
-                        'keyName' : '$'+keyName,
-                        'varName' : '$'+varName,
-                        'subTree' : subTree,
+                        'type'        : 'build-in',
+                        'name'        : 'foreach',
+                        'arr'         : arrName,
+                        'keyName'     : keyName,
+                        'varName'     : '$'+varName,
+                        'loopName'    : loopName,
+                        'subTree'     : subTree,
                         'subTreeElse' : subTreeElse
                     });
 
@@ -531,22 +558,40 @@
                             }
                             data[node.varName+'__total'] = total;
                             var i=0;
+                            if (node.loopName)
+                            {
+                                data['$smarty']['foreach'][node.loopName] = {};
+                                data['$smarty']['foreach'][node.loopName]['total'] = total;
+                            }
                             for (nm in a)
                             {
                                 data[node.varName+'__key'] = (a instanceof Array) ? parseInt(nm) : nm;
                                 if (node.keyName)
                                 {
-                                    data[node.keyName] = data[node.varName+'__key'];
+                                    data['$'+node.keyName] = data[node.varName+'__key'];
                                 }
                                 data[node.varName] = a[nm];
                                 data[node.varName+'__index'] = parseInt(i);
                                 data[node.varName+'__iteration'] = parseInt(i+1);
                                 data[node.varName+'__first'] = (i===0);
                                 data[node.varName+'__last'] = (i==total-1);
+                                
+                                if (node.loopName)
+                                {
+                                    data['$smarty']['foreach'][node.loopName]['index'] = parseInt(i);
+                                    data['$smarty']['foreach'][node.loopName]['iteration'] = parseInt(i+1);
+                                    data['$smarty']['foreach'][node.loopName]['first'] = (i===0) ? 1 : '';
+                                    data['$smarty']['foreach'][node.loopName]['last'] = (i==total-1) ? 1 : '';
+                                }
+
                                 s += process(node.subTree, data);
                                 ++i;
                             }
                             data[node.varName+'__show'] = (i>0);
+                            if (node.loopName)
+                            {
+                                data['$smarty']['foreach'][node.loopName]['show'] = (i>0) ? 1 : '';
+                            }
                             if (i>0)
                             {
                                 return s;                
@@ -1089,6 +1134,7 @@
             'smarty' : 
             {
                 'capture': {},
+                'foreach': {},
                 'section': {}
             }
         };

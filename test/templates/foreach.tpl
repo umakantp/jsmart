@@ -8,6 +8,11 @@
 {$v}
 
 
+{foreach $a as $vvv}
+	|{$vvv}|
+{/foreach}
+
+
 {foreach $a as $i}{$i}{foreachelse}
 error
 {/foreach}
@@ -63,3 +68,24 @@ this is just@total text@index
 {assign var="idx" value=$v@total}
 
 idx:[{$idx}]
+
+
+{foreach from=$a key=mykey item=myitem}
+	[{$mykey}]:[{$myitem}]
+{/foreach}
+
+
+{foreach from=$o item=myitem}
+	[{$myitem}]
+{/foreach}
+
+
+{foreach from=$a key='mykey' item='myitem'}
+	[{$mykey}]:[{$myitem}]
+{/foreach}
+
+{foreach from=$a item="myiiii" name='smarty2'}
+	{$smarty.foreach.smarty2.index}|{$smarty.foreach.smarty2.iteration}|{$smarty.foreach.smarty2.first}|{$smarty.foreach.smarty2.last} [{$myiiii}]
+{/foreach}
+
+[{$smarty.foreach.smarty2.show}] [{$smarty.foreach.smarty2.total}]
