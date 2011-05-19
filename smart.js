@@ -2,7 +2,7 @@
  * @preserve jSmart Javascript template engine
  * http://code.google.com/p/jsmart/
  *
- * Copyright 2011, Maxim Miroshnikov <miroshnikov at gmail dot com> 
+ * Copyright 2011, Max Miroshnikov <miroshnikov at gmail dot com> 
  * jSmart is licensed under the GNU General Public License
  * http://www.apache.org/licenses/LICENSE-2.0
 */
@@ -544,59 +544,58 @@
 
                 'process': function(node, data)
                 {
-                    if (node.arr in data)
+                    var a = (node.arr in data) ? data[node.arr] : trimQuotes(node.arr);
+                    if (!(a instanceof Object))
                     {
-                        var a = data[node.arr];
-                        if (a instanceof Object)
-                        {
-                            var s = '';
-                            var total = 0;
-                            var nm = null;
-                            for (nm in a)
-                            {
-                                ++total;
-                            }
-                            data[node.varName+'__total'] = total;
-                            var i=0;
-                            if (node.loopName)
-                            {
-                                data['$smarty']['foreach'][node.loopName] = {};
-                                data['$smarty']['foreach'][node.loopName]['total'] = total;
-                            }
-                            for (nm in a)
-                            {
-                                data[node.varName+'__key'] = (a instanceof Array) ? parseInt(nm) : nm;
-                                if (node.keyName)
-                                {
-                                    data['$'+node.keyName] = data[node.varName+'__key'];
-                                }
-                                data[node.varName] = a[nm];
-                                data[node.varName+'__index'] = parseInt(i);
-                                data[node.varName+'__iteration'] = parseInt(i+1);
-                                data[node.varName+'__first'] = (i===0);
-                                data[node.varName+'__last'] = (i==total-1);
-                                
-                                if (node.loopName)
-                                {
-                                    data['$smarty']['foreach'][node.loopName]['index'] = parseInt(i);
-                                    data['$smarty']['foreach'][node.loopName]['iteration'] = parseInt(i+1);
-                                    data['$smarty']['foreach'][node.loopName]['first'] = (i===0) ? 1 : '';
-                                    data['$smarty']['foreach'][node.loopName]['last'] = (i==total-1) ? 1 : '';
-                                }
+                        a = [a];
+                    }
 
-                                s += process(node.subTree, data);
-                                ++i;
-                            }
-                            data[node.varName+'__show'] = (i>0);
-                            if (node.loopName)
-                            {
-                                data['$smarty']['foreach'][node.loopName]['show'] = (i>0) ? 1 : '';
-                            }
-                            if (i>0)
-                            {
-                                return s;                
-                            }
+                    var s = '';
+                    var total = 0;
+                    var nm = null;
+                    for (nm in a)
+                    {
+                        ++total;
+                    }
+                    data[node.varName+'__total'] = total;
+                    var i=0;
+                    if (node.loopName)
+                    {
+                        data['$smarty']['foreach'][node.loopName] = {};
+                        data['$smarty']['foreach'][node.loopName]['total'] = total;
+                    }
+                    for (nm in a)
+                    {
+                        data[node.varName+'__key'] = (a instanceof Array) ? parseInt(nm) : nm;
+                        if (node.keyName)
+                        {
+                            data['$'+node.keyName] = data[node.varName+'__key'];
                         }
+                        data[node.varName] = a[nm];
+                        data[node.varName+'__index'] = parseInt(i);
+                        data[node.varName+'__iteration'] = parseInt(i+1);
+                        data[node.varName+'__first'] = (i===0);
+                        data[node.varName+'__last'] = (i==total-1);
+                        
+                        if (node.loopName)
+                        {
+                            data['$smarty']['foreach'][node.loopName]['index'] = parseInt(i);
+                            data['$smarty']['foreach'][node.loopName]['iteration'] = parseInt(i+1);
+                            data['$smarty']['foreach'][node.loopName]['first'] = (i===0) ? 1 : '';
+                            data['$smarty']['foreach'][node.loopName]['last'] = (i==total-1) ? 1 : '';
+                        }
+
+                        s += process(node.subTree, data);
+                        ++i;
+                    }
+                    data[node.varName+'__show'] = (i>0);
+                    if (node.loopName)
+                    {
+                        data['$smarty']['foreach'][node.loopName]['show'] = (i>0) ? 1 : '';
+                    }
+                    if (i>0)
+                    {
+                        return s;                
                     }
                     return process(node.subTreeElse, data);
                 }

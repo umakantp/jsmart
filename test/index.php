@@ -23,6 +23,7 @@ $smarty->assign('aEmpty',array());
 $smarty->assign('o',array('0'=>'0','1'=>'1','2'=>'2','3'=>'3','4'=>'4','5'=>'5','6'=>'6','7'=>'7','8'=>'8','9'=>'9'));
 $smarty->assign('ob', array('prop1'=>'prop1', 'prop2'=> array('txt'=>'txt', 'num'=>777, 'bool_true'=>true)));
 $smarty->assign('code','[$ob.prop2.txt]');
+$smarty->assign('num',7);
 
 
 $smarty->assign(

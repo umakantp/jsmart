@@ -89,3 +89,29 @@ idx:[{$idx}]
 {/foreach}
 
 [{$smarty.foreach.smarty2.show}] [{$smarty.foreach.smarty2.total}]
+
+______________________________ not array ________________________
+
+{foreach from=$num item='myitem'}
+	[{$myitem}]
+{/foreach}
+
+{foreach $num as $k => $v}
+	[{$v@index}] {$k}:{$v}
+{/foreach}
+
+{foreach from=$num key='k' item='myitem'}
+	[{$k}: {$myitem}]
+{/foreach}
+
+{foreach from=777 item='myitem'}
+	[{$myitem}]
+{/foreach}
+
+{foreach from='abcdef' item='myitem'}
+	[{$myitem}]
+{/foreach}
+
+{foreach from=ghijkl item='myitem'}
+	[{$myitem}]
+{/foreach}

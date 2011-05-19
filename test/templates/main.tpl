@@ -28,6 +28,7 @@
 			'prop2': { 'txt':'txt', 'num':777, 'bool_true': 1 }
 		},
 		'code' : '[$ob.prop2.txt]',
+		'num': 7,
 		
 		'books': [
 					{
