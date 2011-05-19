@@ -49,6 +49,46 @@ $smarty->assign(
 $smarty->assign('use_compiled',defined('USE_COMPILED'));
 
 
+function sayHello($params, $template)
+{
+	$s = 'Hello ';
+	if (array_key_exists('to',$params))
+	{
+		$s .= $params['to'];
+	}
+	return $s;
+}
+$smarty->registerPlugin('function', 'sayHello', 'sayHello');
+
+function replaceStr($params, $content, $template, &$repeat)
+{
+	return str_replace($params['from'], $params['to'], $content);
+}
+$smarty->registerPlugin('block', 'replaceStr', 'replaceStr');
+
+
+function testRepeat($params, $content, $template, &$repeat)
+{
+	if (!$content && array_key_exists('hide',$params) && $params['hide']==true) {
+		$repeat = false;
+	}
+	static $i = 0;
+	if ($content)
+	{
+		if (++$i<3)
+		{
+			$repeat = true;
+		}
+		else
+		{
+			$i = 0;
+		}
+	}
+	return '['.$content.']';
+}
+$smarty->registerPlugin('block', 'testRepeat', 'testRepeat');
+
+
 $smarty->display('main.tpl');
 
 ?>

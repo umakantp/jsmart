@@ -52,6 +52,54 @@
 		return document.getElementById(name.replace('.','_')).value;
 	}
 	
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'sayHello', 
+        function(params, data)
+        {
+			var s = 'Hello ';
+			if ('to' in params)
+			{
+				s += params['to'];
+			}
+			return s;
+		}
+	);
+	
+    jSmart.prototype.registerPlugin(
+        'block', 
+        'replaceStr', 
+        function(params, content, data, repeat)
+        {
+			return content.replace(new RegExp(params['from'],'g'), params['to']);
+		}
+	);
+	
+	i = 0;
+    jSmart.prototype.registerPlugin(
+        'block', 
+        'testRepeat', 
+        function(params, content, data, repeat)
+        {
+			if (!content && 'hide' in params && params['hide'] == true)
+			{
+				repeat.value = false;
+			}
+			if (content)
+			{
+				if (++i<3)
+				{
+					repeat.value = true;
+				}
+				else
+				{
+					i = 0;
+				}
+				return '[' + content + ']';
+			}
+		}
+	);
+	
 </script>
 {/literal}
 
@@ -93,7 +141,6 @@
 	
 {/function}
 
-
 {runTest nm='var'}
 {runTest nm='append'}
 {runTest nm='assign'}
@@ -115,11 +162,12 @@
 <textarea class='test' id='child1_tpl'>{include_literal file='child1'}</textarea>
 {runTest nm='child2'}  {*extends*}
 
-
+{runTest nm='plugins'}
 {runTest nm='cycle'}
 {runTest nm='counter'}
 
 {runTest nm='examples'}
+
 
 </body>
 </html>

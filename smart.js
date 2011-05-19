@@ -725,9 +725,9 @@
             'include':
             {
                 'type': 'function',
-                'parse': function(params, tree)
+                'parse': function(paramStr, tree)
                 {
-                    var params = parseParams(params);
+                    var params = parseParams(paramStr);
                     var file = eval(params.file);
                     tree.push({
                         'type'   : 'build-in',
@@ -765,9 +765,9 @@
             'extends':
             {
                 'type': 'function',
-                'parse': function(params, tree)
+                'parse': function(paramStr, tree)
                 {
-                    var params = parseParams(params);
+                    var params = parseParams(paramStr);
                     var file = eval(params.file);
                     var tpl = jSmart.prototype.getTemplate(file);
                     if (typeof(tpl) != 'string')
@@ -994,7 +994,13 @@
                 else if (nm in plugins)
                 {
                     var plugin = plugins[nm];
-                    if (plugin.type == 'function')
+                    if (plugin.type == 'block')
+                    {
+                        var closeTag = findCloseTag('\/'+nm, nm+' +[^}]*', s);
+                        parsePluginBlock(nm, params, tree, s.slice(0,closeTag.index));
+                        s = s.slice(closeTag.index+closeTag[0].length);
+                    }
+                    else if (plugin.type == 'function')
                     {
                         parsePluginFunc(nm, params, tree);
                     }
@@ -1052,6 +1058,18 @@
         return params;
     }
 
+    function parsePluginBlock(name, params, tree, content)
+    {
+        var subTree = [];
+        tree.push({
+            'type' : 'plugin',
+            'name' : name,
+            'params' : parseParams(params),
+            'subTree' : subTree
+        });
+        parse(content,subTree);
+    }
+
     function parsePluginFunc(name, params, tree)
     {
         tree.push({
@@ -1096,7 +1114,26 @@
             }
             else if (node.type == 'plugin')
             {
-                s += plugins[node.name].process(getActualParamValues(node.params,data), data);
+                var plugin = plugins[node.name];
+                if (plugin.type == 'block')
+                {
+                    var repeat = {value:true};
+                    plugins[node.name].process(getActualParamValues(node.params,data), '', data, repeat);
+                    while (repeat.value)
+                    {
+                        repeat.value = false;
+                        s += plugins[node.name].process(
+                            getActualParamValues(node.params,data), 
+                            process(node.subTree, data), 
+                            data, 
+                            repeat
+                        );
+                    }
+                }
+                else if (plugin.type == 'function')
+                {
+                    s += plugins[node.name].process(getActualParamValues(node.params,data), data);
+                }
             }
         }
         return s;    
