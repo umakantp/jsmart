@@ -35,6 +35,7 @@
 
     /**
        merges two or more objects into one and add prefix at the beginning of every property name at the top level
+       objects type is lost, prototype properties become own properties 
     */
     function obMerge(prefix, ob1, ob2 /*, ...*/)
     {
@@ -58,17 +59,14 @@
 
 
     /**
-       @return  number of own properties in ob
+       @return  number of properties in ob
     */
     function countProperties(ob)
     {
         var count = 0;
-        for (k in ob) 
+        for (var k in ob) 
         {
-            if (ob.hasOwnProperty(k))
-            {
-                count++;
-            }
+            count++;
         }
         return count;
     }
@@ -298,7 +296,7 @@
                         if( this.foreach(
                             params.name, 
                             params.__get('start',0),
-                            countProperties(params.loop),
+                            (params.loop instanceof Array) ? params.loop.length : countProperties(params.loop),
                             params.__get('step',1),
                             params.__get('max',Number.MAX_VALUE),
                             data,
@@ -550,28 +548,34 @@
                         a = [a];
                     }
 
-                    var s = '';
-                    var total = 0;
-                    var nm = null;
-                    for (nm in a)
-                    {
-                        ++total;
-                    }
+                    var total = (a instanceof Array) ? a.length : countProperties(a);
+
                     data[node.varName+'__total'] = total;
-                    var i=0;
                     if (node.loopName)
                     {
                         data['$smarty']['foreach'][node.loopName] = {};
                         data['$smarty']['foreach'][node.loopName]['total'] = total;
                     }
-                    for (nm in a)
+
+                    var s='';
+                    var i=0;
+                    for (var key in a)
                     {
-                        data[node.varName+'__key'] = (a instanceof Array) ? parseInt(nm) : nm;
+                        if (a instanceof Array)
+                        {
+                            key = parseInt(key);
+                            if (isNaN(key))
+                            {
+                                continue;
+                            }
+                        }
+
+                        data[node.varName+'__key'] = key;
                         if (node.keyName)
                         {
                             data['$'+node.keyName] = data[node.varName+'__key'];
                         }
-                        data[node.varName] = a[nm];
+                        data[node.varName] = a[key];
                         data[node.varName+'__index'] = parseInt(i);
                         data[node.varName+'__iteration'] = parseInt(i+1);
                         data[node.varName+'__first'] = (i===0);

@@ -18,6 +18,8 @@
 
 {literal}
 <script>
+	Array.prototype.notInForeach = "{foreach} loops only on numerical indexes in Array";
+	
 	var data = {
 		'foo' : 'bar',
 		'a' : ['0','1','2','3','4','5','6','7','8','9'],

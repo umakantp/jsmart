@@ -1,4 +1,6 @@
 {"foo"|upper}
 {'foo'|upper}
 {$foo|upper}
-{sayHello|upper}
+{$ob.prop2.txt|upper}
+{$ob['prop2']['txt']|upper}
+{*sayHello|upper to='me'*}
