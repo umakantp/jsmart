@@ -217,7 +217,13 @@
         {
             with (__data)
             {
-                return eval(__code);
+                try {
+                    return eval(__code);
+                }
+                catch(e)
+                {
+                    throw new Error(e.message + ' in \n' + __code);
+                }
             }
         }
         return __code;

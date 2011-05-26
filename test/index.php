@@ -25,6 +25,11 @@ $smarty->assign('ob', array('prop1'=>'prop1', 'prop2'=> array('txt'=>'txt', 'num
 $smarty->assign('code','[$ob.prop2.txt]');
 $smarty->assign('num',7);
 
+function strayFunc($v1, $v2)
+{
+	return $v1.','.$v2;
+}
+
 
 $smarty->assign(
 	'books',

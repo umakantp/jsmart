@@ -37,3 +37,9 @@
 
 {$test_with_code = "{for $z=1 to 5}[{$z}]{/for}"}
 {$test_with_code}
+
+{strayFunc('abc','def')}-
+
+{strayFunc($ob.prop2.txt,$foo)}-
+
+{strayFunc($ob.prop2['txt'],$foo)} -
