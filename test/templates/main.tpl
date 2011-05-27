@@ -1,5 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
 	<title>jSmart unit test</title>
 	
 	<script type="text/javascript" src="../smart{if $use_compiled}.min{/if}.js"></script>
@@ -48,7 +50,8 @@
 						'author' : 'Michael Morrison',
 						'price'  : '29.54'
 					}
-		]
+		],
+		'long_text': "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA. Third sentence \n\n\n Third paragraph\n"
 	};
 	
 	jSmart.prototype.getTemplate = function(name) {
@@ -174,6 +177,8 @@
 {runTest nm='plugins'}
 {runTest nm='cycle'}
 {runTest nm='counter'}
+
+{runTest nm='modifiers'}
 
 {runTest nm='examples'}
 

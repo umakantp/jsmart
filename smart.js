@@ -215,14 +215,17 @@
     {
         if (typeof(__code) == 'string')
         {
-            with (__data)
+            with (modifiers)
             {
-                try {
-                    return eval(__code);
-                }
-                catch(e)
+                with (__data)
                 {
-                    throw new Error(e.message + ' in \n' + __code);
+                    try {
+                        return eval(__code);
+                    }
+                    catch(e)
+                    {
+                        throw new Error(e.message + ' in \n' + __code);
+                    }
                 }
             }
         }
@@ -964,6 +967,8 @@
 
     var plugins = {};
 
+    var modifiers = {};
+
     var blocks = {};
 
     var files = {};
@@ -1103,6 +1108,51 @@
         return actualParams;
     }
 
+    function isValidVar(varName, __data)
+    {
+        try
+	     {
+		      with (__data)
+		      {
+			       eval(varName);
+		      }
+	     }
+	     catch(e)
+	     {
+		      return false;
+	     }
+
+	     return true;
+    }
+
+    function processModifierParams(s)
+    {
+        var params = [];
+        return params;
+    }
+
+    function processModifiers(s,data)
+    {
+        var re = new RegExp('(\\$[^|]+|".+?"|\'.+?\')\\|(\\w+)(:)?');
+        var sRes = '';
+        var found = null;
+        for (found=s.match(re); found; found=s.match(re))
+        {
+	         if ((found[1].substr(0,1)=='$' && isValidVar(found[1]),data) || found[1].substr(0,1)=="'" || found[1].substr(0,1)=='"')
+	         {
+		          sRes += s.slice(0,found.index);
+		          sRes += found[2] + '(' + found[1] + ')';
+	         }
+	         else
+	         {
+		          sRes += s.slice(0,found.index+found[0].length);
+	         }
+	         s = s.slice(found.index+found[0].length);
+        }
+        sRes += s;
+        return sRes;
+    }
+
     function process(tree, data)
     {
         var s = '';
@@ -1115,7 +1165,7 @@
             }
             else if (node.type == 'var')
             {
-                s += execute(node.name, data);
+                s += execute(processModifiers(node.name,data), data);
             }
             else if (node.type == 'build-in')
             {
@@ -1188,16 +1238,19 @@
     };
 
     /**
-       @param type  valid values are 'function' or 'block'
+       @param type  valid values are 'function', 'block' or 'modifier'
        @param callback  func(params,data)  or  block(params,content,data,repeat)
     */
     jSmart.prototype.registerPlugin = function(type, name, callback)
     {
-        plugins[name] = 
-            {
-                'type': type,
-                'process': callback
-            };
+        if (type == 'modifier')
+        {
+            modifiers[name] = callback;
+        }
+        else
+        {
+            plugins[name] = {'type': type, 'process': callback};
+        }
     };
 
     /**
@@ -1330,6 +1383,82 @@
             return '';
         }
     );
+
+
+
+    /**
+       register custom modifiers
+    */
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'upper', 
+        function(s)
+        {
+            return s.toUpperCase();
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'lower', 
+        function(s)
+        {
+            return s.toLowerCase();
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'count_paragraphs', 
+        function(s)
+        {
+            var found = s.match(/\n+/g);
+            if (found)
+            {
+	             return found.length+1;
+            }
+            return 1;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'count_sentences', 
+        function(s)
+        {
+            var found = s.match(/[^\s]\.(?!\w)/g);
+            if (found)
+            {
+	             return found.length;
+            }
+            return 0;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'count_words', 
+        function(s)
+        {
+            var found = s.match(/\w+/g);
+            if (found)
+            {
+	             return found.length;
+            }
+            return 0;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'nl2br', 
+        function(s)
+        {
+            return s.replace(/\n/g,'<br />\n');
+        }
+    );
+
 
     String.prototype.fetch = function(data) 
     {
