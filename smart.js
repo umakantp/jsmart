@@ -969,9 +969,9 @@
 
     var modifiers = {};
 
-    var blocks = {};
-
     var files = {};
+
+    var blocks = null;
 
     function parse(s, tree)
     {
@@ -1245,8 +1245,9 @@
     jSmart = function(tpl)
     {
         this.tree = [];
-        tpl = stripComments(tpl.replace(/\r\n/g,'\n'));
-        parse(tpl, this.tree);
+        this.blocks = {};
+        blocks = this.blocks;
+        parse(stripComments(tpl.replace(/\r\n/g,'\n')), this.tree);
     };
 
     jSmart.prototype.fetch = function(data)
@@ -1259,6 +1260,7 @@
                 'section': {}
             }
         };
+        blocks = this.blocks;
         return process(this.tree, obMerge('$',{},data,smarty));
     };
 
