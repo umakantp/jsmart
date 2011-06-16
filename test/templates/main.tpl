@@ -5,10 +5,10 @@
 	<title>jSmart unit test</title>
 	
 	<script type="text/javascript" src="../smart{if $use_compiled}.min{/if}.js"></script>
-	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-	<script type="text/javascript" src="http://github.com/jquery/qunit/raw/master/qunit/qunit.js"></script>
+	<script type="text/javascript" src="jquery.min.js"></script>
+	<script type="text/javascript" src="qunit.js"></script>
 	
-	<link rel="stylesheet" href="http://github.com/jquery/qunit/raw/master/qunit/qunit.css" type="text/css" media="screen" />
+	<link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
 	{literal}
 	<style type="text/css">
 		textarea.test { display:none; }

@@ -1125,15 +1125,27 @@
 	     return true;
     }
 
-    function processModifierParams(s)
+    function processModifierParams(s, params)
     {
-        var params = [];
-        return params;
+        var re = new RegExp('^:(".+?"|\'.+?\'|.*?)([\\s:|,))]|$)');
+        var found = null;
+        for (found=s.match(re); found; found=s.match(re))
+        {
+            params.push(found[1]);
+            s = s.slice(found[1].length+1);
+            if (found[2] != ':')
+            {
+                return s;
+            }
+        }
+        return s;
     }
 
     function processModifiers(s,data)
     {
-        var re = new RegExp('(\\$[^|]+|".+?"|\'.+?\')\\|(\\w+)(:)?');
+        var re = new RegExp('(\\$[^|]+|".+?"|\'.+?\')\\|\\w+');
+        var reFunc = new RegExp('^\\|(\\w+)(:)?');
+
         var sRes = '';
         var found = null;
         for (found=s.match(re); found; found=s.match(re))
@@ -1141,13 +1153,26 @@
 	         if ((found[1].substr(0,1)=='$' && isValidVar(found[1]),data) || found[1].substr(0,1)=="'" || found[1].substr(0,1)=='"')
 	         {
 		          sRes += s.slice(0,found.index);
-		          sRes += found[2] + '(' + found[1] + ')';
+                s = s.slice(found.index+found[1].length);
+
+                var params = [found[1]];
+                var foundFunc = null;
+                for (foundFunc=s.match(reFunc); foundFunc; foundFunc=s.match(reFunc))
+                {
+                    s = s.slice(foundFunc[1].length+1);
+                    if (foundFunc.length > 2)
+                    {
+                        s = processModifierParams(s,params);
+                    }
+                    params = [ foundFunc[1]+'('+params.join(',')+')' ];
+                }
+		          sRes += params[0];
 	         }
 	         else
 	         {
 		          sRes += s.slice(0,found.index+found[0].length);
+	             s = s.slice(found.index+found[0].length);
 	         }
-	         s = s.slice(found.index+found[0].length);
         }
         sRes += s;
         return sRes;
@@ -1456,6 +1481,42 @@
         function(s)
         {
             return s.replace(/\n/g,'<br />\n');
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'spacify', 
+        function(s, space)
+        {
+            if (!space)
+            {
+                space = ' ';
+            }
+            return s.replace(/(\n|.)(?!$)/g,'$1'+space);
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'capitalize', 
+        function(s, withDigits)
+        {
+            if (withDigits == null)
+            {
+                withDigits = false;
+            }
+
+            var words = s.split(/\b/);
+            var i=0;
+            for (i=0; i<words.length; ++i)
+            {
+	             if (withDigits || words[i].search(/\d/)<0)
+	             {
+		              words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+	             }
+            }
+            return words.join('');
         }
     );
 
