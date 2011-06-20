@@ -25,6 +25,12 @@ assign var='num'  value=999
 {assign var="test_with_code" value=$foo}
 {$test_with_code}
 
+{assign var="test_with_code" value="$foo"}
+{$test_with_code}
+
+{assign var="test_with_code" value='$foo'}
+{$test_with_code}
+
 
 {assign var="test_with_code" value="{if $foo}aaa{else}zzzz{/if}"}
 {$test_with_code}
@@ -41,3 +47,11 @@ assign var='num'  value=999
 {assign var="test_with_code" value="{foreach $o as $k => $v}[{$k}]({$v}) {/foreach}"}
 {$test_with_code}
 
+{assign var="testOb" value=$ob}
+[{$testOb.prop1}]
+
+{assign var="testOb" value="$ob"}
+[{$testOb.prop1}]
+
+{assign var="testOb" value='$ob'}
+[{$testOb}]

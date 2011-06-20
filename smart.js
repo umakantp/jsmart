@@ -852,23 +852,11 @@
                 'parse': function(paramsStr, tree)
                 {
                     var params = parseParams(paramsStr);
-                    var subTree = [];
                     tree.push({
                         'type'   : 'build-in',
                         'name'   : 'assign',
-                        'params' : params,
-                        'subTree' : subTree
+                        'params' : params
                     });
-                    
-                    if (params.value.match(/^ *".*" *$/))
-                    {
-//                      params.value.replace(/([^{])(\$[\w]+)([^}])/g,'$1{$2}$3');
-                        parse(eval(params.value), subTree);
-                    }
-                    else
-                    {
-                        parseVar(params.value, subTree);
-                    }
                 },
 
                 'process': function(node, data)
@@ -876,7 +864,19 @@
                     var varName = ('shorthand' in node.params) ? 
                         node.params['var'] :
                         execute(node.params['var'], data);
-                    execute('$'+varName+'="'+process(node.subTree, data)+'"',data);
+                    
+                    var value = node.params.value;
+                    if (value.match(/^ *".*" *$/))
+                    {
+                        value = eval(value);
+                        if (!isValidVar(value,data))
+                        {
+                            var subTree = [];
+                            parse(value, subTree);
+                            value = '"'+process(subTree, data)+'"';
+                        }
+                    }
+                    execute('$'+varName+'='+value, data);
                     return '';
                 }
             },
@@ -1110,6 +1110,10 @@
 
     function isValidVar(varName, __data)
     {
+		  if (!varName.match(/^ *[$]/))
+		  {
+			   return false;
+		  }
         try
 	     {
 		      with (__data)
