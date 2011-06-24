@@ -739,15 +739,14 @@
                 'type': 'function',
                 'parse': function(paramStr, tree)
                 {
-                    var params = parseParams(paramStr);
-                    var file = eval(params.file);
+//                    var params = parseParams(paramStr);
+//                    var file = eval(params.file);
                     tree.push({
                         'type'   : 'build-in',
                         'name'   : 'include',
-                        'file'   : file,
-                        'params' : params
+                        'params' : parseParams(paramStr)
                     });
-
+/*
                     if (file in files)
                     {
                         return;
@@ -759,12 +758,26 @@
                         throw new Error('No template for '+ file);
                     }
                     parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
+*/
                 },
 
                 'process': function(node, data)
                 {
                     var params = getActualParamValues(node.params,data);
-                    var s = process(files[node.file], obMerge('$',obMerge('',{},data),params));
+
+                    var file = params.file;
+                    if (!(file in files))
+                    {
+                        files[file] = [];
+                        var tpl = jSmart.prototype.getTemplate(file);
+                        if (typeof(tpl) != 'string')
+                        {
+                            throw new Error('No template for '+ file);
+                        }
+                        parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
+                    }
+
+                    var s = process(files[file], obMerge('$',obMerge('',{},data),params));
                     if ('assign' in node.params)
                     {
                         data['$'+params.assign] = s;
@@ -876,6 +889,7 @@
                             value = '"'+process(subTree, data)+'"';
                         }
                     }
+                    data['$'+varName] = null;
                     execute('$'+varName+'='+value, data);
                     return '';
                 }
@@ -1098,7 +1112,12 @@
         var actualParams = {};
         for (var nm in params)
         {
-            actualParams[nm] = execute(params[nm], data);
+            var v = params[nm];
+            if (v && v.match(/^ *"\$.*" *$/) && isValidVar(eval(v),data))
+            {
+                v = eval(v);
+            }
+            actualParams[nm] = execute(v, data);
         }
 
         actualParams.__get = function(nm,defVal)
