@@ -43,7 +43,7 @@
         {
             for (var nm in arguments[i]) 
             {
-                if (typeof(arguments[i][nm]) == 'object')
+                if (typeof(arguments[i][nm]) == 'object' && arguments[i][nm] != null)
                 {
                     ob1[prefix+nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
                     obMerge('', ob1[prefix+nm], arguments[i][nm]);
@@ -1154,7 +1154,7 @@
         var found = null;
         for (found=s.match(re); found; found=s.match(re))
         {
-	         if ((found[1].substr(0,1)=='$' && isValidVar(found[1]),data) || found[1].substr(0,1)=="'" || found[1].substr(0,1)=='"')
+	         if ((found[1].substr(0,1)=='$' && isValidVar(found[1],data)) || found[1].substr(0,1)=="'" || found[1].substr(0,1)=='"')
 	         {
 		          sRes += s.slice(0,found.index);
                 s = s.slice(found.index+found[1].length);
@@ -1168,7 +1168,7 @@
                     {
                         s = processModifierParams(s,params);
                     }
-                    params = [ foundFunc[1]+'('+params.join(',')+')' ];
+                    params = [ (foundFunc[1]=='default'?'defaultValue':foundFunc[1])+'('+params.join(',')+')' ];
                 }
 		          sRes += params[0];
 	         }
@@ -1418,24 +1418,55 @@
 
 
     /**
-       register custom modifiers
+       register modifiers
     */
 
     jSmart.prototype.registerPlugin(
         'modifier', 
-        'upper', 
-        function(s)
+        'capitalize', 
+        function(s, withDigits)
         {
-            return s.toUpperCase();
+            var re = new RegExp(withDigits ? '[\\W\\d]+' : '\\W+');
+            var found = null;
+            var res = '';
+            for (found=s.match(re); found; found=s.match(re))
+            {
+	             var word = s.slice(0,found.index);
+                if (word.match(/\d/))
+                {
+                    res += word;
+                }
+                else
+                {
+	                 res += word.charAt(0).toUpperCase() + word.slice(1);
+                }
+                res += s.slice(found.index, found.index+found[0].length);
+	             s = s.slice(found.index+found[0].length);
+            }
+            if (s.match(/\d/))
+            {
+                return res + s;
+            }
+            return res + s.charAt(0).toUpperCase() + s.slice(1);
         }
     );
 
     jSmart.prototype.registerPlugin(
         'modifier', 
-        'lower', 
-        function(s)
+        'cat', 
+        function(s, value)
         {
-            return s.toLowerCase();
+            value = value ? value : '';
+            return s + value;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'count_characters', 
+        function(s, includeWhitespaces)
+        {
+            return includeWhitespaces ? s.length : s.replace(/\s/g,'').length;
         }
     );
 
@@ -1480,6 +1511,62 @@
             return 0;
         }
     );
+/*
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'date_format', 
+        function(s)
+        {
+        }
+    );
+*/
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'defaultValue',
+        function(s, value)
+        {
+            if (s) {
+                return s;
+            }
+            return s ? s : (value ? value : '');
+        }
+    );
+/*
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'escape', 
+        function(s)
+        {
+        }
+    );
+*/
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'indent',
+        function(s, repeat, indentWith)
+        {
+            repeat = repeat ? repeat : 4;
+            indentWith = indentWith ? indentWith : ' ';
+            
+            var indentStr = '';
+            while (repeat--)
+            {
+                indentStr += indentWith;
+            }
+            
+            var tail = s.match(/\n+$/);
+            return indentStr + s.replace(/\n+$/,'').replace(/\n/g,'\n'+indentStr) + (tail ? tail[0] : '');
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'lower', 
+        function(s)
+        {
+            return s.toLowerCase();
+        }
+    );
 
     jSmart.prototype.registerPlugin(
         'modifier', 
@@ -1487,6 +1574,37 @@
         function(s)
         {
             return s.replace(/\n/g,'<br />\n');
+        }
+    );
+
+    /** 
+        only modifiers (flags) 'i' and 'm' are supported 
+        backslashes should be escaped e.g. \\s
+    */
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'regex_replace',
+        function(s, re, replaceWith)
+        {
+            var pattern = re.match(/^ *\/(.*)\/(.*) *$/);
+            return (new String(s)).replace(new RegExp(pattern[1],'g'+(pattern.length>1?pattern[2]:'')), replaceWith);
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'replace',
+        function(s, search, replaceWith)
+        {
+            s = new String(s);
+            var res = '';
+            var pos = -1;
+            for (pos=s.indexOf(search); pos>=0; pos=s.indexOf(search))
+            {
+                res += s.slice(0,pos) + replaceWith;
+                s = s.slice(pos+search.length);
+            }
+            return res + s;
         }
     );
 
@@ -1502,29 +1620,112 @@
             return s.replace(/(\n|.)(?!$)/g,'$1'+space);
         }
     );
+/*
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'string_format', 
+        function(s, fmt)
+        {
+            return sprintf(fmt, s);
+        }
+    );
+*/
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'strip',
+        function(s, replaceWith)
+        {
+            replaceWith = replaceWith ? replaceWith : ' ';
+            return (new String(s)).replace(/[\s]+/g, replaceWith);
+        }
+    );
 
     jSmart.prototype.registerPlugin(
         'modifier', 
-        'capitalize', 
-        function(s, withDigits)
+        'strip_tags',
+        function(s, addSpace)
         {
-            if (withDigits == null)
-            {
-                withDigits = false;
-            }
-
-            var words = s.split(/\b/);
-            var i=0;
-            for (i=0; i<words.length; ++i)
-            {
-	             if (withDigits || words[i].search(/\d/)<0)
-	             {
-		              words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
-	             }
-            }
-            return words.join('');
+            addSpace = (addSpace==null) ? true : addSpace;
+            return (new String(s)).replace(/<[^>]*?>/g, addSpace ? ' ' : '');
         }
     );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'truncate', 
+        function(s, length, etc, breakWords, middle)
+        {
+            length = length ? length : 80;
+            etc = (etc!=null) ? etc : '...';
+            
+            if (s.length <= length)
+            {
+                return s;
+            }
+
+            length -= Math.min(length,etc.length);
+            if (middle)
+            {
+                //one of floor()'s should be replaced with ceil() but it so in Smarty 
+                return s.slice(0,Math.floor(length/2)) + etc + s.slice(s.length-Math.floor(length/2));
+            }
+
+            if (!breakWords)
+            {
+                s = s.slice(0,length+1).replace(/\s+?(\S+)?$/,'');
+            }
+          
+            return s.slice(0,length) + etc;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'upper', 
+        function(s)
+        {
+            return s.toUpperCase();
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
+        'wordwrap', 
+        function(s, width, wrapWith, breakWords)
+        {
+	         width = width ? width : 80;
+	         wrapWith = wrapWith ? wrapWith : '\n';
+	         
+	         width -= Math.min(width,wrapWith.length);
+
+	         var lines = s.split('\n');
+	         var i = 0;
+	         for (i=0; i<lines.length; ++i)
+	         {
+		          var line = lines[i];
+		          var res = '';
+		          var pos = 0;
+		          while (pos+width < line.length)
+		          {
+			           var part = line.slice(pos,pos+width+1);
+			           if (!breakWords)
+			           {
+				            part = part.replace(/(\s+)\S+$/,'$1');
+			           }
+			           part = part.slice(0,width);
+			           pos += part.length;
+			           res += part.replace(/\s+$/,'').replace(/^\s+/,'') + wrapWith;
+                    while (line.charAt(pos).match(/\s/))
+                    {
+                        ++pos;
+                    }
+		          }
+		          lines[i] = res + line.slice(pos);
+	         }
+	         return lines.join('\n');
+        }
+    );
+
 
 
     String.prototype.fetch = function(data) 

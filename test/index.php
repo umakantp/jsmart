@@ -19,12 +19,15 @@ $smarty->registerPlugin('function', 'include_literal', 'include_literal');
 
 $smarty->assign('foo','bar');
 $smarty->assign('a',array('0','1','2','3','4','5','6','7','8','9'));
-$smarty->assign('aEmpty',array());
 $smarty->assign('o',array('0'=>'0','1'=>'1','2'=>'2','3'=>'3','4'=>'4','5'=>'5','6'=>'6','7'=>'7','8'=>'8','9'=>'9'));
 $smarty->assign('ob', array('prop1'=>'prop1', 'prop2'=> array('txt'=>'txt', 'num'=>777, 'bool_true'=>true)));
 $smarty->assign('code','[$ob.prop2.txt]');
 $smarty->assign('num',7);
-$smarty->assign('long_text', "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA. Third sentence \n\n\n Third paragraph\n");
+$smarty->assign('long_text', "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n");
+$smarty->assign('aEmpty',array());
+$smarty->assign('sEmpty','');
+$smarty->assign('nullVar',null);
+
 
 function strayFunc($v1, $v2)
 {
