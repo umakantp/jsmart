@@ -9,17 +9,15 @@
 	<script type="text/javascript" src="qunit.js"></script>
 	
 	<link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
-	{literal}
-	<style type="text/css">
-		textarea.test { display:none; }
-	</style>
-	{/literal}
 </head>
 
 <body>
 
 {literal}
 <script>
+
+	var isIE = navigator.userAgent.indexOf("MSIE") >= 0;
+	
 	Array.prototype.notInForeach = "{foreach} loops only on numerical indexes in Array";
 	
 	var data = {
@@ -57,7 +55,12 @@
 	};
 	
 	jSmart.prototype.getTemplate = function(name) {
-		return document.getElementById(name.replace('.','_')).value;
+		var tplTxt = document.getElementById(name.replace('.','_')).innerHTML;
+		if (isIE)
+		{
+			tplTxt = tplTxt.replace(/\r\n/g,'\n').replace(/^\n*/,'');
+		}
+		return tplTxt;
 	}
 	
     jSmart.prototype.registerPlugin(
@@ -126,8 +129,8 @@
 
 
 {function name='includeTest'}
-<textarea class='test' id='{$nm}_php'>{include file="{$nm}.tpl"}</textarea>
-<textarea class='test' id='{$nm}_tpl'>{include_literal file=$nm}</textarea>
+<script type="text/x-jsmart-tmpl" id='{$nm}_php'>{include file="{$nm}.tpl"}</script>
+<script type="text/x-jsmart-tmpl" id='{$nm}_tpl'>{include_literal file=$nm}</script>
 {/function}
 
 
@@ -138,16 +141,24 @@
 	<script>
 		try 
 		{
-			var tpl = new jSmart($('#{$nm}_tpl').val());
+			var tpl = new jSmart($('#{$nm}_tpl').html());
 			var res_{$nm} = tpl.fetch(data);
-			var res2_{$nm} = $('#{$nm}_tpl').val().fetch(data);
+			var res2_{$nm} = $('#{$nm}_tpl').html().fetch(data);
 
 		} catch(e) 
 		{
 			alert(e.name + ' ' + e.message);
 		}
 		test("{$nm}", function() {
-			equal(res_{$nm}, $('#{$nm}_php').val());
+			var resJS = res_{$nm};
+			var resPHP = $('#{$nm}_php').html();
+			if (isIE)
+			{
+				//IE bug: it adds an extra new line at the beginning and strip existing new lines from the end of SCRIPT innerHTML
+				resJS = resJS.replace(/^\n*/,'').replace(/\n*$/,'');
+				resPHP = resPHP.replace(/\r\n/g,'\n').replace(/^\n*/,'').replace(/\n*$/,'');
+			}
+			equal(resJS, resPHP);
 			equal(res2_{$nm}, res_{$nm});
 		} );
 	</script>
@@ -155,6 +166,7 @@
 	
 {/function}
 
+{runTest nm='comments'}
 {runTest nm='var'}
 {runTest nm='append'}
 {runTest nm='assign'}
@@ -172,10 +184,9 @@
 {runTest nm='strip'}
 {runTest nm='while'}
 {runTest nm='include'}
-<textarea class='test' id='parent_tpl'>{include_literal file='parent'}</textarea>
-<textarea class='test' id='child1_tpl'>{include_literal file='child1'}</textarea>
+<script type="text/x-jsmart-tmpl" id='parent_tpl'>{include_literal file='parent'}</script>
+<script type="text/x-jsmart-tmpl" id='child1_tpl'>{include_literal file='child1'}</script>
 {runTest nm='child2'}  {*extends*}
-
 {runTest nm='plugins'}
 {runTest nm='cycle'}
 {runTest nm='counter'}
@@ -183,7 +194,6 @@
 {runTest nm='modifiers'}
 
 {runTest nm='examples'}
-
 
 </body>
 </html>

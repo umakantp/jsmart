@@ -1,4 +1,3 @@
-
 {foreach $o as $k => $v}
 	[{$v@index}] {$k}:{$v}
 {/foreach}

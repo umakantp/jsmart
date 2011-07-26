@@ -8,6 +8,14 @@ this will be captured
 
 [{$smarty.capture.testCapture1}]
 
+{capture name='withTextarea'}
+   <textarea>
+      test test test
+   </textarea>
+{/capture}
+
+[{$smarty.capture.withTextarea}]
+
 {capture name='testCapture2' assign='captureA'}
 this will be captured into variable
 {foreach $o as $i}{$i}{/foreach}

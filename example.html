@@ -5,7 +5,7 @@
 </head>
 <body>
 
-<textarea id="test_tpl" style="display:none;">
+<script id="test_tpl" type="text/x-jsmart-tmpl"> 
    {literal}                                                  
      There are some {JScript} books you may find interesting:
    {/literal}                                                 
@@ -22,7 +22,7 @@
    {/foreach}
 
    Total: {$book@total}
-</textarea>
+</script>
 
 <div id='someDiv'></div>
 
@@ -47,9 +47,8 @@
 		]      
 	};
 
-	var tpl = new jSmart(document.getElementById('test_tpl').value);
+	var tpl = new jSmart(document.getElementById('test_tpl').innerHTML);
 	var res = tpl.fetch(data);
-
 	document.getElementById('someDiv').innerHTML = res;
 </script>
 

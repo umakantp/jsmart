@@ -739,26 +739,11 @@
                 'type': 'function',
                 'parse': function(paramStr, tree)
                 {
-//                    var params = parseParams(paramStr);
-//                    var file = eval(params.file);
                     tree.push({
                         'type'   : 'build-in',
                         'name'   : 'include',
                         'params' : parseParams(paramStr)
                     });
-/*
-                    if (file in files)
-                    {
-                        return;
-                    }
-                    files[file] = [];
-                    var tpl = jSmart.prototype.getTemplate(file);
-                    if (typeof(tpl) != 'string')
-                    {
-                        throw new Error('No template for '+ file);
-                    }
-                    parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
-*/
                 },
 
                 'process': function(node, data)
@@ -1260,6 +1245,11 @@
                 throw new Error('Unclosed {*');
             }
             s = s.slice(closeTag.index+closeTag[0].length);
+            if (sRes.match(/\n+$/) && s.match(/^\n+/))
+            {
+                sRes = sRes.replace(/\n+$/,'\n');
+                s = s.replace(/^\n/,'')
+            }
         }
         return sRes + s;
     }

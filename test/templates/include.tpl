@@ -1,6 +1,12 @@
+[[[
 {include file='foreach.tpl'}
+]]]
+[[[
 {include file='capture.tpl'}
+]]]
+[[[
 {include file='strip.tpl'}
+]]]
 
 {include file='for.tpl' assign='zzz'}
 [{$zzz}]

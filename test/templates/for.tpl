@@ -42,4 +42,3 @@
 {for $i=1 to 255 step 4 max=20} 
 	{$i}
 {/for}
-
