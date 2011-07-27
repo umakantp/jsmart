@@ -4,6 +4,18 @@
 {assign var='num'  value=777}
 {$num}
 
+{assign var='zzz'  			value='abc'}
+{$zzz}
+
+{assign 
+	value   =   'd=ef'
+	var	=	'zzz'}
+{$zzz}
+
+{assign var='zzz'  			value='it\'s OK'}
+{$zzz}
+
+
 {assign var=$foo  value='new_value_of_foo'}
 [{$foo}][{$bar}]
 

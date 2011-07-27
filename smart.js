@@ -1061,15 +1061,26 @@
     }
 
     function parseParams(paramsStr)
-    {
-        var params = {};
-        var a = reSplit(/ +([\w]+) *=/, paramsStr);
-        for (var i=1; i<a.length-1; i+=2)
-        {
-            params[a[i]] = prepare(a[i+1]);
-        }
-        return params;
-    }
+	 {
+		  var s = paramsStr.replace(/\n/g,' ');
+		  var params = [];
+        var re = /^\s*(?:(\w+)\s*=)?\s*([^'"][^\s]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/;
+		  var found = s.match(re);
+		  var i = 0;
+		  for (;found;found=s.match(re))
+		  {
+			   if (found[1])
+			   {
+				    params[found[1]] = prepare(found[2]);
+			   }
+			   else
+			   {
+				    params[i++] = prepare(found[2]);	//short-hand param
+			   }
+			   s = s.slice(found.index+found[0].length);
+		  }
+		  return params;
+	 }
 
     function parsePluginBlock(name, params, tree, content)
     {
@@ -1097,12 +1108,15 @@
         var actualParams = {};
         for (var nm in params)
         {
-            var v = params[nm];
-            if (v && v.match(/^ *"\$.*" *$/) && isValidVar(eval(v),data))
+            if (params.hasOwnProperty(nm))
             {
-                v = eval(v);
+                var v = params[nm];
+                if (v && v.match(/^ *"\$.*" *$/) && isValidVar(eval(v),data))
+                {
+                    v = eval(v);
+                }
+                actualParams[nm] = execute(v, data);
             }
-            actualParams[nm] = execute(v, data);
         }
 
         actualParams.__get = function(nm,defVal)
