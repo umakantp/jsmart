@@ -7,7 +7,7 @@
 {assign var='zzz'  			value='abc'}
 {$zzz}
 
-{assign 
+{assign 	
 	value   =   'd=ef'
 	var	=	'zzz'}
 {$zzz}
@@ -15,6 +15,8 @@
 {assign var='zzz'  			value='it\'s OK'}
 {$zzz}
 
+{assign var='zzz'  			value="abc\"def\tghi"}
+{$zzz}
 
 {assign var=$foo  value='new_value_of_foo'}
 [{$foo}][{$bar}]

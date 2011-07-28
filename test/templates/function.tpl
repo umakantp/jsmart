@@ -29,3 +29,6 @@
 
 {testFunc3 par='str'}
 
+{function name="testFunc4" parStr1="abc\"def"} [{$parStr1}] [{$parStr2}] {/function}-
+-
+{testFunc4 parStr2='ghi\'jkl'}

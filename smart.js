@@ -864,14 +864,14 @@
                         execute(node.params['var'], data);
                     
                     var value = node.params.value;
-                    if (value.match(/^ *".*" *$/))
+                    if (value.match(/^".*"$/))
                     {
                         value = eval(value);
                         if (!isValidVar(value,data))
                         {
                             var subTree = [];
                             parse(value, subTree);
-                            value = '"'+process(subTree, data)+'"';
+                            value = '"'+process(subTree, data).replace(/"/g,'\\"')+'"';
                         }
                     }
                     data['$'+varName] = null;
