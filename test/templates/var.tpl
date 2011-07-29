@@ -42,4 +42,10 @@
 
 {strayFunc($ob.prop2.txt,$foo)}-
 
+{$textWithTags = 'Woman Gets <font face="helvetica">New Kidney</font> from Dad she Hasn\'t Seen in <b>years</b>.'}
+{$textWithTags}
+
+{$textWithTags = "double \"quotes\" inside"}
+{$textWithTags}
+
 {strayFunc($ob.prop2['txt'],$foo)} -

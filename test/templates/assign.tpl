@@ -15,7 +15,7 @@
 {assign var='zzz'  			value='it\'s OK'}
 {$zzz}
 
-{assign var='zzz'  			value="abc\"def\tghi"}
+{assign    var	=	'zzz' value	=	"abc\"def\tghi"}
 {$zzz}
 
 {assign var=$foo  value='new_value_of_foo'}
@@ -69,3 +69,6 @@ assign var='num'  value=999
 
 {assign var="testOb" value='$ob'}
 [{$testOb}]
+
+{assign var='foo' value='test'}
+{$foo}

@@ -17,6 +17,7 @@
 <script>
 
 	var isIE = navigator.userAgent.indexOf("MSIE") >= 0;
+	var isOpera = navigator.userAgent.indexOf("Opera") >= 0;
 	
 	Array.prototype.notInForeach = "{foreach} loops only on numerical indexes in Array";
 	
@@ -157,6 +158,10 @@
 				//IE bug: it adds an extra new line at the beginning and strip existing new lines from the end of SCRIPT innerHTML
 				resJS = resJS.replace(/^\n*/,'').replace(/\n*$/,'');
 				resPHP = resPHP.replace(/\r\n/g,'\n').replace(/^\n*/,'').replace(/\n*$/,'');
+			}
+			if (isOpera)
+			{
+				resPHP = resPHP.replace(/\r\n/g,'\n');
 			}
 			equal(resJS, resPHP);
 			equal(res2_{$nm}, res_{$nm});

@@ -11,29 +11,6 @@
 (function() {
 
     /**
-       Split the given string by a regular expression, 
-       parenthesized expression in the delimiter pattern added to array (at odd indexes),
-       like PHP preg_split() with flag PREG_SPLIT_DELIM_CAPTURE
-    */
-    function reSplit(re, s)
-    {
-        var a = [];
-        var found=s.match(re);
-        for (; found; found=s.match(re))
-        {
-            a.push(s.slice(0,found.index));
-            if (found[1]) {
-                a.push(found[1]);
-            }
-            s = s.slice(found.index + found[0].length);
-        }
-        if (s.length) {
-            a.push(s);
-        }
-        return a;
-    }
-
-    /**
        merges two or more objects into one and add prefix at the beginning of every property name at the top level
        objects type is lost, prototype properties become own properties 
     */
@@ -288,6 +265,7 @@
                 'process': function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
+                    params.loop = execute(node.params.loop, data);
 
                     var sectionProps = {};
                     data['$smarty']['section'][params.name] = sectionProps;
@@ -307,7 +285,7 @@
                             params.__get('start',0),
                             (params.loop instanceof Array) ? params.loop.length : countProperties(params.loop),
                             params.__get('step',1),
-                            params.__get('max',Number.MAX_VALUE),
+                            params.__get('max'),
                             data,
                             sectionProps,
                             function(i) { 
@@ -326,7 +304,7 @@
                             params.__get('start',0),
                             parseInt(params.loop),
                             params.__get('step',1),
-                            params.__get('max',Number.MAX_VALUE),
+                            params.__get('max'),
                             data,
                             sectionProps,
                             function(i) { s += process(node.subTree, data);  }
@@ -340,6 +318,15 @@
 
                 'foreach' : function(nm, from, to, step, max, data, props, callback)
                 {
+                    from = parseInt(from);
+                    to = parseInt(to);
+                    step = parseInt(step);
+                    max = parseInt(max);
+                    if (isNaN(max))
+                    {
+                        max = Number.MAX_VALUE;
+                    }
+
                     if (from < 0)
                     {
                         from = to + from;
@@ -421,13 +408,24 @@
                 'process': function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
-                    var step = params.__get('step',1);
-                    var max = params.__get('max',Number.MAX_VALUE);
+                    var from = parseInt(params.__get('from'));
+                    var to = parseInt(params.__get('to'));
+                    var step = parseInt(params.__get('step'));
+                    if (isNaN(step))
+                    {
+                        step = 1;
+                    }
+                    var max = parseInt(params.__get('max'));
+                    if (isNaN(max))
+                    {
+                        max = Number.MAX_VALUE;
+                    }
+
                     var count = 0;
                     var s = '';
-			           var total = Math.min( Math.ceil( ((step > 0 ? params.to-params.from : params.from-params.to)+1) / Math.abs(step)  ), max);
+			           var total = Math.min( Math.ceil( ((step > 0 ? to-from : from-to)+1) / Math.abs(step)  ), max);
 			           
-                    for (var i=params.from; count<total; i+=step,++count)
+                    for (var i=parseInt(params.from); count<total; i+=step,++count)
                     {
                         data['$'+params.varName] = i;
                         s += process(node.subTree, data);
@@ -711,7 +709,7 @@
                                 return process(this.subTree, obMerge('$',obMerge('',{},data),defaults,params));
                             }
                         };
-                    parse(content, subTree);
+                    parse(content.replace(/\n+$/,''), subTree);
                 }
             },
 
@@ -1003,6 +1001,7 @@
                             tree = []; //throw away further parsing except for {block}
                         }
                     }
+                    s = s.replace(/^\n/,'');
                 }
                 else if (nm in plugins)
                 {
@@ -1022,7 +1021,6 @@
                 {
                     parseVar(openTag[1],tree);
                 }
-			       s = s.replace(/^\n/,'');	//remove new line after any tag (like in Smarty)
             }
             else         //variable
             {
@@ -1111,11 +1109,47 @@
             if (params.hasOwnProperty(nm))
             {
                 var v = params[nm];
-                if (v && v.match(/^ *"\$.*" *$/) && isValidVar(eval(v),data))
+                if (!v)
                 {
-                    v = eval(v);
+                    actualParams[nm] = v;
+                    continue;
                 }
-                actualParams[nm] = execute(v, data);
+
+                var tree = [];
+
+                if (v.match(/^(?:true|false)$/i))
+                {
+                    parseText(v.match(/^true$/i) ? '1' : '', tree);
+                }
+                else if (v.match(/^'.*'$/))
+                {
+                    parseText(eval(v),tree);
+                }
+                else
+                {
+                    if (v.match(/^".*"$/))
+                    {
+                        v = eval(v);
+                    }
+
+                    if (v.match(/^\$/))
+                    {
+                        parseVar(v, tree);
+                    }
+                    else
+                    {
+                        var firstWord = v.match(/^(\w+)/);
+                        if (firstWord && eval('typeof '+firstWord[1]) == 'function')
+                        {
+                            parseVar(v, tree);
+                        }
+                        else
+                        {
+                            parse(v, tree);
+                        }
+                    }
+                }
+                actualParams[nm] = process(tree, data);
             }
         }
 
@@ -1343,6 +1377,8 @@
                 }
                 else
                 {
+                    data[name].value = parseInt(data[name].value);
+                    data[name].skip = parseInt(data[name].skip);
                     if ('down' == data[name].direction)
                     {
                         data[name].value -= data[name].skip;
@@ -1360,7 +1396,7 @@
             {
                 data[name] = {
                     'value' : parseInt(params.__get('start',1)),
-                    'skip' : params.__get('skip',1),
+                    'skip' : parseInt(params.__get('skip',1)),
                     'direction' : params.__get('direction','up'),
                     'assign' : params.__get('assign',null)
                 };
