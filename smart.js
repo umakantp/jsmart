@@ -436,45 +436,47 @@
             'if': 
             {
                 'type':'block',
-                'parse': function(params, tree, content)
+                'parse': function(paramStr, tree, content)
                 {
-                    params = prepare( replaceSmartyQualifiers(params) );
+                    var condTree = [];
+                    parseVar(replaceSmartyQualifiers(paramStr), condTree);
 
                     var subTreeIf = [];
                     var subTreeElse = [];
                     tree.push({
                         'type' : 'build-in',
                         'name' : 'if',
-                        'params' : params,
+                        'cond' : condTree,
                         'subTreeIf' : subTreeIf,
                         'subTreeElse' : subTreeElse
                     });
 
-                    var findElse = findElseTag('if [^}]+', '\/if', 'else[^}]*', content);
-                    if (!findElse)
-                    {
-                        parse(content, subTreeIf);
-                    }
-                    else
+                    var findElse = findElseTag('if\s+[^}]+', '\/if', 'else[^}]*', content);
+                    if (findElse)
                     {
                         parse(content.slice(0,findElse.index),subTreeIf);
 
                         content = content.slice(findElse.index+findElse[0].length);
-                        var findElseIf = findElse[1].match(/^if(.*)/);
-                        if (!findElseIf)
+                        var findElseIf = findElse[1].match(/^elseif(.*)/);
+                        if (findElseIf)
                         {
-                            parse(content.replace(/^[\r\n]/,''), subTreeElse);
+                            buildInFunctions['if'].parse(findElseIf[1], subTreeElse, content.replace(/^\n/,''));
                         }
                         else
                         {
-                            buildInFunctions['if'].parse(findElseIf[1], subTreeElse, content.replace(/^[\r\n]/,''));
+                            parse(content.replace(/^\n/,''), subTreeElse);
                         }
+                    }
+                    else
+                    {
+                        parse(content, subTreeIf);
                     }
                 },
 
                 'process': function(node, data)
                 {
-                    if (execute(node.params, data))
+                    var res = process(node.cond, data);
+                    if (res && res != 'false')
                     {
                         return process(node.subTreeIf, data);
                     }

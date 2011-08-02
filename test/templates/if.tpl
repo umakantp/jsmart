@@ -1,3 +1,37 @@
+{if $foo == 'bar'}
+	ok1
+{else}
+	er
+{/if}
+
+{if $foo != 'bar'}
+	er1
+{elseif $foo == 'abc'}
+	er2
+{else}
+	ok2
+{/if}
+
+{if $foo != 'bar'}
+	er11
+{elseif $foo == 'abc'}
+	er22
+{elseif $foo == 'zzz'}
+	er33
+{elseif $foo == 'zzz'}
+	er44
+{else}
+	{if $foo == 'bar'}
+		ok3
+	{/if}
+{/if}
+
+{if $foo != 'bar'}
+	er
+{elseif $foo == 'bar'}
+	ok4
+{/if}
+
 {if $ob.prop2.txt == 'zzz'}
    error
 {elseif $ob.prop2.num eq 777}
@@ -24,3 +58,75 @@ aa{if $ob.prop2.bool_true}
    false
 {/if}
 abc
+
+{if 'ok'}
+	'ok'
+{else}
+	no 'ok'
+{/if}
+
+{if "ok"}
+	"ok"
+{else}
+	no "ok"
+{/if}
+
+{if "ok"|replace:'ok':'yes'|upper == 'YES'}
+	YES
+{else}
+	no YES
+{/if}
+
+{if $foo|upper|replace:'B':'[B'|replace:'R':'R]' == '[BAR]'}
+	[BAR]
+{else}
+	no [BAR]
+{/if}
+
+{if $foo|upper|replace:'B':'[B'|replace:'R':'R]' == '[BAR]' && 'abcd'|replace:'ab':'xy'|upper == 'XYCD'}
+	[BAR] XYCD
+{else}
+	no [BAR2] XYCD
+{/if}
+
+{if $noVal|default:false}
+	error
+{else}
+	no such value
+{/if}
+
+{if $sEmpty}
+	error
+{else}
+	empty string
+{/if}
+
+
+
+{*  not supported 
+
+{if "{for $ccc=1 to 7}{$ccc}{/for}" == '1234567'}
+	1234567
+{else}
+	no 1234567
+{/if}
+
+{if {counter start=0}}
+	code2
+{else}
+	no code2
+{/if}
+
+{if {counter}}
+	code3
+{else}
+	no code3
+{/if}
+
+{if {counter} == 2 && "{for $ccc=1 to 7}{$ccc}{/for}" == '1234567'}
+	counter == 2
+{else}
+	counter != 2
+{/if}
+
+*}
