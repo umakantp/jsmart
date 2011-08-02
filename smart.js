@@ -369,20 +369,15 @@
             'for':
             {
                 'type':'block',
-                'parse': function(paramstr, tree, content)
+                'parse': function(paramStr, tree, content)
                 {
-                    var res = paramstr.match(/^ *\$(\w+) *= *([^ ]+) *to *([^ ]+) *(step *([^ ]+))? *(.*)$/);
+                    var res = paramStr.match(/^\s*\$(\w+)\s*=\s*([^\s]+)\s*to\s*([^\s]+)\s*(?:step\s*([^\s]+))?\s*(.*)$/);
                     if (!res)
                     {
-                        throw new Error('Invalid {for} parameters: '+paramstr);
+                        throw new Error('Invalid {for} parameters: '+paramStr);
                     }
-
-                    var params = parseParams(' '+res[6]);
-                    params.varName = "'"+res[1]+"'";
-                    params.from = res[2];
-                    params.to = res[3];
-                    params.step = res[5];
-
+                    
+                    var params = parseParams("varName='"+res[1]+"' from="+res[2]+" to="+res[3]+" step="+(res[4]?res[4]:'1')+" "+res[5]);
                     var subTree = [];
                     var subTreeElse = [];
                     tree.push({
@@ -393,15 +388,15 @@
                         'subTreeElse' : subTreeElse
                     });
 
-                    var findElse = findElseTag('for [^}]+', '\/for', 'forelse', content);
-                    if (!findElse)
-                    {
-                        parse(content, subTree);
-                    }
-                    else
+                    var findElse = findElseTag('for\s[^}]+', '\/for', 'forelse', content);
+                    if (findElse)
                     {
                         parse(content.slice(0,findElse.index),subTree);
                         parse(content.slice(findElse.index+findElse[0].length), subTreeElse);
+                    }
+                    else
+                    {
+                        parse(content, subTree);
                     }            
                 },
 
@@ -536,14 +531,14 @@
                     });
 
                     var findElse = findElseTag('foreach [^}]+', '\/foreach', 'foreachelse', content);
-                    if (!findElse)
-                    {
-                        parse(content, subTree);
-                    }
-                    else
+                    if (findElse)
                     {
                         parse(content.slice(0,findElse.index),subTree);
                         parse(content.slice(findElse.index+findElse[0].length).replace(/^[\r\n]/,''), subTreeElse);
+                    }
+                    else
+                    {
+                        parse(content, subTree);
                     }
                 },
 
@@ -696,7 +691,7 @@
                 {
                     var params = parseParams(paramstr);
                     var subTree = [];
-                    var funcName = eval(params.name);
+                    var funcName = params.name;
                     delete params.name;
                     plugins[funcName] = 
                         {
@@ -776,7 +771,7 @@
                 'parse': function(paramStr, tree)
                 {
                     var params = parseParams(paramStr);
-                    var file = eval(params.file);
+                    var file = params.file;
                     var tpl = jSmart.prototype.getTemplate(file);
                     if (typeof(tpl) != 'string')
                     {
@@ -789,9 +784,9 @@
             'block':
             {
                 'type':'block',
-                'parse': function(paramstr, tree, content)
+                'parse': function(paramStr, tree, content)
                 {
-                    var params = parseParams(paramstr);
+                    var params = parseParams(paramStr);
 
                     tree.push({
                         'type'   : 'build-in',
@@ -1049,23 +1044,81 @@
 
     function parseParams(paramsStr)
 	 {
-		  var s = paramsStr.replace(/\n/g,' ');
+		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
 		  var params = [];
+        params.__parsed = [];
         var re = /^\s*(?:(\w+)\s*=)?\s*((?:[^'"$][^\s]*|[$][^\s|]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')(?:[|]\w+(?:[:](?:[^'"][^\s]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'))*)*)/;
+
+        var parsedTrue = [];
+        parseText('1', parsedTrue);
 
 		  var found = s.match(re);
 		  var i = 0;
-		  for (;found;found=s.match(re))
+		  for (;found;found=s.match(re),++i)
 		  {
-			   if (found[1])
+            var v = prepare(found[2]);
+
+            var tree = [];
+            tree.paramIsVar = false;
+            if (!v)
+            {
+                parseText('', tree);
+            }
+            else if (v.match(/^(?:true|false)$/i))
+            {
+                parseText(v.match(/^true$/i) ? '1' : '', tree);
+            }
+            else if (v.match(/^'[^'\\]*(?:\\.[^'\\]*)*'$/))
+            {
+                v = eval(v);
+                parseText(v,tree);
+            }
+            else if (v.match(/^(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')[|]/) )
+            {
+                parseVar(v, tree);
+            }
+            else
+            {
+                if (v.match(/^".*"$/))
+                {
+                    v = eval(v);
+                }
+
+                if (v.match(/^\$/))
+                {
+                    parseVar(v, tree);
+                    tree.paramIsVar = true;
+                }
+                else
+                {
+                    var firstWord = v.match(/^(\w+)/);
+                    if (firstWord && eval('typeof '+firstWord[1]) == 'function' && v.match(/^\w+\s*\(/))
+                    {
+                        parseVar(v, tree);
+                    }
+                    else
+                    {
+                        parse(v, tree);
+                    }
+                }
+            }
+
+            var nm = found[1];
+			   if (nm)
 			   {
-				    params[found[1]] = prepare(found[2]);
+				    params[nm] = v;
+                params.__parsed[nm] = tree; 
 			   }
 			   else
 			   {
-				    params[i++] = prepare(found[2]);	//short-hand param
+				    params[i] = v;	              //short-hand param
+                params.__parsed[i] = tree; 
+
+                params[found[2]] = 'true';
+                params.__parsed[found[2]] = parsedTrue;
 			   }
-			   s = s.slice(found.index+found[0].length);
+
+			   s = s.slice(found.index+found[0].length);            
 		  }
 
 		  return params;
@@ -1094,59 +1147,14 @@
 
     function getActualParamValues(params,data)
     {
-        var actualParams = {};
-        for (var nm in params)
+        var actualParams = [];
+        for (var nm in params.__parsed)
         {
-            if (params.hasOwnProperty(nm))
+            if (params.__parsed.hasOwnProperty(nm))
             {
-                var v = params[nm];
-                if (!v)
-                {
-                    actualParams[nm] = v;
-                    continue;
-                }
+                var tree = params.__parsed[nm];
 
-                var tree = [];
-                var paramIsVar = false;
-                if (v.match(/^(?:true|false)$/i))
-                {
-                    parseText(v.match(/^true$/i) ? '1' : '', tree);
-                }
-                else if (v.match(/^'[^'\\]*(?:\\.[^'\\]*)*'$/))
-                {
-                    parseText(eval(v),tree);
-                }
-                else if (v.match(/^(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')[|]/) )
-                {
-                    parseVar(v, tree);
-                }
-                else
-                {
-                    if (v.match(/^".*"$/))
-                    {
-                        v = eval(v);
-                    }
-
-                    if (v.match(/^\$/))
-                    {
-                        parseVar(v, tree);
-                        paramIsVar = true;
-                    }
-                    else
-                    {
-                        var firstWord = v.match(/^(\w+)/);
-                        if (firstWord && eval('typeof '+firstWord[1]) == 'function' && v.match(/^\w+\s*\(/))
-                        {
-                            parseVar(v, tree);
-                        }
-                        else
-                        {
-                            parse(v, tree);
-                        }
-                    }
-                }
-
-                if (paramIsVar && isValidVar(tree[0].name, data))
+                if (tree.paramIsVar && isValidVar(tree[0].name, data))
                 {
                     with (data)
                     {

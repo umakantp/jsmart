@@ -42,3 +42,17 @@
 {for $i=1 to 255 step 4 max=20} 
 	{$i}
 {/for}
+
+----------------------
+{$forFrom = 1}
+{$forTo = 7}
+{$forStep = 1}
+{$forMax = 6}
+{for	$i=$forFrom 	to  $forTo step      $forStep     max=$forMax} 
+	{$i}
+{/for}
+----------------------
+{for $i=1 to $forTo step "2" max=20} 
+	{$i}
+{/for}
+----------------------
