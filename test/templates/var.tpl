@@ -1,5 +1,7 @@
 {$foo}
 
+{$foo|replace:"bar":"|bar:"}
+
 {'abcdef'}
 
 {$zzz = "text value"}

@@ -857,23 +857,12 @@
 
                 'process': function(node, data)
                 {
-                    var varName = ('shorthand' in node.params) ? 
-                        node.params['var'] :
-                        execute(node.params['var'], data);
-                    
-                    var value = node.params.value;
-                    if (value.match(/^".*"$/))
-                    {
-                        value = eval(value);
-                        if (!isValidVar(value,data))
-                        {
-                            var subTree = [];
-                            parse(value, subTree);
-                            value = '"'+process(subTree, data).replace(/"/g,'\\"')+'"';
-                        }
-                    }
-                    data['$'+varName] = null;
-                    execute('$'+varName+'='+value, data);
+                    var params = getActualParamValues(node.params, data);
+                    var varName = ('shorthand' in node.params) ? node.params['var'] : params.__get('var');
+
+                    var __v = params.__get('value','');
+                    eval('data.$'+varName+'=__v');
+
                     return '';
                 }
             },
@@ -1024,11 +1013,11 @@
             }
             else         //variable
             {
-                res = openTag[1].match(/^ *\$([\[\w'"\]]+) *= *(.*) *$/);
+                res = openTag[1].match(/^\s*\$([\[\w'"\].]+)\s*=\s*(.*)\s*$/);
                 if (res)    //variable assignment
                 {
                     buildInFunctions['assign'].parse(' var='+res[1]+' value='+res[2]+' shorthand=1', tree);
-				        s = s.replace(/^\n/,'');	//remove new line after any tag (like in Smarty)
+				        s = s.replace(/^\n/,'');
                 }
                 else   //output variable
                 {
@@ -1062,7 +1051,8 @@
 	 {
 		  var s = paramsStr.replace(/\n/g,' ');
 		  var params = [];
-        var re = /^\s*(?:(\w+)\s*=)?\s*([^'"][^\s]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/;
+        var re = /^\s*(?:(\w+)\s*=)?\s*((?:[^'"$][^\s]*|[$][^\s|]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')(?:[|]\w+(?:[:](?:[^'"][^\s]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'))*)*)/;
+
 		  var found = s.match(re);
 		  var i = 0;
 		  for (;found;found=s.match(re))
@@ -1077,6 +1067,7 @@
 			   }
 			   s = s.slice(found.index+found[0].length);
 		  }
+
 		  return params;
 	 }
 
@@ -1116,14 +1107,18 @@
                 }
 
                 var tree = [];
-
+                var paramIsVar = false;
                 if (v.match(/^(?:true|false)$/i))
                 {
                     parseText(v.match(/^true$/i) ? '1' : '', tree);
                 }
-                else if (v.match(/^'.*'$/))
+                else if (v.match(/^'[^'\\]*(?:\\.[^'\\]*)*'$/))
                 {
                     parseText(eval(v),tree);
+                }
+                else if (v.match(/^(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')[|]/) )
+                {
+                    parseVar(v, tree);
                 }
                 else
                 {
@@ -1135,11 +1130,12 @@
                     if (v.match(/^\$/))
                     {
                         parseVar(v, tree);
+                        paramIsVar = true;
                     }
                     else
                     {
                         var firstWord = v.match(/^(\w+)/);
-                        if (firstWord && eval('typeof '+firstWord[1]) == 'function')
+                        if (firstWord && eval('typeof '+firstWord[1]) == 'function' && v.match(/^\w+\s*\(/))
                         {
                             parseVar(v, tree);
                         }
@@ -1149,7 +1145,18 @@
                         }
                     }
                 }
-                actualParams[nm] = process(tree, data);
+
+                if (paramIsVar && isValidVar(tree[0].name, data))
+                {
+                    with (data)
+                    {
+                        actualParams[nm] = eval(tree[0].name);
+                    }
+                }
+                else
+                {
+                    actualParams[nm] = process(tree, data);
+                }
             }
         }
 

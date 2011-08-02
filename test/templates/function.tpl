@@ -62,3 +62,23 @@
 {testFunc5 par=false}
 
 {testFunc5 par=falsE}
+
+{function name="testFunc6"} {$par.prop2.txt} {/function}	//param is an Object
+{testFunc6 par=$ob}
+{testFunc6 par="$ob"}
+
+{function name="testFunc7"} property: {$par.txt} {/function}	//param is an Object's property
+{testFunc7 par=$ob.prop2}
+
+{function name="testFunc8"} {$par.prop2.txt = 'zzzz'} {$par.prop2.txt} {/function}  // assign property
+{testFunc8 par=$ob}
+
+{function name="testFunc9"} {$par.prop3 = 'new'} {$par.prop3} {/function}  // set new property
+{testFunc9 par=$ob}
+
+{function name="testFunc10"}[{$xxx}]{/function}-
+{testFunc10 xxx='a b\'cd'|upper}
+{testFunc10 xxx='a b\'cd'|replace:'a b':'xy'|upper|replace:"xy":"A|B|C"}
+{testFunc10 xxx=$foo|replace:'bar':'b a r'|upper|replace:'a':"{ A }"}
+{testFunc10 xxx='a\'a'|replace:'a':' b '}
+{testFunc10 xxx='a\'a'|replace:"'":' " '}

@@ -18,6 +18,22 @@
 {assign    var	=	'zzz' value	=	"abc\"def\tghi"}
 {$zzz}
 
+{assign var=zzz value=not_in_quotes}
+{$zzz}
+
+{assign var=zzz value=$foo|replace:'bar':'abc'|upper}
+{$zzz}
+
+{assign var=zzz value=$foo|replace:'bar':'abc'|upper}
+{$zzz}
+
+{assign var=$ob['prop1'] value="test PROP"}
+{$prop1}	//$prop1 == 'test PROP' 
+{$ob['prop1']}
+
+{assign var="abc{for $ccc=1 to 3}{$ccc}{/for}" value="generate name of var!"}
+{$abc123}
+
 {assign var=$foo  value='new_value_of_foo'}
 [{$foo}][{$bar}]
 
@@ -72,3 +88,5 @@ assign var='num'  value=999
 
 {assign var='foo' value='test'}
 {$foo}
+
+{assign var=xxx value='\''|replace:"'":'"'}
