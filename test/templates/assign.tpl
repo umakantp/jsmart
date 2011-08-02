@@ -90,3 +90,7 @@ assign var='num'  value=999
 {$foo}
 
 {assign var=xxx value='\''|replace:"'":'"'}
+{$xxx}
+
+{assign var="yyy" value=$foo|default:"no value"}
+{$yyy}

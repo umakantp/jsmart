@@ -26,6 +26,7 @@
 {/function}-
 
 {testFunc3 par='str'}
+{testFunc3 par=str_without_quotes}
 
 {function name="testFunc4" parStr1="abc\"def"} [{$parStr1}] [{$parStr2}] {/function}-
 -

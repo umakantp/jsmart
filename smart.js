@@ -1177,7 +1177,7 @@
 
     function isValidVar(varName, __data)
     {
-		  if (!varName.match(/^ *[$]/))
+		  if (!varName.match(/^\s*[$]/))
 		  {
 			   return false;
 		  }
@@ -1198,7 +1198,7 @@
 
     function processModifierParams(s, params)
     {
-        var re = new RegExp('^:(".+?"|\'.+?\'|.*?)([\\s:|,))]|$)');
+        var re = /^:(".+?"|'.+?'|.*?)([\s:|,))]|$)/;
         var found = null;
         for (found=s.match(re); found; found=s.match(re))
         {
@@ -1214,14 +1214,14 @@
 
     function processModifiers(s,data)
     {
-        var re = new RegExp('(\\$[^|]+|".+?"|\'.+?\')\\|\\w+');
-        var reFunc = new RegExp('^\\|(\\w+)(:)?');
+        var re = /([$][^|]+|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')[|]\w+/;
+        var reFunc = /^[|](\w+)(:)?/;
 
         var sRes = '';
         var found = null;
         for (found=s.match(re); found; found=s.match(re))
         {
-	         if ((found[1].substr(0,1)=='$' && isValidVar(found[1],data)) || found[1].substr(0,1)=="'" || found[1].substr(0,1)=='"')
+	         if ((found[1].match(/^[$]/) && (isValidVar(found[1],data) || s.slice(found.index+found[1].length).match(/[|]default:/))) || found[1].match(/^['"]/))
 	         {
 		          sRes += s.slice(0,found.index);
                 s = s.slice(found.index+found[1].length);
@@ -1235,6 +1235,12 @@
                     {
                         s = processModifierParams(s,params);
                     }
+
+                    if (foundFunc[1] == 'default' && params[0].match(/^[$]/))
+                    {
+                        try { execute(params[0], data); } catch(e) { params[0] = "''"; }
+                    }
+
                     params = [ (foundFunc[1]=='default'?'defaultValue':foundFunc[1])+'('+params.join(',')+')' ];
                 }
 		          sRes += params[0];

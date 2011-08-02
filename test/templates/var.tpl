@@ -10,6 +10,9 @@
 {$zzz = 'new text value'}
 {$zzz}
 
+{$zzz = $noVal|default:'empty'|upper}
+{$zzz}
+
 {'abcdef'}
 
 {$ob['prop3'] = 'prop value'}

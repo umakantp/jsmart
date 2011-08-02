@@ -43,6 +43,11 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {$foo|default:'no value'}
 {$nullVar|default:'this variable is null'}
 {$sEmpty|default:'empty string'}
+{'abc'|default:'def'}
+{"abc"|default:"def"}
+{$noSuchVal|default:'no such value'}
+{$ob.prop7|default:'no such property'}
+
 
 {$long_text|indent:4:'-'}
 {$foo|indent:2:'-'}
@@ -54,6 +59,10 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 
 {$foo|replace:'b':'z'}
 {$long_text|replace:'sentence':'short sentence'}
+{$t = 'abc|def:ghi'}
+{$t|replace:'abc|d':'abc:d'}
+{'abcd\'|abcd'|replace:'d':'x'}
+{'$fake|replace:f:c'}
 
 {$long_text|strip}
 {$long_text|strip:'-'}
