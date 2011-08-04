@@ -101,9 +101,41 @@ abc
 	empty string
 {/if}
 
+{$a = 'aaa'}
+t:[{$a == 'aaa'}]		  		//1
+t():[{isEmptyStr s=''}]   		//1
+f:[{$a != 'aaa'}]		  		//empty string
+f():[{isEmptyStr s='abc'}]   	//empty string
+
+{if 'false'}
+	'false'
+{else}
+	er
+{/if}
+
+{if "false"}
+	"false"
+{else}
+	er
+{/if}
+
+{$b = "{isEmptyStr s='abc'}"}
+{if $b}
+	'abc' is not empty
+{else}
+	er
+{/if}
 
 
-{*  not supported 
+{$b = "{isEmptyStr s=''}"}
+{if $b}
+	now empty!
+{else}
+	er
+{/if}
+
+
+{*  not supported 	- every operand (e.g. in op1 && (op2 || op3)) needs to be parsed individually
 
 {if "{for $ccc=1 to 7}{$ccc}{/for}" == '1234567'}
 	1234567

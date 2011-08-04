@@ -70,11 +70,19 @@ function sayHello($params, $template)
 }
 $smarty->registerPlugin('function', 'sayHello', 'sayHello');
 
+
 function replaceStr($params, $content, $template, &$repeat)
 {
 	return str_replace($params['from'], $params['to'], $content);
 }
 $smarty->registerPlugin('block', 'replaceStr', 'replaceStr');
+
+
+function isEmptyStr($params, $template)
+{
+	return strlen($params['s']) == 0;
+}
+$smarty->registerPlugin('function', 'isEmptyStr', 'isEmptyStr');
 
 
 function testRepeat($params, $content, $template, &$repeat)

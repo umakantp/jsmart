@@ -83,3 +83,21 @@
 {testFunc10 xxx=$foo|replace:'bar':'b a r'|upper|replace:'a':"{ A }"}
 {testFunc10 xxx='a\'a'|replace:'a':' b '}
 {testFunc10 xxx='a\'a'|replace:"'":' " '}
+
+{function name="testBool"}{if $b}{$b}{/if}{/function}-
+{testBool b=true}
+{testBool b=false}
+{testBool b='true'}
+{testBool b='false'}
+{testBool b="true"}
+{testBool b="false"}
+
+{*
+{$i1 = 10} {$i2 = 20}
+{testFunc10 xxx="$i1 + $i2"}	//string
+{testFunc10 xxx="$foo|upper"}	//string
+{testFunc10 xxx="$i1|upper"}	//string
+{testFunc10 xxx="{$i1}|upper"}	//string
+{testFunc10 xxx="{$i1 + $i2}"}	//variable
+{testFunc10 xxx=" {for $j=1 to 3}$j{/for} "}	//tpl code
+*}

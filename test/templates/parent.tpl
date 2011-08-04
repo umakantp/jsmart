@@ -5,6 +5,8 @@
    Hello from {block name="hello"}parent template{/block}!
 </h1>
 -{block name='b4'}Hello{/block}-
+<title>{block name="title1"}Title - {/block}</title>
+<title>{block name="title2"} is my title{/block}</title>
 
 
 
@@ -14,7 +16,7 @@
 -{block name='b8'} p8 {/block}-
 -{block name='b9'} |{$smarty.block.child}| {/block}-
 -{block name='b10'} <{$smarty.block.child}> {/block}-
-
+<title>{block name="title3"}The {$smarty.block.child} was inserted here{/block}</title>
 
 
 //parent
@@ -30,9 +32,9 @@
 		{/if}
 	{/block}]
 {/block}-
+<title>{block name="title4"}Parent Title{/block}</title>
 
 {block name='outblock1'} [{block name='inblock1'}pInblock1{/block}] {/block}-
-
 
 
 //parent child mixed

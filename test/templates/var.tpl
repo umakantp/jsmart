@@ -18,6 +18,13 @@
 {$ob['prop3'] = 'prop value'}
 {$ob.prop3}
 
+{$ob.propNew = 'new prop value'}
+{$ob.propNew}
+
+{$ob.prop2.yyy = 'multidimensional (object exists)'}
+{$ob.prop2.yyy}
+
+
 {$aaa = '$bbb'}
 
 {$aaa}
@@ -54,3 +61,15 @@
 {$textWithTags}
 
 {strayFunc($ob.prop2['txt'],$foo)} -
+
+{$a[] = 'zzz'}
+{$a[10]}
+
+{$u="something" scope=parent nocache}
+{$u}
+
+{$u = $ob.prop2.yyy|replace:"(":'['|replace:')':"]"|upper scope="global" nocache}
+{$u}
+
+{$i1 = 10}
+{$i2 = 20}

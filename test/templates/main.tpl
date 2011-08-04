@@ -87,17 +87,27 @@
 		}
 	);
 	
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'isEmptyStr', 
+        function(params, data)
+        {
+			return params['s'].length == 0;
+		}
+	);
+
+	
 	i = 0;
     jSmart.prototype.registerPlugin(
         'block', 
         'testRepeat', 
         function(params, content, data, repeat)
         {
-			if (!content && 'hide' in params && params['hide'] == true)
+			if (!content && 'hide' in params && params['hide'] == true)		//it's opening tag and if 'hide' than forbid further displaying
 			{
 				repeat.value = false;
 			}
-			if (content)
+			if (content)		//closing tag
 			{
 				if (++i<3)
 				{

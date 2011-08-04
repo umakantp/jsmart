@@ -465,8 +465,7 @@
 
                 process: function(node, data)
                 {
-                    var res = process(node.cond, data);
-                    if (res && res != 'false')
+                    if (process(node.cond, data))
                     {
                         return process(node.subTreeIf, data);
                     }
@@ -924,7 +923,15 @@
 
                     with ( {__data:data, __v: params.__get('value','')} )
                     { 
-                        eval('__data.$'+varName+'=__v'); 
+                        if (varName.match(/\[\]$/))
+                        {
+                            varName = varName.replace(/\[\]$/,'');
+                            eval('__data.$'+varName+'.push(__v)'); 
+                        }
+                        else
+                        {
+                            eval('__data.$'+varName+'=__v'); 
+                        }
                     }
                     return '';
                 }
@@ -1072,10 +1079,10 @@
             }
             else         //variable
             {
-                res = openTag[1].match(/^\s*\$([\[\w'"\].]+)\s*=\s*(.*)\s*$/);
+                res = openTag[1].match(/^\s*\$([\[\w'"\].]+)\s*=([^=].*)\s*$/);
                 if (res)    //variable assignment
                 {
-                    buildInFunctions['assign'].parse(' var='+res[1]+' value='+res[2]+' shorthand=1', tree);
+                    buildInFunctions['assign'].parse(' var='+res[1]+' shorthand=1 value='+res[2].replace(/^\s+/,''), tree);
 				        s = s.replace(/^\n/,'');
                 }
                 else   //output variable
@@ -1320,21 +1327,22 @@
 
     function process(tree, data)
     {
-        var s = '';
+        var res = '';
         for (var i=0; i<tree.length; ++i)
         {
+            var s = '';
             var node = tree[i];
             if (node.type == 'text')
             {
-                s += node.data;
+                s = node.data;
             }
             else if (node.type == 'var')
             {
-                s += execute(processModifiers(node.name,data), data);
+                s = execute(processModifiers(node.name,data), data);
             }
             else if (node.type == 'build-in')
             {
-                s += buildInFunctions[node.name].process(node,data);
+                s = buildInFunctions[node.name].process(node,data);
             }
             else if (node.type == 'plugin')
             {
@@ -1356,11 +1364,16 @@
                 }
                 else if (plugin.type == 'function')
                 {
-                    s += plugins[node.name].process(getActualParamValues(node.params,data), data);
+                    s = plugins[node.name].process(getActualParamValues(node.params,data), data);
                 }
             }
+            if (typeof s == 'boolean')
+            {
+                s = s ? '1' : '';
+            }
+            res += s;
         }
-        return s;    
+        return res;    
     }
 
     function stripComments(s)
