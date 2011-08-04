@@ -189,6 +189,7 @@
 {runTest nm='strip'}
 {runTest nm='while'}
 {runTest nm='include'}
+{runTest nm='php'}
 <script type="text/x-jsmart-tmpl" id='parent_tpl'>{include_literal file='parent'}</script>
 <script type="text/x-jsmart-tmpl" id='child1_tpl'>{include_literal file='child1'}</script>
 {runTest nm='child2'}  {*extends*}

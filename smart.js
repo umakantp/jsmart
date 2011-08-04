@@ -710,6 +710,12 @@
                 }
             },
 
+            'php':
+            {
+                'type':'block',
+                'parse': function(params, tree, content) {}
+            },
+
             'javascript': 
             {
                 'type':'block',
@@ -783,26 +789,97 @@
                 }
             },
 
-            'block':
+            block:
             {
-                'type':'block',
-                'parse': function(paramStr, tree, content)
+                type: 'block',
+                parse: function(paramStr, tree, content)
                 {
                     var params = parseParams(paramStr);
 
                     tree.push({
                         'type'   : 'build-in',
                         'name'   : 'block',
-                        'blockName' : params.name
+                        'params' : params
                     });
+                    
+                    if (!('append' in params))
+                    {
+                        params.append = false;
+                    }
+                    if (!('prepend' in params))
+                    {
+                        params.prepend = false;
+                    }
+                    params.hasChild = params.hasParent = false;
 
-                    blocks[params.name] = [];
-                    parse(content, blocks[params.name]);
+                    var __parseVar = parseVar;
+                    parseVar = function(name, tree)
+                    {
+                        if (name.match(/^\s*[$]smarty.block.child\s*$/))
+                        {
+                            params.hasChild = true;
+                        }
+                        if (name.match(/^\s*[$]smarty.block.parent\s*$/))
+                        {
+                            params.hasParent = true;
+                        }
+                        tree.push({type:'var', name:prepare(name)});
+                    };
+
+                    var tree = [];
+                    parse(content, tree);
+
+                    parseVar = __parseVar;
+
+                    if (!(params.name in blocks))
+                    {
+                        blocks[params.name] = [];
+                    }
+                    blocks[params.name].push({tree:tree, params:params});
                 },
 
-                'process': function(node, data)
+                process: function(node, data)
                 {
-                    return process(blocks[node.blockName], data);
+                    data.$smarty.block.parent = data.$smarty.block.child = '';
+                    this.processBlocks(blocks[node.params.name], blocks[node.params.name].length-1, data);
+                    return data.$smarty.block.child;
+                },
+
+                processBlocks: function(blockAncestry, headIdx, data)
+                {
+                    var append = true; //(headIdx == blockAncestry.length-1);
+                    var prepend = false;
+                    var i = headIdx;
+                    for (; i>=0; --i)
+                    {
+                        if (blockAncestry[i].params.hasParent)
+                        {
+                            var tmpChild = data.$smarty.block.child;
+                            data.$smarty.block.child = '';
+                            this.processBlocks(blockAncestry, i-1, data);
+                            data.$smarty.block.parent = data.$smarty.block.child;
+                            data.$smarty.block.child = tmpChild;
+                        }
+
+                        var tmpChild = data.$smarty.block.child;
+                        var s = process(blockAncestry[i].tree, data);
+                        data.$smarty.block.child = tmpChild;
+
+                        if (blockAncestry[i].params.hasChild)
+                        {
+                            data.$smarty.block.child = s;
+                        }
+                        else if (append)
+                        {
+                            data.$smarty.block.child = s + data.$smarty.block.child;
+                        }
+                        else if (prepend)
+                        {
+                            data.$smarty.block.child += s;
+                        }
+                        append = blockAncestry[i].params.append;
+                        prepend = blockAncestry[i].params.prepend;
+                    }
                 }
             },
 
@@ -857,9 +934,8 @@
                     var params = getActualParamValues(node.params, data);
                     var varName = ('shorthand' in node.params) ? node.params['var'] : params.__get('var');
 
-                    var __v = params.__get('value','');
-                    eval('data.$'+varName+'=__v');
-
+                    var v = {__v: params.__get('value','')};
+                    with (v) { eval('data.$'+varName+'=__v'); }
                     return '';
                 }
             },
@@ -1341,7 +1417,8 @@
             {
                 'capture': {},
                 'foreach': {},
-                'section': {}
+                'section': {},
+                'block': {}
             }
         };
         blocks = this.blocks;

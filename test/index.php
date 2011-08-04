@@ -8,7 +8,7 @@ require_once SMARTY_DIR . 'Smarty.class.php';
 $smarty = new Smarty;
 $smarty->compile_check = true;
 $smarty->debugging = false;
-
+$smarty->allow_php_tag = true;
 
 function include_literal($params, $smarty)
 {
