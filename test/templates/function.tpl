@@ -64,6 +64,9 @@
 
 {testFunc5 par=falsE}
 
+{$ob[':strange : param* | $name| @ [(name)]'] = '!@#$%^&*()'}
+{testFunc5 par=$ob[':strange : param* | $name| @ [(name)]']}
+
 {function name="testFunc6"} {$par.prop2.txt} {/function}	//param is an Object
 {testFunc6 par=$ob}
 {testFunc6 par="$ob"}
@@ -92,12 +95,5 @@
 {testBool b="true"}
 {testBool b="false"}
 
-{*
-{$i1 = 10} {$i2 = 20}
-{testFunc10 xxx="$i1 + $i2"}	//string
-{testFunc10 xxx="$foo|upper"}	//string
-{testFunc10 xxx="$i1|upper"}	//string
-{testFunc10 xxx="{$i1}|upper"}	//string
-{testFunc10 xxx="{$i1 + $i2}"}	//variable
-{testFunc10 xxx=" {for $j=1 to 3}$j{/for} "}	//tpl code
-*}
+
+

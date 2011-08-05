@@ -919,18 +919,18 @@
                 process: function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
-                    var varName = ('shorthand' in node.params) ? node.params['var'] : params.__get('var');
+                    var varName = ('shorthand' in node.params) ? node.params['var'] : '$'+params.__get('var');
 
                     with ( {__data:data, __v: params.__get('value','')} )
                     { 
                         if (varName.match(/\[\]$/))
                         {
                             varName = varName.replace(/\[\]$/,'');
-                            eval('__data.$'+varName+'.push(__v)'); 
+                            eval('__data.'+varName+'.push(__v)'); 
                         }
                         else
                         {
-                            eval('__data.$'+varName+'=__v'); 
+                            eval('__data.'+varName+'=__v'); 
                         }
                     }
                     return '';
@@ -1079,7 +1079,7 @@
             }
             else         //variable
             {
-                res = openTag[1].match(/^\s*\$([\[\w'"\].]+)\s*=([^=].*)\s*$/);
+                res = openTag[1].match(/^\s*([$]\w+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*)\s*=([^=].*)\s*$/);
                 if (res)    //variable assignment
                 {
                     buildInFunctions['assign'].parse(' var='+res[1]+' shorthand=1 value='+res[2].replace(/^\s+/,''), tree);
@@ -1118,7 +1118,7 @@
 		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
 		  var params = [];
         params.__parsed = [];
-        var re = /^\s*(?:(\w+)\s*=)?\s*((?:[^'"$][^\s]*|[$][^\s|]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')(?:[|]\w+(?:[:](?:[^'"][^\s]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'))*)*)/;
+        var re = /^\s*(?:(\w+)\s*=)?\s*((?:[^'"$][^\s]*|[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')(?:[|]\w+(?:[:](?:[^'"][^\s]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'))*)*)/;
 
         var parsedTrue = [];
         parseText('1', parsedTrue);
@@ -1338,7 +1338,13 @@
             }
             else if (node.type == 'var')
             {
-                s = execute(processModifiers(node.name,data), data);
+                try {
+                    s = execute(processModifiers(node.name,data), data);
+                }
+                catch(e)
+                {
+                    s = '';
+                }
             }
             else if (node.type == 'build-in')
             {

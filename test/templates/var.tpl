@@ -24,6 +24,11 @@
 {$ob.prop2.yyy = 'multidimensional (object exists)'}
 {$ob.prop2.yyy}
 
+{$ob['with space'] = 'with space'}
+{$ob['with space']}
+
+{$ob['with | symbol:'] = 'with | symbol:'}
+$ob['with | symbol:']
 
 {$aaa = '$bbb'}
 
@@ -48,9 +53,7 @@
 {$test_with_code}
 
 {$test_with_code = "{for $z=1 to 5}[{$z}]{/for}"}
-{$test_with_code}
-
-{strayFunc('abc','def')}-
+{$test_with_code}{strayFunc('abc','def')}-
 
 {strayFunc($ob.prop2.txt,$foo)}-
 
