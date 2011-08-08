@@ -1113,6 +1113,107 @@
         });
     }
 
+    function PHPreplace(s)
+    {
+	     var res = '';
+	     var re = /(.)?([$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*)(.|$)/;
+	     var found = null;
+	     for (found=s.match(re); found; found=s.match(re))
+	     {
+		      var pos = found.index + found[0].length - 1;
+		      if (found[1] != '{' || found[3] != '}')
+		      {
+			       s = s.replace(re,'$1{$2}$3');
+			       pos += 2;
+		      }
+		      res += s.slice(0,pos);
+		      s = s.slice(pos);
+	     }
+	     return res + s;
+    }
+
+    function parseParam(v, tree)
+    {
+        if (!v)
+        {
+            parseText('',tree);
+            return v;
+        }
+
+        if (v.match(/^(?:true|false)$/i))
+        {
+            parseText(v.match(/^true$/i) ? '1' : '', tree);
+            return v;
+        }
+
+        var reVar = /^[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*([|])?/;
+        var isVar = v.match(reVar);
+        if (isVar)
+        {
+            parseVar(v, tree);
+            tree.paramIsVar = !Boolean(isVar[1]);
+            return v;
+        }
+
+        var isQuotes = v.match(/^'[^'\\]*(?:\\.[^'\\]*)*'([|]|$)/);
+        if (isQuotes)
+        {
+            if (isQuotes[1] == '|')
+            {
+                parseVar(v, tree);
+            }
+            else
+            {
+                v = eval(v);
+                parseText(v,tree);
+            }
+            return v;
+        }
+
+        var isDblQuotes = v.match(/^"[^"\\]*(?:\\.[^"\\]*)*"([|]|$)/);
+        if (isDblQuotes)
+        {
+            if (isDblQuotes[1] == '|')
+            {
+                //TODO: applyModifiers(parse( PHPreplace("" without modifiers) ))
+                parseVar(v, tree);
+            }
+            else
+            {
+                v = eval(v);
+                isVar = v.match(reVar);
+                if (isVar && !Boolean(isVar[1]))
+                {
+                    parseVar(v, tree);
+                    tree.paramIsVar = true;
+                }
+                else
+                {
+                    //TODO: parse(PHPreplace(v),tree);
+                    parse(v,tree);
+                }
+                return v;
+            }
+        }
+        
+        if (v.match(/^{.+}$/))
+        {
+            parse(v,tree);
+            return v;
+        }
+
+        var firstWord = v.match(/^(\w+)/);
+        if (firstWord && eval('typeof '+firstWord[1]) == 'function' && v.match(/^\w+\s*\(/))
+        {
+            parseVar(v, tree);
+            return v;
+        }
+
+        
+        parseText(v,tree);
+        return v;
+    }
+
     function parseParams(paramsStr)
 	 {
 		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
@@ -1127,54 +1228,9 @@
 		  var i = 0;
 		  for (;found;found=s.match(re),++i)
 		  {
-            var v = found[2];
-
-            var tree = [];
-            tree.paramIsVar = false;
-            if (!v)
-            {
-                parseText('', tree);
-            }
-            else if (v.match(/^(?:true|false)$/i))
-            {
-                parseText(v.match(/^true$/i) ? '1' : '', tree);
-            }
-            else if (v.match(/^'[^'\\]*(?:\\.[^'\\]*)*'$/))
-            {
-                v = eval(v);
-                parseText(v,tree);
-            }
-            else if (v.match(/^(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')[|]/) )
-            {
-                parseVar(v, tree);
-            }
-            else
-            {
-                if (v.match(/^"[^"\\]*(?:\\.[^"\\]*)*"$/))
-                {
-                    v = eval(v);
-                }
-
-                if (v.match(/^\$/))
-                {
-                    parseVar(v, tree);
-                    tree.paramIsVar = true;
-                }
-                else
-                {
-                    var firstWord = v.match(/^(\w+)/);
-                    if (firstWord && eval('typeof '+firstWord[1]) == 'function' && v.match(/^\w+\s*\(/))
-                    {
-                        parseVar(v, tree);
-                    }
-                    else
-                    {
-                        parse(v, tree);
-                    }
-                }
-            }
-
             var nm = found[1];
+            var tree = [];
+            var v = parseParam(found[2], tree);
 			   if (nm)
 			   {
 				    params[nm] = v;
