@@ -1014,6 +1014,38 @@
                         data: jSmart.prototype.rdelim
                     });
                 }
+            },
+
+            __func:  // {func(p1,p2,...)}
+            {
+                type: 'function',
+                parse: function(paramsStr, tree)
+                {
+                    var params = paramsStr.match(/^\s*(\w+)\s*\((.*)\)\s*$/);
+                    tree.push({
+                        type: 'build-in',
+                        name: '__func',
+                        fname: params[1],
+                        params: parseParams(params[2])
+                    });
+                },
+
+                process: function(node, data)
+                {
+                    var params = getActualParamValues(node.params, data);
+
+                    var p = [];
+                    var i=0;
+                    for(; i<params.length; ++i)
+                    {
+                        p.push('__p'+i);
+                        p['__p'+i] = params[i];
+                    }
+                    with (p)
+                    {
+                        return eval(node.fname + '(' + p.join(',') + ')');
+                    }
+                }
             }
         };
 
@@ -1033,7 +1065,7 @@
             parseText(s.slice(0,openTag.index),tree);
             s = s.slice(openTag.index + openTag[0].length);
 
-            var res = openTag[1].match(/^ *(\w+)(.*)$/);
+            var res = openTag[1].match(/^\s*(\w+)(.*)$/);
             if (res)         //function
             {
                 var nm = res[1];
@@ -1071,6 +1103,10 @@
                     {
                         parsePluginFunc(nm, params, tree);
                     }
+                }
+                else if (eval('typeof '+nm) == 'function')
+                {
+                    buildInFunctions['__func'].parse(openTag[1], tree);
                 }
                 else
                 {
@@ -1132,6 +1168,170 @@
 	     return res + s;
     }
 
+
+    var paramTypes = 
+        {
+            bool: function(s, param)
+            {
+                var found = s.match(/^(true|false)/i);
+                if (found)
+                {
+                    param.value = s.match(/^true$/i);
+                    param.length = found[0].length;
+                    parseText(param.value ? '1' : '', param.tree);
+                    return true;
+                }
+                return false;
+            },
+
+            single_quotes: function(s, param)
+            {
+                var found = s.match(/^('[^'\\]*(?:\\.[^'\\]*)*')([|])?/);
+                if (found)
+                {
+                    param.value = eval(found[1]);
+                    param.length = found[0].length;
+                    if (Boolean(param[2]))
+                    {
+                        parseVar(param.value, param.tree);
+                        //TODO v += this.modifier(s.slice(quotes.index+quotes.length), param);
+                    }
+                    else
+                    {
+                        parseText(param.value, param.tree);
+                    }
+                    return true;
+                }
+                return false;
+            },
+
+            variable: function(s, param)
+            {
+                var re = /^([$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*)([|])?/;
+                var found = s.match(re);
+                if (found)
+                {
+                    param.value = found[1];
+                    param.length = found[0].length;                    
+                    if (Boolean(found[2]))
+                    {
+                        parseVar(param.value, param.tree);
+                        //TODO v += this.modifier(s.slice(found.index+found.length), param);
+                    }
+                    else
+                    {
+                        param.tree.paramIsVar = true;
+                        parseVar(param.value, param.tree);
+                    }
+                    return true;
+                }
+                return false;
+            },
+
+            func: function(s, param)
+            {
+                
+                /*
+                var found = s.match(/^(\w+)\(/);
+                if (found && eval('typeof '+found[1]) == 'function')
+                {
+                    param.value = found[0];
+                    s = s.slice(found[0].length).replace(/^\s+/,'');
+                    
+                    var fparam = {};
+                    parseParam(s, fparam);
+                    
+                }
+                */
+                return false;
+            },
+
+            modifier: function(s, param)
+            {
+                var re = /^(\w+)/;
+                return false;
+            },
+
+            static: function(s, param)
+            {
+                var found = s.match(/^[^\s]*/);
+                param.value = found[0];
+                param.length = found[0].length;
+                parseText(param.value, param.tree);
+                return true;
+            }
+        };
+
+    function parseParam(s, param)
+    {
+        param.tree = [];
+        for (var pt in paramTypes)
+        {
+            if (paramTypes.hasOwnProperty(pt))
+            {
+                if (paramTypes[pt](s, param))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function parseParams(paramsStr)
+	 {
+		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
+		  var params = [];
+        params.__parsed = [];
+
+        var parsedTrue = [];
+        parseText('1', parsedTrue);
+
+		  var i = 0;
+        while (s.length)
+        {
+            var nm = null;
+            var namedParam = s.match(/^\s*(\w+)\s*=\s*/)
+            if (namedParam)
+            {
+                nm = namedParam[1];
+                s = s.slice(namedParam[0].length);
+            }
+            else
+            {
+                var funcParam = s.match(/^\s*,\s*/);
+                if (funcParam)
+                {
+                    s = s.slice(funcParam[0].length);
+                }
+            }
+
+            var param = {};
+            parseParam(s, param);
+
+		      if (nm)
+		      {
+				    params[nm] = param.value;
+                params.__parsed[nm] = param.tree; 
+		      }
+		      else
+		      {
+				    params[i] = param.value;	              //short-hand param
+                params.__parsed[i] = param.tree; 
+
+                params[param.value] = 'true';
+                params.__parsed[param.value] = parsedTrue;
+		      }
+
+            ++i;
+            s = s.slice(param.length);
+        }
+
+		  return params;
+	 }
+
+
+/*
     function parseParam(v, tree)
     {
         if (!v)
@@ -1250,7 +1450,7 @@
 
 		  return params;
 	 }
-
+*/
     function parsePluginBlock(name, params, tree, content)
     {
         var subTree = [];

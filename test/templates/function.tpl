@@ -80,13 +80,6 @@
 {function name="testFunc9"} {$par.prop3 = 'new'} {$par.prop3} {/function}  // set new property
 {testFunc9 par=$ob}
 
-{function name="testFunc10"}[{$xxx}]{/function}-
-{testFunc10 xxx='a b\'cd'|upper}
-{testFunc10 xxx='a b\'cd'|replace:'a b':'xy'|upper|replace:"xy":"A|B|C"}
-{testFunc10 xxx=$foo|replace:'bar':'b a r'|upper|replace:'a':"{ A }"}
-{testFunc10 xxx='a\'a'|replace:'a':' b '}
-{testFunc10 xxx='a\'a'|replace:"'":' " '}
-
 {function name="testBool"}{if $b}{$b}{/if}{/function}-
 {testBool b=true}
 {testBool b=false}
@@ -94,5 +87,31 @@
 {testBool b='false'}
 {testBool b="true"}
 {testBool b="false"}
+
+{function name="testX"}[{$x}]{/function}-
+{testX x='a b\'cd'|upper}
+{testX x='a b\'cd'|replace:'a b':'xy'|upper|replace:"xy":"A|B|C"}
+{testX x='{$foo}'|upper}
+{testX x='a\'a'|replace:'a':' b '}
+{testX x='a\'a'|replace:"'":' " '}
+{testX x=$foo|replace:'bar':'b a r'|upper|replace:'a':"{ A }"}
+
+{testX x=strayFunc("$foo {$foo} ",  $foo|upper)}	//-
+{testX x={sayHello to='world'}}
+{testX x={sayHello to=$foo|upper}}
+{testX x={sayHello to="$foo {$foo|upper}"}}
+
+{testX x=$foo|replace:'bar':"[$foo]"}
+{testX x=$foo|replace:'bar':$foo|upper}
+{testX x="$foo|replace:'bar':$foo|upper"}
+
+--------------------------------------------------
+
+{"$foo"}
+{$foo|replace:'bar':$foo|upper}
+{"$foo {$foo|upper}"}
+{"before {for $c=1 to 7}|{$c}|{/for} after"}
+
+{strayFunc("$foo {$foo} ",  $foo|upper)}
 
 
