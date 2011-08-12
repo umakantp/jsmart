@@ -109,7 +109,6 @@
                 }
             }
         }
-
         return null;
     }
 
@@ -1074,7 +1073,7 @@
                 }
                 else if (openTag[1].match(/\s*\w+\s*[(]/))
                 {
-                    parseFunc(nm, parseParams(params.replace(/^\s*[(]\s*/,''), '\s*,\s*'), tree);
+                    parseFunc(nm, parseParams(params.replace(/^\s*[(]\s*/,''), '\\s*,\\s*'), tree);
                 }
                 else
                 {
@@ -1102,10 +1101,17 @@
     {
         if (text.length)
         {
-            tree.push({
-                type: 'text',
-                data: text
-            });
+            if (parseText.parseEmbeddedVars)
+            {
+                var re = /([$][\w@]+)|`([$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*)`/;
+                for (var found=text.match(re); found; found=text.match(re))
+                {
+                    tree.push({type: 'text', data: text.slice(0,found.index)});
+                    parseVar(found[1]?found[1]:found[2], tree);
+                    text = text.slice(found.index + found[0].length);
+                }
+            }
+            tree.push({type: 'text', data: text});
         }
         return tree;
     }
@@ -1126,27 +1132,6 @@
             params: params
         });
     }
-
-
-    function PHPreplace(s)
-    {
-	     var res = '';
-	     var re = /(.)?([$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*)(.|$)/;
-	     var found = null;
-	     for (found=s.match(re); found; found=s.match(re))
-	     {
-		      var pos = found.index + found[0].length - 1;
-		      if (found[1] != '{' || found[3] != '}')
-		      {
-			       s = s.replace(re,'$1{$2}$3');
-			       pos += 2;
-		      }
-		      res += s.slice(0,pos);
-		      s = s.slice(pos);
-	     }
-	     return res + s;
-    }
-
 
     var paramTypes = 
         [
@@ -1187,8 +1172,9 @@
                     }
                     else
                     {
+                        parseText.parseEmbeddedVars = true;
                         parse(param.value, param.tree);
-                        //PHPreplace(param.tree);
+                        parseText.parseEmbeddedVars = false;
                         parseModifiers(s, param);
                     }
                 }
@@ -1197,22 +1183,12 @@
                 re: /^(\w+)\s*[(]/,  //func()
                 parse: function(s, param)
                 {
-                    param.value += parseFunc(RegExp.$1, parseParams(s,'\s*,\s*'), param.tree);
+                    param.value += parseFunc(RegExp.$1, parseParams(s,'\\s*,\\s*'), param.tree);
                     if (s.match(/\s*[)]/))
                     {
                         param.value += RegExp.lastMatch;
                     }
                     param.length = param.value.length;
-                }
-            },
-            {
-                re: /^{/,
-                parse: function(s, param)
-                {
-                    param.value += s.slice(0,findMatchRDelim(s));
-                    param.length = param.value.length;
-                    parse(param.value, param.tree);
-                    
                 }
             },
             {
@@ -1223,12 +1199,6 @@
                 }
             }
         ];
-
-    function findMatchRDelim(s)
-    {
-        var rd = s.match(/}/);
-        return rd.index + rd[0].length;
-    }
 
     function parseModifiers(s, param)
     {
@@ -1249,7 +1219,7 @@
             s = s.slice(RegExp.lastMatch.length).replace(/^\s+/,'');
 
             parseModifiers.stop = true;
-            var params = parseParams(RegExp.$2?s:'', '\s*:\s*');
+            var params = parseParams(RegExp.$2?s:'', '\\s*:\\s*');
             parseModifiers.stop = false;
 
             params.unshift(param.value);
@@ -1268,9 +1238,20 @@
         return false;
     }
 
-    function parseParam(s, noModifiers)
+    function parseParam(s)
     {
-        var param = { tree:[], noModifiers:noModifiers };
+        var param = { tree:[] };
+        if (s.match(new RegExp('^'+jSmart.prototype.ldelim)))
+        {
+            var tag = findTag('.*',s);
+            if (tag)
+            {
+                param.value = tag[0];
+                param.length = param.value.length;
+                parse(param.value, param.tree);
+                return param;
+            }
+        }
         var i=0;
         for (; i<paramTypes.length; ++i)
         {

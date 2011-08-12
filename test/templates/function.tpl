@@ -88,6 +88,8 @@
 {testBool b="true"}
 {testBool b="false"}
 
+
+
 {function name="testX"}[{$x}]{/function}-
 {testX x='a b\'cd'|upper}
 {testX x='a b\'cd'|replace:'a b':'xy'|upper|replace:"xy":"A|B|C"}
@@ -96,6 +98,39 @@
 {testX x='a\'a'|replace:"'":' " '}
 {testX x=$foo|replace:'bar':'b a r'|upper|replace:'A':"{ a }"}
 
+{$a = a}
+{$b = b}
+{testX x="{$a} z {$b}"|upper}
+{testX x="{$a}|upper"}
+{testX x="ab{counter}cd{$a|upper}s"}
+{testX x=abcd}
 
+{testX x={isEmptyStr s=''}}
+{testX x={sayHello to='world'}}
+{testX x={sayHello to=$foo|upper}}
+{testX x={counter} a='x'}
 
+{testX x=strayFunc($foo,'abc')}
+{testX x={strayFunc('a','b')}}
+
+{testX x="|$foo|"}
+{testX x="|`$ob.prop2.txt`|"}
+{testX x="$a $b"|upper}
+{testX x=strayFunc($foo|upper,"=$a=")}
+{testX x="$a|upper"}
+{testX x="$a + $b"}
+{testX x="$a {$b}"}	
+{testX x="$a {$b|upper}"}
+{testX x="{counter} $a"}
+{testX x=" {for $j=1 to 3}$j{/for} "}
+{testX x="{for $z=1 to 5}{$z}{/for} $a|upper {$b|upper}"}
+{testX x="ab{counter}cd"}
+{testX x="ab{counter}cd$a s"}
+
+{testX x=strayFunc("$foo {$foo} ",  $foo|upper)}
+{testX x = {sayHello to='world'}}
+{testX x={sayHello to="$foo {$foo|upper}"}}
+{testX x=$foo|replace:'bar':"[$foo]"}
+{testX x=$foo|replace:'bar':$foo|upper}
+{testX x="$foo|replace : 'bar' : $foo|upper"}
 

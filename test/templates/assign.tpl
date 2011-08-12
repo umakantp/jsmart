@@ -89,8 +89,11 @@ assign var='num'  value=999
 {assign var='foo' value='test'}
 {$foo}
 
-{assign var=xxx value='\''|replace:"'":'"'}
-{$xxx}
+{assign var=x value='\''|replace:"'":'"'}
+{$x}
 
-{assign var="yyy" value=$foo|default:"no value"}
-{$yyy}
+{assign var="y" value=$foo|default:"no value"}
+{$y}
+
+{$x = {isEmptyStr s='abc'}}
+{$x}
