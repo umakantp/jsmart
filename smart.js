@@ -1014,38 +1014,6 @@
                         data: jSmart.prototype.rdelim
                     });
                 }
-            },
-
-            __func:  // {func(p1,p2,...)}
-            {
-                type: 'function',
-                parse: function(paramsStr, tree)
-                {
-                    var params = paramsStr.match(/^\s*(\w+)\s*\((.*)\)\s*$/);
-                    tree.push({
-                        type: 'build-in',
-                        name: '__func',
-                        fname: params[1],
-                        params: parseParams(params[2])
-                    });
-                },
-
-                process: function(node, data)
-                {
-                    var params = getActualParamValues(node.params, data);
-
-                    var p = [];
-                    var i=0;
-                    for(; i<params.length; ++i)
-                    {
-                        p.push('__p'+i);
-                        p['__p'+i] = params[i];
-                    }
-                    with (p)
-                    {
-                        return eval(node.fname + '(' + p.join(',') + ')');
-                    }
-                }
             }
         };
 
@@ -1104,9 +1072,9 @@
                         parsePluginFunc(nm, params, tree);
                     }
                 }
-                else if (eval('typeof '+nm) == 'function')
+                else if (openTag[1].match(/\s*\w+\s*[(]/))
                 {
-                    buildInFunctions['__func'].parse(openTag[1], tree);
+                    parseFunc(nm, parseParams(params.replace(/^\s*[(]\s*/,''), '\s*,\s*'), tree);
                 }
                 else
                 {
@@ -1139,6 +1107,7 @@
                 data: text
             });
         }
+        return tree;
     }
 
     function parseVar(name, tree)
@@ -1148,6 +1117,16 @@
             name: prepareVar(name)
         });
     }
+
+    function parseFunc(name, params, tree)
+    {
+        tree.push({
+            type: 'func',
+            name: name,
+            params: params
+        });
+    }
+
 
     function PHPreplace(s)
     {
@@ -1170,145 +1149,181 @@
 
 
     var paramTypes = 
-        {
-            bool: function(s, param)
+        [
             {
-                var found = s.match(/^(true|false)/i);
-                if (found)
+                re: /^[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*/,  //var
+                parse: function(s, param)
                 {
-                    param.value = s.match(/^true$/i);
-                    param.length = found[0].length;
+                    parseVar(param.value, param.tree);
+                    param.tree.paramIsVar = !parseModifiers(s, param);
+                }
+            },
+            {
+                re: /^(true|false)/i,  //bool
+                parse: function(s, param)
+                {
+                    param.value = param.value.match(/^true$/i);
                     parseText(param.value ? '1' : '', param.tree);
-                    return true;
                 }
-                return false;
             },
-
-            single_quotes: function(s, param)
             {
-                var found = s.match(/^('[^'\\]*(?:\\.[^'\\]*)*')([|])?/);
-                if (found)
+                re: /^'[^'\\]*(?:\\.[^'\\]*)*'/, //single quotes
+                parse: function(s, param)
                 {
-                    param.value = eval(found[1]);
-                    param.length = found[0].length;
-                    if (Boolean(param[2]))
+                    param.value = eval(param.value);
+                    parseText(param.value, param.tree);
+                    parseModifiers(s, param);
+                }
+            },
+            {
+                re: /^"[^"\\]*(?:\\.[^"\\]*)*"/,  //double quotes
+                parse: function(s, param)
+                {
+                    param.value = eval(param.value);
+                    var isVar = param.value.match(paramTypes[0].re);
+                    if (isVar && isVar[0].length == param.value.length)
                     {
-                        parseVar(param.value, param.tree);
-                        //TODO v += this.modifier(s.slice(quotes.index+quotes.length), param);
+                         paramTypes[0].parse(param.value, param);
                     }
                     else
                     {
-                        parseText(param.value, param.tree);
+                        parse(param.value, param.tree);
+                        //PHPreplace(param.tree);
+                        parseModifiers(s, param);
                     }
-                    return true;
                 }
-                return false;
             },
-
-            variable: function(s, param)
             {
-                var re = /^([$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*)([|])?/;
-                var found = s.match(re);
-                if (found)
+                re: /^(\w+)\s*[(]/,  //func()
+                parse: function(s, param)
                 {
-                    param.value = found[1];
-                    param.length = found[0].length;                    
-                    if (Boolean(found[2]))
+                    param.value += parseFunc(RegExp.$1, parseParams(s,'\s*,\s*'), param.tree);
+                    if (s.match(/\s*[)]/))
                     {
-                        parseVar(param.value, param.tree);
-                        //TODO v += this.modifier(s.slice(found.index+found.length), param);
+                        param.value += RegExp.lastMatch;
                     }
-                    else
-                    {
-                        param.tree.paramIsVar = true;
-                        parseVar(param.value, param.tree);
-                    }
-                    return true;
+                    param.length = param.value.length;
                 }
-                return false;
             },
-
-            func: function(s, param)
             {
-                
-                /*
-                var found = s.match(/^(\w+)\(/);
-                if (found && eval('typeof '+found[1]) == 'function')
+                re: /^{/,
+                parse: function(s, param)
                 {
-                    param.value = found[0];
-                    s = s.slice(found[0].length).replace(/^\s+/,'');
-                    
-                    var fparam = {};
-                    parseParam(s, fparam);
+                    param.value += s.slice(0,findMatchRDelim(s));
+                    param.length = param.value.length;
+                    parse(param.value, param.tree);
                     
                 }
-                */
-                return false;
             },
-
-            modifier: function(s, param)
             {
-                var re = /^(\w+)/;
-                return false;
-            },
-
-            static: function(s, param)
-            {
-                var found = s.match(/^[^\s]*/);
-                param.value = found[0];
-                param.length = found[0].length;
-                parseText(param.value, param.tree);
-                return true;
+                re: /^[^\s]*/, //static
+                parse: function(s, param)
+                {
+                    parseText(param.value, param.tree);
+                }
             }
-        };
+        ];
 
-    function parseParam(s, param)
+    function findMatchRDelim(s)
     {
-        param.tree = [];
-        for (var pt in paramTypes)
+        var rd = s.match(/}/);
+        return rd.index + rd[0].length;
+    }
+
+    function parseModifiers(s, param)
+    {
+        if (parseModifiers.stop) {
+            return false;
+        }
+
+        if (s.match(/^[|](\w+)(?:\s*(:)\s*)?/) && (RegExp.$1 in modifiers || RegExp.$1 == 'default' || eval('typeof '+RegExp.$1) == 'function'))
         {
-            if (paramTypes.hasOwnProperty(pt))
+            param.value += RegExp.lastMatch;
+            param.length += RegExp.lastMatch.length;
+
+            var fnm = RegExp.$1;
+            if (fnm == 'default')
             {
-                if (paramTypes[pt](s, param))
-                {
-                    return true;
-                }
+                fnm = 'defaultValue';
+            }
+            s = s.slice(RegExp.lastMatch.length).replace(/^\s+/,'');
+
+            parseModifiers.stop = true;
+            var params = parseParams(RegExp.$2?s:'', '\s*:\s*');
+            parseModifiers.stop = false;
+
+            params.unshift(param.value);
+            params.__parsed.unshift(param.tree);
+
+            param.value += params.str;
+            param.length += params.str.length;
+            param.tree = [];
+            parseFunc(fnm,params,param.tree);
+
+            s = s.slice(params.str.length);
+
+            parseModifiers(s, param);
+            return true;
+        }
+        return false;
+    }
+
+    function parseParam(s, noModifiers)
+    {
+        var param = { tree:[], noModifiers:noModifiers };
+        var i=0;
+        for (; i<paramTypes.length; ++i)
+        {
+            if (s.match(paramTypes[i].re))
+            {
+                param.value = RegExp.lastMatch;
+                param.length = RegExp.lastMatch.length;
+                paramTypes[i].parse(s.slice(param.length), param);
+                return param;
             }
         }
         return false;
     }
 
-    function parseParams(paramsStr)
+    function parseParams(paramsStr, delim)
 	 {
 		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
 		  var params = [];
         params.__parsed = [];
+        params.str = '';
 
-        var parsedTrue = [];
-        parseText('1', parsedTrue);
+        if (!s)
+        {
+            return params;
+        }
 
-		  var i = 0;
-        while (s.length)
+        var named = false;
+        if (!delim)
+        {
+            delim = /^\s+/;
+            named = true;
+        }
+        else
+        {
+            delim = new RegExp('^'+delim);
+        }
+
+        while (s)
         {
             var nm = null;
-            var namedParam = s.match(/^\s*(\w+)\s*=\s*/)
-            if (namedParam)
+            if (named && s.match(/^(\w+)\s*=\s*/))
             {
-                nm = namedParam[1];
-                s = s.slice(namedParam[0].length);
-            }
-            else
-            {
-                var funcParam = s.match(/^\s*,\s*/);
-                if (funcParam)
-                {
-                    s = s.slice(funcParam[0].length);
-                }
+                nm = RegExp.$1;
+                params.str += s.slice(0,RegExp.lastMatch.lengt);
+                s = s.slice(RegExp.lastMatch.length);
             }
 
-            var param = {};
-            parseParam(s, param);
-
+            var param = parseParam(s);
+            if (!param)
+            {
+                break;
+            }
+            
 		      if (nm)
 		      {
 				    params[nm] = param.value;
@@ -1316,141 +1331,29 @@
 		      }
 		      else
 		      {
-				    params[i] = param.value;	              //short-hand param
-                params.__parsed[i] = param.tree; 
+				    params.push(param.value);
+                params.__parsed.push(param.tree);
 
-                params[param.value] = 'true';
-                params.__parsed[param.value] = parsedTrue;
+                params[param.value] = true;
+                params.__parsed[param.value] = parseText('1',[]);
 		      }
 
-            ++i;
+            params.str += s.slice(0,param.length);
             s = s.slice(param.length);
-        }
 
-		  return params;
-	 }
-
-
-/*
-    function parseParam(v, tree)
-    {
-        if (!v)
-        {
-            parseText('',tree);
-            return v;
-        }
-
-        if (v.match(/^(?:true|false)$/i))
-        {
-            parseText(v.match(/^true$/i) ? '1' : '', tree);
-            return v;
-        }
-
-        var reVar = /^[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*([|])?/;
-        var isVar = v.match(reVar);
-        if (isVar)
-        {
-            parseVar(v, tree);
-            tree.paramIsVar = !Boolean(isVar[1]);
-            return v;
-        }
-
-        var isQuotes = v.match(/^'[^'\\]*(?:\\.[^'\\]*)*'([|]|$)/);
-        if (isQuotes)
-        {
-            if (isQuotes[1] == '|')
+            if (s.match(delim))
             {
-                parseVar(v, tree);
+                params.str += s.slice(0,RegExp.lastMatch.length);
+                s = s.slice(RegExp.lastMatch.length);
             }
             else
             {
-                v = eval(v);
-                parseText(v,tree);
-            }
-            return v;
-        }
-
-        var isDblQuotes = v.match(/^"[^"\\]*(?:\\.[^"\\]*)*"([|]|$)/);
-        if (isDblQuotes)
-        {
-            if (isDblQuotes[1] == '|')
-            {
-                //TODO: applyModifiers(parse( PHPreplace("" without modifiers) ))
-                parseVar(v, tree);
-            }
-            else
-            {
-                v = eval(v);
-                isVar = v.match(reVar);
-                if (isVar && !Boolean(isVar[1]))
-                {
-                    parseVar(v, tree);
-                    tree.paramIsVar = true;
-                }
-                else
-                {
-                    //TODO: parse(PHPreplace(v),tree);
-                    parse(v,tree);
-                }
-                return v;
+                break;
             }
         }
-        
-        if (v.match(/^{.+}$/))
-        {
-            parse(v,tree);
-            return v;
-        }
-
-        var firstWord = v.match(/^(\w+)/);
-        if (firstWord && eval('typeof '+firstWord[1]) == 'function' && v.match(/^\w+\s*\(/))
-        {
-            parseVar(v, tree);
-            return v;
-        }
-
-        
-        parseText(v,tree);
-        return v;
-    }
-
-    function parseParams(paramsStr)
-	 {
-		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
-		  var params = [];
-        params.__parsed = [];
-        var re = /^\s*(?:(\w+)\s*=)?\s*((?:[^'"$][^\s]*|[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')(?:[|]\w+(?:[:](?:[^'"][^\s]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'))*)*)/;
-
-        var parsedTrue = [];
-        parseText('1', parsedTrue);
-
-		  var found = s.match(re);
-		  var i = 0;
-		  for (;found;found=s.match(re),++i)
-		  {
-            var nm = found[1];
-            var tree = [];
-            var v = parseParam(found[2], tree);
-			   if (nm)
-			   {
-				    params[nm] = v;
-                params.__parsed[nm] = tree; 
-			   }
-			   else
-			   {
-				    params[i] = v;	              //short-hand param
-                params.__parsed[i] = tree; 
-
-                params[found[2]] = 'true';
-                params.__parsed[found[2]] = parsedTrue;
-			   }
-
-			   s = s.slice(found.index+found[0].length);            
-		  }
-
 		  return params;
 	 }
-*/
+
     function parsePluginBlock(name, params, tree, content)
     {
         var subTree = [];
@@ -1605,6 +1508,18 @@
             else if (node.type == 'build-in')
             {
                 s = buildInFunctions[node.name].process(node,data);
+            }
+            else if (node.type == 'func')
+            {
+                var params = getActualParamValues(node.params, data);
+                var p = [];
+                var j=0;
+                for(; j<params.length; ++j)
+                {
+                    p.push(node.name+'__p'+j);
+                    data[node.name+'__p'+j] = params[j];
+                }
+                s = execute(node.name + '(' + p.join(',') + ')', data);
             }
             else if (node.type == 'plugin')
             {

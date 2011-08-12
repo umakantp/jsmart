@@ -94,24 +94,8 @@
 {testX x='{$foo}'|upper}
 {testX x='a\'a'|replace:'a':' b '}
 {testX x='a\'a'|replace:"'":' " '}
-{testX x=$foo|replace:'bar':'b a r'|upper|replace:'a':"{ A }"}
+{testX x=$foo|replace:'bar':'b a r'|upper|replace:'A':"{ a }"}
 
-{testX x=strayFunc("$foo {$foo} ",  $foo|upper)}	//-
-{testX x={sayHello to='world'}}
-{testX x={sayHello to=$foo|upper}}
-{testX x={sayHello to="$foo {$foo|upper}"}}
 
-{testX x=$foo|replace:'bar':"[$foo]"}
-{testX x=$foo|replace:'bar':$foo|upper}
-{testX x="$foo|replace:'bar':$foo|upper"}
-
---------------------------------------------------
-
-{"$foo"}
-{$foo|replace:'bar':$foo|upper}
-{"$foo {$foo|upper}"}
-{"before {for $c=1 to 7}|{$c}|{/for} after"}
-
-{strayFunc("$foo {$foo} ",  $foo|upper)}
 
 
