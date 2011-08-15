@@ -186,7 +186,7 @@
 {runTest nm='var'}
 {runTest nm='append'}
 {runTest nm='assign'}
-{*runTest nm='call'*}
+{runTest nm='call'}
 {*runTest nm='javascript'*}
 {runTest nm='capture'}
 {runTest nm='eval'}

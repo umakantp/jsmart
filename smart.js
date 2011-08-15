@@ -673,16 +673,14 @@
                     return '';
                 }
             },
-
             'function': 
             {
                 type: 'block',
-                parse: function(paramstr, tree, content)
+                parse: function(paramStr, tree, content)
                 {
-                    var params = parseParams(paramstr);
+                    var params = parseParams(paramStr);
                     var subTree = [];
                     var funcName = params.name;
-                    delete params.name;
                     plugins[funcName] = 
                         {
                             type: 'function',
@@ -691,6 +689,7 @@
                             process: function(params, data)
                             {
                                 var defaults = getActualParamValues(this.defautParams,data);
+                                delete defaults.name;
                                 return process(this.subTree, obMerge('$',obMerge('',{},data),defaults,params));
                             }
                         };
@@ -1063,7 +1062,7 @@
                     if (plugin.type == 'block')
                     {
                         var closeTag = findCloseTag('\/'+nm, nm+' +[^}]*', s);
-                        parsePluginBlock(nm, params, tree, s.slice(0,closeTag.index));
+                        parsePluginBlock(nm, parseParams(params), tree, s.slice(0,closeTag.index));
                         s = s.slice(closeTag.index+closeTag[0].length);
                     }
                     else if (plugin.type == 'function')
@@ -1341,7 +1340,7 @@
         tree.push({
             type: 'plugin',
             name: name,
-            params: parseParams(params),
+            params: params,
             subTree: subTree
         });
         parse(content,subTree);
@@ -1625,6 +1624,24 @@
     /**
        register custom functions
     */
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'call', 
+        function(params, data)
+        {
+            var fname = params.name;
+            delete params.name;
+            var assign = params.__get('assign',false);
+            delete params.assign;
+            var res = plugins[fname].process(params, data);
+            if (assign)
+            {
+                data[ '$'+assign ] = res;
+                return '';
+            }
+            return res;
+        }
+    );
 
     jSmart.prototype.registerPlugin(
         'function', 
