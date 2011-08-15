@@ -1136,7 +1136,7 @@
     var paramTypes = 
         [
             {
-                re: /^[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*/,  //var
+                re: /^[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|\d+|[$][\w@]+)?\])*/,  //var
                 parse: function(s, param)
                 {
                     parseVar(param.value, param.tree);
@@ -1364,18 +1364,25 @@
             if (params.__parsed.hasOwnProperty(nm))
             {
                 var tree = params.__parsed[nm];
+                var v = '';
 
                 if (tree.paramIsVar && isValidVar(tree[0].name, data))
                 {
                     with (data)
                     {
-                        actualParams[nm] = eval(tree[0].name);
+                        v = eval(tree[0].name);
                     }
                 }
                 else
                 {
-                    actualParams[nm] = process(tree, data);
+                    v = process(tree, data);
                 }
+
+                if (typeof(v) == 'string' && v.match(/^\d+$/) && !isNaN(v))
+                {
+                    v = parseInt(v);
+                }
+                actualParams[nm] = v;
             }
         }
 

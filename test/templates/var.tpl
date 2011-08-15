@@ -1,4 +1,8 @@
 {$foo}
+{$a[4]}
+{$ob.prop1}
+
+{$a2[1].baz}
 
 {$foo|replace:"bar":"|bar:"}
 
@@ -74,5 +78,11 @@ $ob['with | symbol:']
 {$u = $ob.prop2.yyy|replace:"(":'['|replace:')':"]"|upper scope="global" nocache}
 {$u}
 
-{$i1 = 10}
-{$i2 = 20}
+{$num+7}
+
+{$x = 10}
+{$y = 20}
+{$x+$y}
+
+{'test $foo'}
+{{$foo}}

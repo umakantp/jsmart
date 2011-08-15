@@ -98,6 +98,14 @@
 {testX x='a\'a'|replace:"'":' " '}
 {testX x=$foo|replace:'bar':'b a r'|upper|replace:'A':"{ a }"}
 
+{testX x=$a[2]}
+{$i=5}
+{testX x=$a[$i]}
+
+{$ob.prop2['n'] = 7}
+{$ob.prop2['n']}
+
+
 {$a = a}
 {$b = b}
 {testX x="{$a} z {$b}"|upper}
