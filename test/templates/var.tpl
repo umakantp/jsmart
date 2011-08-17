@@ -78,11 +78,23 @@ $ob['with | symbol:']
 {$u = $ob.prop2.yyy|replace:"(":'['|replace:')':"]"|upper scope="global" nocache}
 {$u}
 
+{'test $foo'}
+{{$foo}}
+
+{"$foo {for $a=0 to 5}$a{/for}"}
+
 {$num+7}
+
+{*
+
+[{$num+1 == 8 && ($num < 8 || $num > 100) && 'abcdef'|count_characters == 6}]
+
+
+
 
 {$x = 10}
 {$y = 20}
 {$x+$y}
 
-{'test $foo'}
-{{$foo}}
+{{counter} + $x + 7 + '10'|replace:1:2}
+*}

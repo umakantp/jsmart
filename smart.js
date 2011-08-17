@@ -34,6 +34,15 @@
         return ob1;
     }
 
+    function aMerge(a1, a2) 
+    {
+        for(var i=0; i<a2.length; ++i) 
+        {
+            a1.push(a2[i]);
+        }
+        return a1;
+    }
+
 
     /**
        @return  number of properties in ob
@@ -44,6 +53,7 @@
         for (var k in ob) { count++; }
         return count;
     }
+
 
     /**
        @return  s trimmed and without quotes
@@ -224,6 +234,32 @@
 
     var buildInFunctions = 
         {
+            __operator:
+            {
+                type: 'function',
+                parse: function(op, params, tree)
+                {
+                    tree.push({
+                        type: 'build-in',
+                        name: '__operator',
+                        op: op,
+                        params: {__parsed:params}
+                    });
+                    return tree;
+                },
+
+                process: function(node, data)
+                {
+                    var params = getActualParamValues(node.params, data);
+                    if (params.length == 1)
+                    {
+                        var varName = node.params.__parsed[0][0].name;
+                        return execute(node.op+varName, data);
+                    }
+                    return eval(params[0]+node.op+params[1]);
+                }
+            },
+
             section: 
             {
                 type: 'block',
@@ -1076,7 +1112,7 @@
                 }
                 else
                 {
-                    parseVar(openTag[1],tree);
+                    aMerge(tree, parseParam(openTag[1]).tree);
                 }
             }
             else         //variable
@@ -1089,7 +1125,7 @@
                 }
                 else   //output variable
                 {
-                    parseVar(openTag[1],tree);
+                    aMerge(tree, parseParam(openTag[1]).tree);
                 }
             }
         }
@@ -1121,6 +1157,7 @@
             type: 'var',
             name: prepareVar(name)
         });
+        return tree;
     }
 
     function parseFunc(name, params, tree)
@@ -1130,12 +1167,13 @@
             name: name,
             params: params
         });
+        return tree;
     }
 
     var paramTypes = 
         [
             {
-                re: /^[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|\d+|[$][\w@]+)?\])*/,  //var
+                re: /^[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|\d+|[$][\w@]+|\w+)?\])*/,  //var
                 parse: function(s, param)
                 {
                     parseVar(param.value, param.tree);
@@ -1191,7 +1229,19 @@
                 }
             },
             {
-                re: /^[^\s]*/, //static
+                re: /^(\+{2}|\-{2})/,  //increment/decrement
+                parse: function(s, param)
+                {
+                    var op = param.value;
+
+                    var param2 = lookUpParam(s);
+                    param.value += param2.value;
+                    param.length += param2.value.length;
+                    buildInFunctions['__operator'].parse(op, [param2.tree], param.tree);
+                }
+            },
+            {
+                re: /^[^\s\+\-\*\/:|]*/, //static
                 parse: function(s, param)
                 {
                     parseText(param.value, param.tree);
@@ -1237,7 +1287,48 @@
         return false;
     }
 
-    function parseParam(s)
+    function parseExpression(s, param, tree)
+    {
+        if (s.match(/^\s*(\*|\/|\+{1,2}|\-{1,2}|%)\s*/))
+        {
+            param.value += RegExp.lastMatch;
+            param.length += RegExp.lastMatch.length;
+
+            var op = RegExp.$1;
+            
+            s = s.slice(RegExp.lastMatch.length);
+            var param2 = lookUpParam(s);
+            param.value += param2.value;
+            param.length += param2.value.length;
+
+            if (op.match(/(?:[*]|\/)/))
+            {
+                var params = [tree.pop(), param2.tree];
+                tree.push( buildInFunctions['__operator'].parse(op, params, []) );
+            }
+            else
+            {
+                tree.push(op);
+                tree.push(param2.tree);
+            }
+
+            parseExpression(s.slice(param2.length), param, tree);
+        }
+        else
+        {
+            while (tree.length >= 3)
+            {
+                var param1 = tree.shift();
+                var op = tree.shift();
+                var param2 = tree.shift();
+                var params = [param1, param2];
+                tree.unshift( buildInFunctions['__operator'].parse(op,params, []) );
+            }
+        }
+        return tree;
+    }
+
+    function lookUpParam(s)
     {
         var param = { tree:[] };
         if (s.match(new RegExp('^'+jSmart.prototype.ldelim)))
@@ -1263,6 +1354,17 @@
             }
         }
         return false;
+    }
+
+
+    function parseParam(s)
+    {
+        var param = lookUpParam(s);
+        if (param)
+        {
+            param.tree = parseExpression(s.slice(param.length), param, [param.tree])[0];
+        }
+        return param;
     }
 
     function parseParams(paramsStr, delim)
@@ -1314,8 +1416,11 @@
 				    params.push(param.value);
                 params.__parsed.push(param.tree);
 
-                params[param.value] = true;
-                params.__parsed[param.value] = parseText('1',[]);
+                if (isNaN(param.value))
+                {
+                    params[param.value] = true;
+                    params.__parsed[param.value] = parseText('1',[]);
+                }
 		      }
 
             params.str += s.slice(0,param.length);
@@ -1755,7 +1860,6 @@
     /**
        register modifiers
     */
-
     jSmart.prototype.registerPlugin(
         'modifier', 
         'capitalize', 
@@ -1860,10 +1964,7 @@
         'defaultValue',
         function(s, value)
         {
-            if (s) {
-                return s;
-            }
-            return s ? s : (value ? value : '');
+            return (s && s!='null' && s!='undefined') ? s : (value ? value : '');
         }
     );
 /*
@@ -1931,13 +2032,18 @@
         'replace',
         function(s, search, replaceWith)
         {
+            if (!search)
+            {
+                return s;
+            }
             s = new String(s);
             var res = '';
             var pos = -1;
-            for (pos=s.indexOf(search); pos>=0; pos=s.indexOf(search))
+            for (pos=s.indexOf(search,pos); pos>=0; pos=s.indexOf(search,pos))
             {
                 res += s.slice(0,pos) + replaceWith;
-                s = s.slice(pos+search.length);
+                pos += search.length;
+                s = s.slice(pos);
             }
             return res + s;
         }

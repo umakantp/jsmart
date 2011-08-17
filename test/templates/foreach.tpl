@@ -47,7 +47,7 @@ error
 	{/if}
 	
 	{if $v@last}
-		this is first
+		this is last
 	{/if}
 	
 {/foreach}

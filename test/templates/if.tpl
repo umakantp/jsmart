@@ -101,10 +101,7 @@ abc
 	empty string
 {/if}
 
-{$a = 'aaa'}
-t:[{$a == 'aaa'}]		  		//1
 t():[{isEmptyStr s=''}]   		//1
-f:[{$a != 'aaa'}]		  		//empty string
 f():[{isEmptyStr s='abc'}]   	//empty string
 
 {if 'false'}
@@ -136,6 +133,13 @@ f():[{isEmptyStr s='abc'}]   	//empty string
 
 
 {*  not supported 	- every operand (e.g. in op1 && (op2 || op3)) needs to be parsed individually
+
+{$a = 'aaa'}
+t:[{$a == 'aaa'}]		  		//1
+
+f:[{$a != 'aaa'}]		  		//empty string
+
+
 
 {if "{for $ccc=1 to 7}{$ccc}{/for}" == '1234567'}
 	1234567
