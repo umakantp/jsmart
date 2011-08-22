@@ -4,6 +4,8 @@
 	er
 {/if}
 
+{if $foo}foo {if $nullVar}bar{else}nobar{/if}{/if}
+
 {if $foo != 'bar'}
 	er1
 {elseif $foo == 'abc'}
