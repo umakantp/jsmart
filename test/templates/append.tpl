@@ -1,8 +1,7 @@
-
-
-{append var='newA' value='a'}
+-{append var='newA' value='a'}
 {append var='newA' value='b'}
 {append var='newA' value='c'} {append var='newA' value='d'}
+-
 
 {foreach $newA as $k => $v}
 	[{$k}]: {$v}

@@ -241,17 +241,15 @@
                             var varName = node.params.__parsed[0].name;
                             return execute(varName+node.op+'__arg2', data);
                         }
+                        else if (node.op.match(/div/))
+                        {
+                            return execute('__arg1 % __arg2'+(node.op=='div'?'==':'!=')+'0', data);
+                        }
+                        else if (node.op.match(/even/))
+                        {
+                            return execute('(__arg1 / __arg2) % 2'+(node.op=='even'?'==':'!=')+'0', data);
+                        }
 
-/*                        
-                        if (node.op.match(/div_by/))
-                        {
-                            //                            return eval('arg1 % arg2'+(node.op=='div_by'?'==':'!=')+'0');
-                        }
-                        else
-                        {
-                            //TODO even odd                            
-                        }
-*/
                         return execute('__arg1 '+node.op+'__arg2', data);
                     }
                     else if (node.op == '!')
@@ -261,21 +259,12 @@
                     else 
                     {
                         var varName = node.params.__parsed[0].type=='var' ? node.params.__parsed[0].name : params[0];
-                        // TODO even odd
                         if (node.optype == 'pre-unary')
                         {
                             return execute(node.op+varName, data);
                         }
                         else
                         {
-                            if (node.op.match('even'))
-                            {
-                                return execute(varName+'%2'+(node.op=='even_not'?'!=':'==')+'0', data);
-                            }
-                            if (node.op.match('odd'))
-                            {
-                                return execute(varName+'%2'+(node.op=='odd_not'?'==':'!=')+'0', data);
-                            }
                             return execute(varName+node.op, data);  //?
                         }
                     }
@@ -973,26 +962,11 @@
                 {
                     var params = getActualParamValues(node.params, data);
                     assignVar('$'+params.__get('var'), params.__get('value',''), data);
-                    /*
-                      var varName = ('shorthand' in node.params) ? node.params['var'] : '$'+params.__get('var');
-
-                      with ( {__data:data, __v: params.__get('value','')} )
-                      { 
-                      if (varName.match(/\[\]$/))  //push to array
-                      {
-                      varName = varName.replace(/\[\]$/,'');
-                      eval('__data.'+varName+'.push(__v)'); 
-                      }
-                      else
-                      {
-                      eval('__data.'+varName+'=__v'); 
-                      }
-                      }
-                    */
                     return '';
                 }
             },
 
+/*
             append:
             {
                 type: 'function',
@@ -1026,7 +1000,7 @@
                     return '';
                 }
             },
-
+*/
             strip:
             {
                 type: 'block',
@@ -1041,10 +1015,7 @@
                 type: 'block',
                 parse: function(params, tree, context)
                 {
-                    tree.push({
-                        type: 'text',
-                        data: context
-                    });
+                    parseText(context, tree);
                 }
             },
 
@@ -1053,10 +1024,7 @@
                 type: 'function',
                 parse: function(params, tree)
                 {
-                    tree.push({
-                        type: 'text',
-                        data: jSmart.prototype.ldelim
-                    });
+                    parseText(jSmart.prototype.ldelim, tree);
                 }
             },
 
@@ -1065,10 +1033,7 @@
                 type: 'function',
                 parse: function(params, tree)
                 {
-                    tree.push({
-                        type: 'text',
-                        data: jSmart.prototype.rdelim
-                    });
+                    parseText(jSmart.prototype.rdelim, tree);
                 }
             }
         };
@@ -1129,6 +1094,10 @@
                     else if (plugin.type == 'function')
                     {
                         parsePluginFunc(nm, params, tree);
+                    }
+                    if (nm == 'append')
+                    {
+                        s = s.replace(/^\n/,'');
                     }
                 }
                 else   //variable
@@ -1385,24 +1354,19 @@
                 re: /\s+(is\s+(not\s+)?div\s+by)\s+/,
                 parse: function(e, s)
                 {
-                    var op = RegExp.$2 ? 'div_by_not' : 'div_by';
-                    parseOperator(RegExp.$1, 'binary', 7, e.tree);
+                    parseOperator(RegExp.$2?'div_not':'div', 'binary', 7, e.tree);
                 }
             },
             {
-                re: /\s+(is\s+(not\s+)?even(\s+by\s+)?)\s*/,
+                re: /\s+is\s+(not\s+)?(even|odd)(\s+by\s+)?\s*/,
                 parse: function(e, s)
                 {
-                    var op = RegExp.$2 ? (RegExp.$3 ? 'even_by_not':'even_not') : (RegExp.$3 ? 'even_by' : 'even');
-                    parseOperator(op, RegExp.$3?'binary':'post-unary', 7, e.tree);
-                }
-            },
-            {
-                re: /\s+(is\s+(not\s+)?odd(\s+by\s+)?)\s*/,
-                parse: function(e, s)
-                {
-                    var op = RegExp.$2 ? (RegExp.$3 ? 'odd_by_not':'odd_not') : (RegExp.$3 ? 'odd_by' : 'odd');
-                    parseOperator(op, RegExp.$3?'binary':'post-unary', 7, e.tree);
+                    var op = RegExp.$1 ? ((RegExp.$2=='odd')?'even':'even_not') : ((RegExp.$2=='odd')?'even_not':'even');
+                    parseOperator(op, 'binary', 7, e.tree);
+                    if (!RegExp.$3)
+                    {
+                        parseText('1', e.tree);
+                    }
                 }
             },
             {
@@ -1906,6 +1870,29 @@
                 return '';
             }
             return res;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'append', 
+        function(params, data)
+        {
+            var varName = '$' + params['var'];
+            if (!(varName in data) || !(data[varName] instanceof Array))
+            {
+                data[varName] = [];
+            }
+            var index = params.__get('index',null);
+            if (index)
+            {
+                data[varName][index] = params['value'];
+            }
+            else
+            {
+                data[varName].push(params['value']);                
+            }
+            return '';
         }
     );
 

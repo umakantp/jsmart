@@ -54,6 +54,18 @@
 	{/if}
 {/if}
 
+{if $ob.prop2.txt|upper eq 'TXT' && 4 IS EVEN && 7 is not even && 5 is odd && 6 is NOT odd}
+	{$ob.prop2.txt|upper}
+{/if}
+
+{if 20 is div by 10 and 55 IS NOT DIV BY 3 and $num is odd}
+	{20 is div by 10 and 55 IS NOT DIV BY 3 and $num is odd}
+{/if}
+
+{if 30 is even by 5  and  25 is NOT even by 5  and 15 is odd by 3   and   60 is  not  odd  by  10}
+	even by / odd by OK
+{/if}
+
 aa{if $ob.prop2.bool_true}
    true
 {else}
