@@ -241,9 +241,8 @@
                             var varName = node.params.__parsed[0].name;
                             return execute(varName+node.op+'__arg2', data);
                         }
-                        
-                        var arg1 = params[0];
-                        var arg2 = params[1];
+
+/*                        
                         if (node.op.match(/div_by/))
                         {
                             //                            return eval('arg1 % arg2'+(node.op=='div_by'?'==':'!=')+'0');
@@ -252,6 +251,7 @@
                         {
                             //TODO even odd                            
                         }
+*/
                         return execute('__arg1 '+node.op+'__arg2', data);
                     }
                     else if (node.op == '!')
@@ -268,10 +268,17 @@
                         }
                         else
                         {
+                            if (node.op.match('even'))
+                            {
+                                return execute(varName+'%2'+(node.op=='even_not'?'!=':'==')+'0', data);
+                            }
+                            if (node.op.match('odd'))
+                            {
+                                return execute(varName+'%2'+(node.op=='odd_not'?'==':'!=')+'0', data);
+                            }
                             return execute(varName+node.op, data);  //?
                         }
                     }
-                    return '';
                 }
             },
 
@@ -811,7 +818,7 @@
                 parse: function(paramStr, tree)
                 {
                     var params = parseParams(paramStr);
-                    var file = params.file;
+                    var file = trimQuotes(params.file);
                     var tpl = jSmart.prototype.getTemplate(file);
                     if (typeof(tpl) != 'string')
                     {
@@ -856,6 +863,7 @@
                             params.hasParent = true;
                         }
                         tree.push({type:'var', name:prepareVar(name)});
+                        return tree;
                     };
 
                     var tree = [];
@@ -863,17 +871,19 @@
 
                     parseVar = __parseVar;
 
-                    if (!(params.name in blocks))
+                    var blockName = trimQuotes(params.name);
+                    if (!(blockName in blocks))
                     {
-                        blocks[params.name] = [];
+                        blocks[blockName] = [];
                     }
-                    blocks[params.name].push({tree:tree, params:params});
+                    blocks[blockName].push({tree:tree, params:params});
                 },
 
                 process: function(node, data)
                 {
                     data.$smarty.block.parent = data.$smarty.block.child = '';
-                    this.processBlocks(blocks[node.params.name], blocks[node.params.name].length-1, data);
+                    var blockName = trimQuotes(node.params.name);
+                    this.processBlocks(blocks[blockName], blocks[blockName].length-1, data);
                     return data.$smarty.block.child;
                 },
 
@@ -1282,7 +1292,14 @@
                 re: /\s*(\+\+|--)\s*/,
                 parse: function(e, s)
                 {
-                    parseOperator(RegExp.$1, 'unary', 1, e.tree);
+                    if (e.tree.length && e.tree[e.tree.length-1].type == 'var')
+                    {
+                        parseOperator(RegExp.$1, 'post-unary', 1, e.tree);
+                    }
+                    else
+                    {
+                        parseOperator(RegExp.$1, 'pre-unary', 1, e.tree);
+                    }
                 }
             },
             {
@@ -1301,7 +1318,7 @@
                 }
             },
             {
-                re: /\s+!\s*/,
+                re: /\s*!\s*/,
                 parse: function(e, s)
                 {
                     parseOperator('!', 'pre-unary', 2, e.tree);
@@ -1373,7 +1390,7 @@
                 }
             },
             {
-                re: /\s+(is\s+(not\s+)?even(\s+by)?)\s+/,
+                re: /\s+(is\s+(not\s+)?even(\s+by\s+)?)\s*/,
                 parse: function(e, s)
                 {
                     var op = RegExp.$2 ? (RegExp.$3 ? 'even_by_not':'even_not') : (RegExp.$3 ? 'even_by' : 'even');
@@ -1381,7 +1398,7 @@
                 }
             },
             {
-                re: /\s+(is\s+(not\s+)?odd(\s+by)?)\s+/,
+                re: /\s+(is\s+(not\s+)?odd(\s+by\s+)?)\s*/,
                 parse: function(e, s)
                 {
                     var op = RegExp.$2 ? (RegExp.$3 ? 'odd_by_not':'odd_not') : (RegExp.$3 ? 'odd_by' : 'odd');
@@ -1474,6 +1491,11 @@
             return false;
         }
 
+        if (parseModifiers.stop && e.tree.length)
+        {
+            return false;
+        }
+
         if (s.match('^'+jSmart.prototype.ldelim))
         {
             var tag = findTag('.*',s);
@@ -1508,18 +1530,14 @@
                 op.params.__parsed = [tree[i-1],tree[i+1]];
                 tree.splice(i-1,3,op);
                 return true;
-            }
-            if (op.optype == 'unary')
+            } 
+            else if (op.optype == 'post-unary')
             {
-                if (i && tree[i-1].type == 'var')
-                {
-                    op.optype = 'post-unary';
-                    op.params.__parsed = [tree[i-1]];
-                    tree.splice(i-1,2,op);
-                    return true;
-                }
+                op.params.__parsed = [tree[i-1]];
+                tree.splice(i-1,2,op);
+                return true;
             }
-            op.optype = 'pre-unary';
+
             op.params.__parsed = [tree[i+1]];
             tree.splice(i,2,op);
         }
@@ -1560,7 +1578,7 @@
     function parseExpression(s)
     {
         var e = { value:'', tree:[] };
-        while (lookUp(s.slice(e.value.length), e));
+        while (lookUp(s.slice(e.value.length), e)){}
         if (!e.tree.length)
         {
             return false;
