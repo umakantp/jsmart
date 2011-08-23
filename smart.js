@@ -275,14 +275,14 @@
             section: 
             {
                 type: 'block',
-                parse: function(params, tree, content)
+                parse: function(paramStr, tree, content)
                 {
                     var subTree = [];
                     var subTreeElse = [];
                     tree.push({
                         type: 'build-in',
                         name: 'section',
-                        params: parseParams(params),
+                        params: parseParams(paramStr),
                         subTree: subTree,
                         subTreeElse: subTreeElse
                     });
@@ -641,81 +641,6 @@
                 }
             },
 
-            'while': 
-            {
-                type: 'block',
-                parse: function(paramsStr, tree, content)
-                {
-                    var subTree = [];
-                    tree.push({
-                        type : 'build-in',
-                        name : 'while',
-                        params : parseParams(paramsStr),
-                        subTree : subTree
-                    });
-                    parse(content, subTree);
-                },
-
-                process: function(node, data)
-                {
-                    var s = '';
-                    while (getActualParamValues(node.params,data)[0])
-                    {
-                        s += process(node.subTree, data);
-                    }
-                    return s;
-                }
-            },
-
-            capture: 
-            {
-                type: 'block',
-                parse: function(params, tree, content)
-                {
-                    var subTree = [];
-                    tree.push({
-                        type : 'build-in',
-                        name : 'capture',
-                        params : parseParams(params),
-                        subTree : subTree
-                    });
-                    parse(content, subTree);
-                },
-
-                process: function(node, data)
-                {
-                    var params = getActualParamValues(node.params, data);
-                    var capture = process(node.subTree, data);
-
-                    data.$smarty.capture[params.__get('name','default')] = capture;
-
-                    var assign = params.__get('assign',null);
-                    if (assign)
-                    {
-                        data['$'+assign] = capture;
-                    }
-
-                    var append = params.__get('append',null);
-                    if (append)
-                    {
-                        append = '$'+append;
-				            if (append in data)
-				            {
-					             if (data[append] instanceof Array)
-					             {
-						              data[append].push( capture );
-					             }
-				            }
-				            else
-				            {
-					             data[append] = [ capture ];
-				            }
-                    }
-
-                    return '';
-                }
-            },
-
             'function': 
             {
                 type: 'block',
@@ -743,7 +668,7 @@
             php:
             {
                 type: 'block',
-                parse: function(params, tree, content) {}
+                parse: function(paramStr, tree, content) {}
             },
 
             'extends':
@@ -950,7 +875,7 @@
                     {
                         parsePluginFunc(nm, params, tree);
                     }
-                    if (nm=='append' || nm=='assign' || nm=='eval' || nm=='include')
+                    if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='while')
                     {
                         s = s.replace(/^\n/,'');
                     }
@@ -973,6 +898,7 @@
         {
             parseText(s, tree);
         }
+        return tree;
     }
 
     function parseText(text, tree)
@@ -1002,9 +928,10 @@
 
     function parseFunc(name, params, tree)
     {
+        params.__parsed.name = parseText(name,[])[0];
         tree.push({
-            type: 'func',
-            name: name,
+            type: 'plugin',
+            name: '__func',
             params: params
         });
         return tree;
@@ -1030,7 +957,7 @@
                 parse: function(e, s)
                 {
                     parseVar(e.token, e.tree);
-                    e.tree[e.tree.length-1].paramIsVar = !parseModifiers(s, e);
+                    parseModifiers(s, e);
                 }
             },
             {
@@ -1057,7 +984,6 @@
                     if (isVar && isVar[0].length == v.length)
                     {
                         parseVar(v, e.tree);
-                        e.tree[e.tree.length-1].paramIsVar = !parseModifiers(s, e);
                     }
                     else
                     {
@@ -1077,8 +1003,8 @@
                                 params: {__parsed:tree}
                             });
                         }
-                        parseModifiers(s, e);
                     }
+                    parseModifiers(s, e);
                 }
             },
             {
@@ -1480,14 +1406,12 @@
 
     function parsePluginBlock(name, params, tree, content)
     {
-        var subTree = [];
         tree.push({
             type: 'plugin',
             name: name,
             params: params,
-            subTree: subTree
+            subTree: parse(content,[])
         });
-        parse(content,subTree);
     }
 
     function parsePluginFunc(name, params, tree)
@@ -1509,7 +1433,7 @@
                 var node = params.__parsed[nm];
                 var v = '';
 
-                if (node.paramIsVar && isValidVar(node.name, data))
+                if (node.type == 'var' && isValidVar(node.name, data))
                 {
                     with (data)
                     {
@@ -1580,18 +1504,6 @@
             else if (node.type == 'build-in')
             {
                 s = buildInFunctions[node.name].process(node,data);
-            }
-            else if (node.type == 'func')
-            {
-                var params = getActualParamValues(node.params, data);
-                var p = [];
-                var j=0;
-                for(; j<params.length; ++j)
-                {
-                    p.push(node.name+'__p'+j);
-                    data[node.name+'__p'+j] = params[j];
-                }
-                s = execute(node.name + '(' + p.join(',') + ')', data);
             }
             else if (node.type == 'plugin')
             {
@@ -1711,6 +1623,21 @@
     */
     jSmart.prototype.registerPlugin(
         'function', 
+        '__func', 
+        function(params, data)
+        {
+            var p = [];
+            for(var i=0; i<params.length; ++i)
+            {
+                p.push(params.name+'__p'+i);
+                data[params.name+'__p'+i] = params[i];
+            }
+            return execute(params.name + '(' + p.join(',') + ')', data);
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
         'append', 
         function(params, data)
         {
@@ -1758,6 +1685,147 @@
                 return '';
             }
             return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'block', 
+        'capture', 
+        function(params, content, data, repeat)
+        {
+            if (content)
+            {
+                content = content.replace(/^\n/,'');
+                data.$smarty.capture[params.__get('name','default')] = content;
+
+                if ('assign' in params)
+                {
+                    assignVar('$'+params.assign, content, data);
+                }
+
+                var append = params.__get('append',null);
+                if (append)
+                {
+                    append = '$'+append;
+				        if (append in data)
+				        {
+					         if (data[append] instanceof Array)
+					         {
+						          data[append].push(content);
+					         }
+				        }
+				        else
+				        {
+					         data[append] = [content];
+				        }
+                }
+            }
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'counter', 
+        function(params, data)
+        {
+            var name = '__counter@' + params.__get('name','default');
+            if (name in data)
+            {
+                if ('start' in params)
+                {
+                    data[name].value = parseInt(params['start']);
+                }
+                else
+                {
+                    data[name].value = parseInt(data[name].value);
+                    data[name].skip = parseInt(data[name].skip);
+                    if ('down' == data[name].direction)
+                    {
+                        data[name].value -= data[name].skip;
+                    }
+                    else
+                    {
+                        data[name].value += data[name].skip;
+                    }
+                }
+                data[name].skip = params.__get('skip',data[name].skip);
+                data[name].direction = params.__get('direction',data[name].direction);
+                data[name].assign = params.__get('assign',data[name].assign);
+            }
+            else
+            {
+                data[name] = {
+                    value: parseInt(params.__get('start',1)),
+                    skip: parseInt(params.__get('skip',1)),
+                    direction: params.__get('direction','up'),
+                    assign: params.__get('assign',null)
+                };
+            }
+
+            if (data[name].assign)
+            {
+                data['$'+data[name].assign] = data[name].value;
+                return '';
+            }
+
+            if (params.__get('print',true))
+            {
+                return data[name].value;
+            }
+
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'cycle', 
+        function(params, data)
+        {
+            var name = '__cycle@' + params.__get('name','default');
+            if (name in data)
+            {
+                if (params.__get('advance','true'))
+                {
+                    data[name].i += 1;
+                }
+                if (data[name].i >= data[name].arr.length || params.__get('reset',false))
+                {
+                    data[name].i = 0;
+                }
+            }
+            else
+            {
+                var arr = [];
+                var values = params['values'];
+                if (values instanceof Object)
+                {
+                    for (nm in values)
+                    {
+                        arr.push(values[nm]);
+                    }
+                }
+                else
+                {
+                    var delimiter = params.__get('delimiter',',');
+                    arr = values.split(delimiter);
+                }
+                data[name] = {arr: arr, i: 0};
+            }
+
+            if (params.__get('assign',false))
+            {
+                data[ '$'+params['assign'] ] = data[name].arr[ data[name].i ];
+                return '';
+            }
+
+            if (params.__get('print',true))
+            {
+                return data[name].arr[ data[name].i ];
+            }
+
+            return '';
         }
     );
 
@@ -1816,109 +1884,15 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'counter', 
-        function(params, data)
+        'block', 
+        'while', 
+        function(params, content, data, repeat)
         {
-            var name = '__counter@' + params.__get('name','default');
-            if (name in data)
+            if (content)
             {
-                if ('start' in params)
-                {
-                    data[name].value = parseInt(params['start']);
-                }
-                else
-                {
-                    data[name].value = parseInt(data[name].value);
-                    data[name].skip = parseInt(data[name].skip);
-                    if ('down' == data[name].direction)
-                    {
-                        data[name].value -= data[name].skip;
-                    }
-                    else
-                    {
-                        data[name].value += data[name].skip;
-                    }
-                }
-                data[name].skip = params.__get('skip',data[name].skip);
-                data[name].direction = params.__get('direction',data[name].direction);
-                data[name].assign = params.__get('assign',data[name].assign);
+                repeat.value = Boolean(params[0]);
+                return repeat.value ? content.replace(/^\n/,'') : '';
             }
-            else
-            {
-                data[name] = {
-                    value: parseInt(params.__get('start',1)),
-                    skip: parseInt(params.__get('skip',1)),
-                    direction: params.__get('direction','up'),
-                    assign: params.__get('assign',null)
-                };
-            }
-
-            
-            if (data[name].assign)
-            {
-                data['$'+data[name].assign] = data[name].value;
-                return '';
-            }
-
-            if (params.__get('print',true))
-            {
-                return data[name].value;
-            }
-
-            return '';
-        }
-    );
-
-
-    jSmart.prototype.registerPlugin(
-        'function', 
-        'cycle', 
-        function(params, data)
-        {
-            var name = '__cycle@' + params.__get('name','default');
-            if (name in data)
-            {
-                if (params.__get('advance','true'))
-                {
-                    data[name].i += 1;
-                }
-                if (data[name].i >= data[name].arr.length || params.__get('reset',false))
-                {
-                    data[name].i = 0;
-                }
-            }
-            else
-            {
-                var arr = [];
-                var values = params['values'];
-                if (values instanceof Object)
-                {
-                    for (nm in values)
-                    {
-                        arr.push(values[nm]);
-                    }
-                }
-                else
-                {
-                    var delimiter = params.__get('delimiter',',');
-                    arr = values.split(delimiter);
-                }
-                data[name] = {arr: arr, i: 0};
-            }
-
-            if (params.__get('assign',false))
-            {
-                data[ '$'+params['assign'] ] = data[name].arr[ data[name].i ];
-                return '';
-            }
-
-            if (params.__get('print',true))
-            {
-                return data[name].arr[ data[name].i ];
-            }
-
-            return '';
         }
     );
 

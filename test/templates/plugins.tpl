@@ -6,3 +6,7 @@
 [{testRepeat hide=true}test{/testRepeat} ]
 
 [{testRepeat}test{/testRepeat} ]
+
+{replaceStr from='bar' to='zar'}
+	{$foo}
+{/replaceStr}

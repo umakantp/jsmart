@@ -32,7 +32,7 @@ bbb
 {/capture}
 
 {foreach $a as $i}
-	{$i}
+	[{$i}]
 {/foreach}
 
 
