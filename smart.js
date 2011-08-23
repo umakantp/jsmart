@@ -219,6 +219,7 @@
                     return getActualParamValues(node.params, data).join('');
                 }
             },
+
             __operator:
             {
                 process: function(node, data)
@@ -714,6 +715,7 @@
                     return '';
                 }
             },
+
             'function': 
             {
                 type: 'block',
@@ -742,63 +744,6 @@
             {
                 type: 'block',
                 parse: function(params, tree, content) {}
-            },
-
-            javascript: 
-            {
-                type: 'block',
-                parse: function(params, tree, content)
-                {
-                    tree.push({
-                        type: 'build-in',
-                        name: 'javascript',
-                        code: content
-                    });
-                },
-
-                process: function(node, data)
-                {
-                    execute(node.code, data);
-                    return '';
-                }
-            },
-
-            include:
-            {
-                type: 'function',
-                parse: function(paramStr, tree)
-                {
-                    tree.push({
-                        type: 'build-in',
-                        name: 'include',
-                        params: parseParams(paramStr)
-                    });
-                },
-
-                process: function(node, data)
-                {
-                    var params = getActualParamValues(node.params,data);
-
-                    var file = params.file;
-                    if (!(file in files))
-                    {
-                        files[file] = [];
-                        var tpl = jSmart.prototype.getTemplate(file);
-                        if (typeof(tpl) != 'string')
-                        {
-                            throw new Error('No template for '+ file);
-                        }
-                        parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
-                    }
-
-                    var s = process(files[file], obMerge('$',obMerge('',{},data),params));
-                    if ('assign' in node.params)
-                    {
-                        data['$'+params.assign] = s;
-                        return '';
-                    }
-                    return s;
-                }
             },
 
             'extends':
@@ -914,115 +859,28 @@
                 }
             },
 
-            'eval':
-            {
-                type: 'function',
-                parse: function(params, tree)
-                {
-                    tree.push({
-                        type: 'build-in',
-                        name: 'eval',
-                        params: parseParams(params)
-                    });
-                },
-
-                process: function(node, data)
-                {
-                    var params = getActualParamValues(node.params, data);
-                    var tree = [];
-                    parse(params['var'], tree);
-                    var s = process(tree, data);
-                    var assignVar = params.__get('assign',false);
-                    if (assignVar)
-                    {
-                        data['$'+assignVar] = s;
-                    }
-                    else
-                    {
-                        return s;
-                    }
-                    return '';
-                }
-            },
-
-            assign:
-            {
-                type: 'function',
-                parse: function(paramsStr, tree)
-                {
-                    var params = parseParams(paramsStr);
-                    tree.push({
-                        type: 'build-in',
-                        name: 'assign',
-                        params: params
-                    });
-                },
-
-                process: function(node, data)
-                {
-                    var params = getActualParamValues(node.params, data);
-                    assignVar('$'+params.__get('var'), params.__get('value',''), data);
-                    return '';
-                }
-            },
-
-/*
-            append:
-            {
-                type: 'function',
-                parse: function(params, tree)
-                {
-                    tree.push({
-                        type: 'build-in',
-                        name: 'append',
-                        params: parseParams(params)
-                    });
-                },
-
-                process: function(node, data)
-                {
-                    var params = getActualParamValues(node.params, data);
-                    var varName = '$' + params['var'];
-                    if (!(varName in data) || !(data[varName] instanceof Array))
-                    {
-                        data[varName] = [];
-                    }
-
-                    var index = params.__get('index',null);
-                    if (!index)
-                    {
-                        data[varName].push(params['value']);
-                    }
-                    else
-                    {
-                        data[varName][index] = params['value'];
-                    }
-                    return '';
-                }
-            },
-*/
             strip:
             {
                 type: 'block',
-                parse: function(params, tree, context)
+                parse: function(paramStr, tree, content)
                 {
-                    parse(context.replace(/[ \t]*[\r\n]+[ \t]*/g, ''), tree);
+                    parse(content.replace(/[ \t]*[\r\n]+[ \t]*/g, ''), tree);
                 }
             },
 
             literal:
             {
                 type: 'block',
-                parse: function(params, tree, context)
+                parse: function(paramStr, tree, content)
                 {
-                    parseText(context, tree);
+                    parseText(content, tree);
                 }
             },
 
             ldelim:
             {
                 type: 'function',
-                parse: function(params, tree)
+                parse: function(paramStr, tree)
                 {
                     parseText(jSmart.prototype.ldelim, tree);
                 }
@@ -1031,7 +889,7 @@
             rdelim:
             {
                 type: 'function',
-                parse: function(params, tree)
+                parse: function(paramStr, tree)
                 {
                     parseText(jSmart.prototype.rdelim, tree);
                 }
@@ -1039,11 +897,8 @@
         };
 
     var plugins = {};
-
     var modifiers = {};
-
     var files = {};
-
     var blocks = null;
 
     function parse(s, tree)
@@ -1095,7 +950,7 @@
                     {
                         parsePluginFunc(nm, params, tree);
                     }
-                    if (nm == 'append')
+                    if (nm=='append' || nm=='assign' || nm=='eval' || nm=='include')
                     {
                         s = s.replace(/^\n/,'');
                     }
@@ -1856,25 +1711,6 @@
     */
     jSmart.prototype.registerPlugin(
         'function', 
-        'call', 
-        function(params, data)
-        {
-            var fname = params.name;
-            delete params.name;
-            var assign = params.__get('assign',false);
-            delete params.assign;
-            var res = plugins[fname].process(params, data);
-            if (assign)
-            {
-                data[ '$'+assign ] = res;
-                return '';
-            }
-            return res;
-        }
-    );
-
-    jSmart.prototype.registerPlugin(
-        'function', 
         'append', 
         function(params, data)
         {
@@ -1892,6 +1728,89 @@
             {
                 data[varName].push(params['value']);                
             }
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'assign', 
+        function(params, data)
+        {
+            assignVar('$'+params.__get('var'), params.__get('value',''), data);
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'call', 
+        function(params, data)
+        {
+            var fname = params.name;
+            delete params.name;
+            var assignTo = params.__get('assign',false);
+            delete params.assign;
+            var s = plugins[fname].process(params, data);
+            if (assignTo)
+            {
+                assignVar('$'+assignTo, s, data);
+                return '';
+            }
+            return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'eval', 
+        function(params, data)
+        {
+            var tree = [];
+            parse(params['var'], tree);
+            var s = process(tree, data);
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, s, data);
+                return '';
+            }
+            return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'include', 
+        function(params, data)
+        {
+            var file = params.file;
+            if (!(file in files))
+            {
+                files[file] = [];
+                var tpl = jSmart.prototype.getTemplate(file);
+                if (typeof(tpl) != 'string')
+                {
+                    throw new Error('No template for '+ file);
+                }
+                parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
+            }
+
+            var s = process(files[file], obMerge('$',obMerge('',{},data),params));
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, s, data);
+                return '';
+            }
+            return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'block', 
+        'javascript', 
+        function(params, content, data, repeat)
+        {
+            execute(content, data);
             return '';
         }
     );
