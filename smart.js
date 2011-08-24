@@ -1269,7 +1269,7 @@
     function bundleOp(i, tree, precedence)
     {
         var op = tree[i];
-        if (op.name == '__operator' && op.precedence == precedence)
+        if (op.name == '__operator' && op.precedence == precedence && !op.params.__parsed)
         {
             if (op.optype == 'binary')
             {

@@ -88,9 +88,30 @@ $ob['with | symbol:']
 
 [{$num+1 == 8 && ($num < 8 || $num > 100) && 'abcdef'|count_characters == 6}]
 
+{"test $foo {$foo}"}
+{$foo|replace:'bar':$foo|upper}
+{"$foo {$foo|upper}"}
+{"before {for $c=1 to 7}|{$c}|{/for} after"}
+{strayFunc("$foo {$foo} ",  $foo|upper)}
+
 {$x = 10}
 {$y = 20}
 {$x+$y}
+{$x + $y}
+{$z = $x + $y}
+{$z}
+
+{$z = $foo|count_characters + 'abcdef'|count_characters + $x / 5}
+{$z}
+
+{$w = ($foo|count_characters + 'abcdef'|count_characters) + $x/5}
+{$w} //==11
+
+{(($foo|count_characters + 'abcdef'|count_characters)-7) + $x/5}
+
+{function name='retX'}{$x}{/function}|
+{(($foo|count_characters + 'abcdef'|count_characters)-{retX x=7}) + $x/5}
+
 
 {$y + "12"|replace:2:5}
 

@@ -144,3 +144,6 @@
 
 {$x = 10}
 {{counter name='invar'} + $x + 7 + '10'|replace:1:2}
+
+{testX x={call name='testX' x='x'}}
+{testX x={call name='testX' x="{$a|upper}"}}	
