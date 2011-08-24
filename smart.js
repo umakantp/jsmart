@@ -1011,11 +1011,11 @@
                 re: /(\w+)\s*[(]/,  //func()
                 parse: function(e, s)
                 {
-                    e.value += parseFunc(RegExp.$1, parseParams(s,'\\s*,\\s*'), e.tree);
-                    if (s.match(/\s*[)]/))
-                    {
-                        e.value += RegExp.lastMatch;
-                    }
+                    var fnm = RegExp.$1;
+                    var params = parseParams(s,'\\s*,\\s*');
+                    parseFunc(fnm, params, e.tree);
+                    e.value += params.str;
+                    parseModifiers(s.slice(params.str.length), e);
                 }
             },
             {
@@ -1248,6 +1248,7 @@
             {
                 e.value += tag[0];
                 parse(tag[0], e.tree);
+                parseModifiers(s.slice(e.value.length), e);
                 return true;
             }
         }
@@ -2078,6 +2079,8 @@
                 return s;
             }
             s = new String(s);
+            search = new String(search);
+            replaceWith = new String(replaceWith);
             var res = '';
             var pos = -1;
             for (pos=s.indexOf(search,pos); pos>=0; pos=s.indexOf(search,pos))

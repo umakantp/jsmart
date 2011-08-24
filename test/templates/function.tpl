@@ -142,3 +142,5 @@
 {testX x=$foo|replace:'bar':$foo|upper}
 {testX x="$foo|replace : 'bar' : $foo|upper"}
 
+{$x = 10}
+{{counter name='invar'} + $x + 7 + '10'|replace:1:2}

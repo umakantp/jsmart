@@ -85,16 +85,19 @@ $ob['with | symbol:']
 
 {$num+7}
 
-{*
 
 [{$num+1 == 8 && ($num < 8 || $num > 100) && 'abcdef'|count_characters == 6}]
-
-
-
 
 {$x = 10}
 {$y = 20}
 {$x+$y}
 
-{{counter} + $x + 7 + '10'|replace:1:2}
-*}
+{$y + "12"|replace:2:5}
+
+{strayFunc('a','b')|upper}
+
+{strayFunc('a','b')|upper|replace:',':':'}
+
+{"{sayHello to='everybody'}|upper"}		//modifier is NOT applied!
+
+{{sayHello to='everybody'}|upper|replace:'EVERYBODY':$foo}

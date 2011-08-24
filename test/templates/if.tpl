@@ -146,7 +146,6 @@ f():[{isEmptyStr s='abc'}]   	//empty string
 {/if}
 
 
-{*  not supported 	- every operand (e.g. in op1 && (op2 || op3)) needs to be parsed individually
 
 {$a = 'aaa'}
 t:[{$a == 'aaa'}]		  		//1
@@ -161,22 +160,23 @@ f:[{$a != 'aaa'}]		  		//empty string
 	no 1234567
 {/if}
 
-{if {counter start=0}}
+
+
+{if {isEmptyStr s=""}}
 	code2
 {else}
 	no code2
 {/if}
 
-{if {counter}}
+{if {sayHello to='world!'} == 'Hello world!'}
 	code3
 {else}
 	no code3
 {/if}
 
-{if {counter} == 2 && "{for $ccc=1 to 7}{$ccc}{/for}" == '1234567'}
-	counter == 2
-{else}
-	counter != 2
-{/if}
 
-*}
+{if {sayHello to='world!'} == 'Hello world!' && "{for $ccc=1 to 7}{$ccc}{/for}" == '1234567' && $foo|replace:$foo:'ZZZ' == 'ZZZ'}
+	OK
+{else}
+	err
+{/if}
