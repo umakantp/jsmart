@@ -209,6 +209,7 @@
 {runTest nm='modifiers'}
 {runTest nm='examples'}
 
+
 <script>
 	test("from JS string", function() {
 		var tpl = new jSmart($('#function_tpl').html());
@@ -217,6 +218,11 @@
 		equal(res_JS_string, res2_JS_string);
 	} );
 </script>
+
+
+<!-- <script type="text/javascript" src="php.default.min.js"></script>-->
+<script type="text/javascript" src="php.default.namespaced.min.js"></script> 
+{runTest nm='phpjs'}
 
 </body>
 </html>
