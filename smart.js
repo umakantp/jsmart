@@ -1585,10 +1585,11 @@
         var smarty = {
             smarty: 
             {
+                block: {},
                 capture: {},
+                cycle: {},
                 foreach: {},
-                section: {},
-                block: {}
+                section: {}
             }
         };
         blocks = this.blocks;
@@ -1796,22 +1797,22 @@
         'cycle', 
         function(params, data)
         {
-            var name = '__cycle@' + params.__get('name','default');
-            if (name in data)
+            var name = params.__get('name','default');
+            var reset = params.__get('reset',false);
+            if (!(name in data.$smarty.cycle))
             {
-                if (params.__get('advance','true'))
-                {
-                    data[name].i += 1;
-                }
-                if (data[name].i >= data[name].arr.length || params.__get('reset',false))
-                {
-                    data[name].i = 0;
-                }
+                data.$smarty.cycle[name] = {arr: [''], delimiter: params.__get('delimiter',','), index: 0};
+                reset = true;
             }
-            else
+
+            if (params.__get('delimiter',false))
+            {
+                data.$smarty.cycle[name].delimiter = params.delimiter;
+            }
+            var values = params.__get('values',false);
+            if (values)
             {
                 var arr = [];
-                var values = params['values'];
                 if (values instanceof Object)
                 {
                     for (nm in values)
@@ -1821,21 +1822,35 @@
                 }
                 else
                 {
-                    var delimiter = params.__get('delimiter',',');
-                    arr = values.split(delimiter);
+                    arr = values.split(data.$smarty.cycle[name].delimiter);
                 }
-                data[name] = {arr: arr, i: 0};
+                
+                if (arr.length != data.$smarty.cycle[name].arr.length || arr[0] != data.$smarty.cycle[name].arr[0])
+                {
+                    data.$smarty.cycle[name].arr = arr;
+                    data.$smarty.cycle[name].index = 0;
+                    reset = true;
+                }
+            }
+
+            if (params.__get('advance','true'))
+            {
+                data.$smarty.cycle[name].index += 1;
+            }
+            if (data.$smarty.cycle[name].index >= data.$smarty.cycle[name].arr.length || reset)
+            {
+                data.$smarty.cycle[name].index = 0;
             }
 
             if (params.__get('assign',false))
             {
-                data[ '$'+params['assign'] ] = data[name].arr[ data[name].i ];
+                assignVar('$'+params.assign, data.$smarty.cycle[name].arr[ data.$smarty.cycle[name].index ], data);
                 return '';
             }
 
             if (params.__get('print',true))
             {
-                return data[name].arr[ data[name].i ];
+                return data.$smarty.cycle[name].arr[ data.$smarty.cycle[name].index ];
             }
 
             return '';
