@@ -155,8 +155,6 @@
 		{
 			var tpl = new jSmart($('#{$nm}_tpl').html());
 			var res_{$nm} = tpl.fetch(data);
-			var res2_{$nm} = $('#{$nm}_tpl').html().fetch(data);
-
 		} catch(e) 
 		{
 			alert(e.name + ' ' + e.message);
@@ -175,7 +173,6 @@
 				resPHP = resPHP.replace(/\r\n/g,'\n');
 			}
 			equal(resJS, resPHP);
-			equal(res2_{$nm}, res_{$nm});
 		} );
 	</script>
 
@@ -209,10 +206,17 @@
 {runTest nm='plugins'}
 {runTest nm='cycle'}
 {runTest nm='counter'}
-
 {runTest nm='modifiers'}
-
 {runTest nm='examples'}
+
+<script>
+	test("from JS string", function() {
+		var tpl = new jSmart($('#function_tpl').html());
+		var res_JS_string = tpl.fetch(data);
+		var res2_JS_string = $('#function_tpl').html().fetch(data);
+		equal(res_JS_string, res2_JS_string);
+	} );
+</script>
 
 </body>
 </html>
