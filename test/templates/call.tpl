@@ -8,6 +8,9 @@
 {call name=$fname}
 {call name="$fname"}
 {call name="{$fname}"}
+{call testF}
+{call "testF" par='test'}
+{call $fname par='test'}
 
 {$t = 'test'}
 {call name="{$t}F" par="[{$t}]"}

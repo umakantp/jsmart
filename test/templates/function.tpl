@@ -71,13 +71,13 @@
 {testFunc6 par=$ob}
 {testFunc6 par="$ob"}
 
-{function name="testFunc7"} property: {$par.txt} {/function}	//param is an Object's property
+{function testFunc7} property: {$par.txt} {/function}	//param is an Object's property
 {testFunc7 par=$ob.prop2}
 
-{function name="testFunc8"} {$par.prop2.txt = 'zzzz'} {$par.prop2.txt} {/function}  // assign property
+{function 'testFunc8'} {$par.prop2.txt = 'zzzz'} {$par.prop2.txt} {/function}  // assign property
 {testFunc8 par=$ob}
 
-{function name="testFunc9"} {$par.prop3 = 'new'} {$par.prop3} {/function}  // set new property
+{function "testFunc9"} {$par.prop3 = 'new'} {$par.prop3} {/function}  // set new property
 {testFunc9 par=$ob}
 
 {function name="testBool"}{if $b}{$b}{/if}{/function}-

@@ -7,19 +7,16 @@
 	[{$k}]: {$v}
 {/foreach} 
 
-{append var='a' value='10'}
+{append var='a' value='10' scope=parent}
 
 {foreach  $newA  as  $v}
 	{$v} 
 {/foreach} 
 
-________________________________
+{append var='a' value='15' index=10 scope=global}
+{$a[10]}
 
+{append 'name' 'Bob' index='first'}
+{append 'name' 'Meyer' index='last'}
 
-{* seems like index attribute is not supported in PHP Smarty 
-{append var='a' value='15' index=15}
-*}
-
-
-
-________________________________
+{$name.first} {$name.last}

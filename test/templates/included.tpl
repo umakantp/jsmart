@@ -1,0 +1,2 @@
+{$varFromIncluded='test'}
+[{$varFromIncluded}]

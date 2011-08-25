@@ -49,3 +49,8 @@ this will be captured into new array
 --
 {foreach $newA as $i}{$i}{/foreach}
 --
+
+{capture testC}
+	teeest
+{/capture}
+{$smarty.capture.testC}

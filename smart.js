@@ -648,8 +648,7 @@
                 {
                     var params = parseParams(paramStr);
                     var subTree = [];
-                    var funcName = trimQuotes(params.name);
-                    plugins[funcName] = 
+                    plugins[trimQuotes(params.name?params.name:params[0])] = 
                         {
                             type: 'function',
                             subTree: subTree,
@@ -677,7 +676,7 @@
                 parse: function(paramStr, tree)
                 {
                     var params = parseParams(paramStr);
-                    var file = trimQuotes(params.file);
+                    var file = trimQuotes(params.file?params.file:params[0]);
                     var tpl = jSmart.prototype.getTemplate(file);
                     if (typeof(tpl) != 'string')
                     {
@@ -730,7 +729,7 @@
 
                     parseVar = __parseVar;
 
-                    var blockName = trimQuotes(params.name);
+                    var blockName = trimQuotes(params.name?params.name:params[0]);
                     if (!(blockName in blocks))
                     {
                         blocks[blockName] = [];
@@ -741,7 +740,7 @@
                 process: function(node, data)
                 {
                     data.$smarty.block.parent = data.$smarty.block.child = '';
-                    var blockName = trimQuotes(node.params.name);
+                    var blockName = trimQuotes(node.params.name?node.params.name:node.params[0]);
                     this.processBlocks(blocks[blockName], blocks[blockName].length-1, data);
                     return data.$smarty.block.child;
                 },
@@ -1454,9 +1453,21 @@
             }
         }
 
-        actualParams.__get = function(nm,defVal)
+        actualParams.__get = function(nm,defVal,id)
         {
-            return (nm in actualParams && typeof(actualParams[nm]) != 'undefined') ? actualParams[nm] : defVal;
+            if (nm in actualParams && typeof(actualParams[nm]) != 'undefined')
+            {
+                return actualParams[nm];
+            }
+            if (typeof(id)!='undefined' && typeof(actualParams[id]) != 'undefined')
+            {
+                return actualParams[id];
+            }
+            if (defVal === null)
+            {
+                throw new Error("The required attribute '"+nm+"' is missing");
+            }
+            return defVal;
         };
         return actualParams;
     }
@@ -1642,19 +1653,20 @@
         'append', 
         function(params, data)
         {
-            var varName = '$' + params['var'];
+            var varName = '$' + params.__get('var',null,0);
             if (!(varName in data) || !(data[varName] instanceof Array))
             {
                 data[varName] = [];
             }
-            var index = params.__get('index',null);
-            if (index)
+            var index = params.__get('index',false);
+            var val = params.__get('value',null,1);
+            if (index === false)
             {
-                data[varName][index] = params['value'];
+                data[varName].push(val);
             }
             else
             {
-                data[varName].push(params['value']);                
+                data[varName][index] = val;
             }
             return '';
         }
@@ -1665,7 +1677,7 @@
         'assign', 
         function(params, data)
         {
-            assignVar('$'+params.__get('var'), params.__get('value',''), data);
+            assignVar('$'+params.__get('var',null,0), params.__get('value',null,1), data);
             return '';
         }
     );
@@ -1675,7 +1687,7 @@
         'call', 
         function(params, data)
         {
-            var fname = params.name;
+            var fname = params.__get('name',null,0);
             delete params.name;
             var assignTo = params.__get('assign',false);
             delete params.assign;
@@ -1697,14 +1709,14 @@
             if (content)
             {
                 content = content.replace(/^\n/,'');
-                data.$smarty.capture[params.__get('name','default')] = content;
+                data.$smarty.capture[params.__get('name','default',0)] = content;
 
                 if ('assign' in params)
                 {
                     assignVar('$'+params.assign, content, data);
                 }
 
-                var append = params.__get('append',null);
+                var append = params.__get('append',false);
                 if (append)
                 {
                     append = '$'+append;
@@ -1760,7 +1772,7 @@
                     value: parseInt(params.__get('start',1)),
                     skip: parseInt(params.__get('skip',1)),
                     direction: params.__get('direction','up'),
-                    assign: params.__get('assign',null)
+                    assign: params.__get('assign',false)
                 };
             }
 
@@ -1836,7 +1848,7 @@
         function(params, data)
         {
             var tree = [];
-            parse(params['var'], tree);
+            parse(params.__get('var','',0), tree);
             var s = process(tree, data);
             if ('assign' in params)
             {
@@ -1852,7 +1864,7 @@
         'include', 
         function(params, data)
         {
-            var file = params.file;
+            var file = params.__get('file',null,0);
             if (!(file in files))
             {
                 files[file] = [];

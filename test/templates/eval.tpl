@@ -14,3 +14,9 @@
 
 {eval var="{for $i=1 to 5}[$i]{/for}" assign="$foo{$foo}"}
 {$barbar}
+
+{$c = '{for $i=0 to 5}[{$i}]{/for}'}
+{eval var=$c}
+{eval var="$c"}
+{eval var="{$c}"}
+{eval $c}

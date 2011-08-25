@@ -182,6 +182,8 @@
 	
 {/function}
 
+<script type="text/x-jsmart-tmpl" id='included_tpl'>{include_literal file='included'}</script>
+
 {runTest nm='comments'}
 {runTest nm='var'}
 {runTest nm='append'}

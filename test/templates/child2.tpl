@@ -1,4 +1,4 @@
-{extends file="child1.tpl"} 
+{extends "child1.tpl"} 
 ignored
 {block name='b3'}child2 3{/block}
 ignored
@@ -14,12 +14,12 @@ ignored
 {block name='b10'} c2.10 {/block}
 
 
-{block name='b5'}<{$smarty.block.parent}>{/block}
-{block name='b5.2'}child2 5.2 {$smarty.block.parent}{/block}
-{block name='b5.3'}override all{/block}
+{block b5}<{$smarty.block.parent}>{/block}
+{block 'b5.2'}child2 5.2 {$smarty.block.parent}{/block}
+{block 'b5.3'}override all{/block}
 
 
-{block name='inblock'}c2.inblock{/block}
+{block 'inblock'}c2.inblock{/block}
 
 {block name='outblock'}	
 =={$smarty.block.parent}==

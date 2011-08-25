@@ -101,10 +101,10 @@ $ob['with | symbol:']
 {$z = $x + $y}
 {$z}
 
-{$z = $foo|count_characters + 'abcdef'|count_characters + $x / 5}
+{$z = $foo|count_characters + 'abcdef'|count_characters + $x / 5 scope=root nocache}
 {$z}
 
-{$w = ($foo|count_characters + 'abcdef'|count_characters) + $x/5}
+{$w = ($foo|count_characters + 'abcdef'|count_characters) + $x/5 nocache}
 {$w} //==11
 
 {(($foo|count_characters + 'abcdef'|count_characters)-7) + $x/5}

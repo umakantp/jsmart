@@ -92,8 +92,14 @@ assign var='num'  value=999
 {assign var=x value='\''|replace:"'":'"'}
 {$x}
 
-{assign var="y" value=$foo|default:"no value"}
+{assign var="y" value=$foo|default:"no value" scope=global   nocache}
 {$y}
 
 {$x = {isEmptyStr s='abc'}}
 {$x}
+
+{assign x {isEmptyStr s='abc'}}
+{$x}
+
+{assign 'cnt' $foo|replace:"bar":"bbbar"|count_characters  scope=global  nocache}  {*short-hand*}
+{$cnt}
