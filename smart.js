@@ -1633,15 +1633,15 @@
 
 
 
-    jSmart.prototype.getPHPJSFunc = function(fnm, modifier)
+    jSmart.prototype.PHPJS = function(fnm, modifier)
     {
         if (eval('typeof '+fnm) == 'function')
         {
-            return eval(fnm);
+            return window;
         }
         else if (typeof(PHP_JS) == 'function')
         {
-            return eval('(new PHP_JS()).'+fnm);
+            return new PHP_JS();
         }
         throw new Error("Modifier '" + modifier + "' uses '" + fnm + "' implementation from php.js project. Find out more at http://phpjs.org");
     }
@@ -2056,91 +2056,61 @@
     jSmart.prototype.registerPlugin(
         'modifier', 
         'escape', 
-        function(s, $esc_type, $char_set)
+        function(s, esc_type, char_set)
         {
-/*
-            switch ($esc_type) {
+            esc_type = esc_type ? esc_type : 'html';
+            char_set = char_set ? char_set : 'UTF-8';
+
+            switch (esc_type) 
+            {
             case 'html':
-                return htmlspecialchars($string, ENT_QUOTES, $char_set);
-
-        case 'htmlall':
-            return htmlentities($string, ENT_QUOTES, $char_set);
-
-        case 'url':
-            return rawurlencode($string);
-
-        case 'urlpathinfo':
-            return str_replace('%2F', '/', rawurlencode($string));
-
-        case 'quotes': 
-            // escape unescaped single quotes
-            return preg_replace("%(?<!\\\\)'%", "\\'", $string);
-
-        case 'hex': 
-            // escape every character into hex
-            $return = '';
-            for ($x = 0; $x < strlen($string); $x++) {
-                $return .= '%' . bin2hex($string[$x]);
-            } 
-            return $return;
-
-        case 'hexentity':
-            $return = '';
-            for ($x = 0; $x < strlen($string); $x++) {
-                $return .= '&#x' . bin2hex($string[$x]) . ';';
-            } 
-            return $return;
-
-        case 'decentity':
-            $return = '';
-            for ($x = 0; $x < strlen($string); $x++) {
-                $return .= '&#' . ord($string[$x]) . ';';
-            } 
-            return $return;
-
-        case 'javascript': 
-            // escape quotes and backslashes, newlines, etc.
-            return strtr($string, array('\\' => '\\\\', "'" => "\\'", '"' => '\\"', "\r" => '\\r', "\n" => '\\n', '</' => '<\/'));
-
-        case 'mail': 
-          require_once(SMARTY_PLUGINS_DIR . 'shared.mb_str_replace.php');
-          return smarty_mb_str_replace(array('@', '.'), array(' [AT] ', ' [DOT] '), $string);
-
-        case 'nonstd': 
-            // escape non-standard chars, such as ms document quotes
-            $_res = '';
-            for($_i = 0, $_len = strlen($string); $_i < $_len; $_i++) {
-                $_ord = ord(substr($string, $_i, 1)); 
-                // non-standard char, escape it
-                if ($_ord >= 126) {
-                    $_res .= '&#' . $_ord . ';';
-                } else {
-                    $_res .= substr($string, $_i, 1);
+                return jSmart.prototype.PHPJS('htmlspecialchars','escape').htmlspecialchars(s, 3/*=ENT_QUOTES*/, char_set);
+            case 'htmlall':
+                return jSmart.prototype.PHPJS('htmlentities','escape').htmlentities(s, 3, char_set);
+            case 'url':
+                return jSmart.prototype.PHPJS('rawurlencode','escape').rawurlencode(s);
+            case 'urlpathinfo':
+                return jSmart.prototype.PHPJS('rawurlencode','escape').rawurlencode(s).replace(/%2F/g, '/');
+            case 'quotes': 
+                return s.replace(/([^\\])'/, "$1\\'");
+            case 'hex':
+                var res = '';
+                for (var i=0; i<s.length; ++i) 
+                {
+                    res += '%' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1));
                 } 
-            } 
-            return $_res;
-
-        default:
-            return $string;
-    }             
-*/
-/*
-            var f = null;
-            if (eval('typeof sprintf') == 'function')
-            {
-                f = sprintf;
-            }
-            else if (typeof(PHP_JS) == 'function')
-            {
-                $P = new PHP_JS();
-                f = (new PHP_JS()).sprintf;
-            }
-            if (f)
-            {
-                return f(fmt, s);
-            }
-            throw new Error("Modifier 'string_format' uses 'sprintf' implementation from php.js project. Find out more at http://phpjs.org");
-*/
+                return res;
+            case 'hexentity':
+                var res = '';
+                for (var i=0; i<s.length; ++i) {
+                    res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)) + ';';
+                } 
+                return res;
+            case 'decentity':
+                var res = '';
+                for (var i=0; i<s.length; ++i) {
+                    res += '&#' + jSmart.prototype.PHPJS('ord','escape').ord(s.substr(i,1)) + ';';
+                } 
+                return res;
+            case 'mail': 
+                return s.replace(/@/g,' [AT] ').replace(/[.]/g,' [DOT] ');
+            case 'nonstd': 
+                var res = '';
+                for (var i=0; i<s.length; ++i)
+                {
+                    var _ord = jSmart.prototype.PHPJS('ord','escape').ord(s.substr(i,1));
+                    if (_ord >= 126) {
+                        res += '&#' + _ord + ';';
+                    } else {
+                        res += s.substr(i, 1);
+                    } 
+                    
+                }
+                return res;
+            case 'javascript': 
+                return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\r/g,'\\r').replace(/\n/g,'\\n').replace(/<\//g,'<\/');
+            };
+            return s;
         }
     );
 
@@ -2237,7 +2207,7 @@
         'string_format', 
         function(s, fmt)
         {
-            return jSmart.prototype.getPHPJSFunc('sprintf','string_format')(fmt,s);
+            return jSmart.prototype.PHPJS('sprintf','string_format').sprintf(fmt,s);
         }
     );
 
