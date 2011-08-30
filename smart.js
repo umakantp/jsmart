@@ -1188,7 +1188,8 @@
                 re: /[\w.]+/, //static
                 parse: function(e, s)
                 {
-                    parseText(RegExp.lastMatch, e.tree);
+                    parseText(e.token, e.tree);
+                    parseModifiers(s, e);
                 }
             }
         ];

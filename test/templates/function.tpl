@@ -147,3 +147,5 @@
 
 {testX x={call name='testX' x='x'}}
 {testX x={call name='testX' x="{$a|upper}"}}	
+
+{testX x=abcd|upper}

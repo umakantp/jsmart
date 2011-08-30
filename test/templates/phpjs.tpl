@@ -4,6 +4,7 @@
 {$number}
 {$number|string_format:"%.2f"}
 {$number|string_format:"%d"}
+{5|string_format:"[%d]"}
 
 
 {'&"\'<>'|escape}
