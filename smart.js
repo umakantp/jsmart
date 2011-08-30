@@ -1589,7 +1589,15 @@
                 capture: {},
                 cycle: {},
                 foreach: {},
-                section: {}
+                section: {},
+                now: Math.floor( (new Date()).getTime()/1000 ),
+                'const': {},
+                config: {},
+                current_dir: '/',
+                template: '',
+                ldelim: jSmart.prototype.ldelim,
+                rdelim: jSmart.prototype.rdelim,
+                version: '2.3'
             }
         };
         blocks = this.blocks;
@@ -1645,6 +1653,29 @@
         }
         throw new Error("Modifier '" + modifier + "' uses '" + fnm + "' implementation from php.js project. Find out more at http://phpjs.org");
     }
+
+    jSmart.prototype.makeTimeStamp = function(s)
+    {
+        if (!s)
+        {
+            return Math.floor( (new Date()).getTime()/1000 );
+        }
+        if (isNaN(s))
+        {
+            var tm = jSmart.prototype.PHPJS('strtotime','date_format').strtotime(s);
+            if (tm == -1 || tm === false) {
+                return Math.floor( (new Date()).getTime()/1000 );
+            }
+            return tm;
+        }
+        s = new String(s);
+        if (s.length == 14) //mysql timestamp format of YYYYMMDDHHMMSS
+        {
+            return Math.floor( (new Date(s.substr(0,4),s.substr(4,2)-1,s.substr(6,2),s.substr(8,2),s.substr(10,2)).getTime()/1000 ) );
+        }
+        return parseInt(s);
+    }
+
 
 
     /**
@@ -1906,8 +1937,9 @@
                 }
                 parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
             }
-
-            var s = process(files[file], obMerge('$',obMerge('',{},data),params));
+            var incData = obMerge('$',obMerge('',{},data),params);
+            incData.$smarty.template = file;
+            var s = process(files[file], incData);
             if ('assign' in params)
             {
                 assignVar('$'+params.assign, s, data);
@@ -2035,15 +2067,16 @@
             return 0;
         }
     );
-/*
+
     jSmart.prototype.registerPlugin(
         'modifier', 
         'date_format', 
-        function(s)
+        function(s, fmt, defaultDate)
         {
+            return jSmart.prototype.PHPJS('strftime','date_format').strftime(fmt?fmt:'%b %e, %Y', jSmart.prototype.makeTimeStamp(s?s:defaultDate));
         }
     );
-*/
+
     jSmart.prototype.registerPlugin(
         'modifier', 
         'defaultValue',

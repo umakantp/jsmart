@@ -1,6 +1,6 @@
 <?php
 
-date_default_timezone_set('Universal');		//to silence the PHP warning
+date_default_timezone_set('Europe/Moscow');		//to test date_format modifier
 
 define('SMARTY_DIR','./smarty/');
 require_once SMARTY_DIR . 'Smarty.class.php';
