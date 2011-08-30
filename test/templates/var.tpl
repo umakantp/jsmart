@@ -1,23 +1,24 @@
 {$foo}
 {$a[4]}
 {$ob.prop1}
+-{nocache}
+	{$a2[1].baz}
 
-{$a2[1].baz}
+	{$foo|replace:"bar":"|bar:"}
 
-{$foo|replace:"bar":"|bar:"}
+	{'abcdef'}
 
-{'abcdef'}
+	{$zzz = "text value"}
+	{$zzz}
 
-{$zzz = "text value"}
-{$zzz}
+	{$zzz = 'new text value'}
+	{$zzz}
 
-{$zzz = 'new text value'}
-{$zzz}
+	{$zzz = $noVal|default:'empty'|upper}
+	{$zzz}
 
-{$zzz = $noVal|default:'empty'|upper}
-{$zzz}
-
-{'abcdef'}
+	{'abcdef'}
+{/nocache}
 
 {$ob['prop3'] = 'prop value'}
 {$ob.prop3}

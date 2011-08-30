@@ -874,7 +874,7 @@
                     {
                         parsePluginFunc(nm, params, tree);
                     }
-                    if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='while')
+                    if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='while' || nm=='nocache')
                     {
                         s = s.replace(/^\n/,'');
                     }
@@ -1956,6 +1956,15 @@
         {
             execute(content, data);
             return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'block', 
+        'nocache', 
+        function(params, content, data, repeat)
+        {
+            return content;
         }
     );
 

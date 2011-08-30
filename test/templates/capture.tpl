@@ -1,10 +1,18 @@
 ---
+
+
+
+
 {capture name='testCapture1'}
 this will be captured
 {for $i=1 to 10}
    {$i}
 {/for}
 {/capture}
+
+
+
+
 
 [{$smarty.capture.testCapture1}]
 
