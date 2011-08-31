@@ -1602,7 +1602,13 @@
             }
         };
         blocks = this.blocks;
-        return process(this.tree, obMerge('$',{},data,smarty));
+        var d = obMerge('$',{},data,smarty);
+        var res = process(this.tree, d);
+        if (jSmart.prototype.debugging)
+        {
+            plugins.debug.process([],d);
+        }
+        return res;
     };
 
     /**
@@ -1640,6 +1646,8 @@
     jSmart.prototype.ldelim = '{';
     jSmart.prototype.rdelim = '}';
 
+    /** enables the debugging console */
+    jSmart.prototype.debugging = false;
 
 
     jSmart.prototype.PHPJS = function(fnm, modifier)
@@ -1901,6 +1909,57 @@
                 return data.$smarty.cycle[name].arr[ data.$smarty.cycle[name].index ];
             }
 
+            return '';
+        }
+    );
+
+    jSmart.prototype.print_r = function(v,indent)
+    {
+        if (v instanceof Object)
+        {
+            var s = ((v instanceof Array) ? 'Array['+v.length+']' : 'Object') + '<br>';
+            for (var nm in v)
+            {
+                s += indent + '&nbsp;&nbsp;<strong>' + nm + '</strong> : ' + jSmart.prototype.print_r(v[nm],indent+'&nbsp;&nbsp;&nbsp;') + '<br>';
+            }
+            return s;
+        }
+        return v;
+    }
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'debug', 
+        function(params, data)
+        {
+            if (typeof dbgWnd != 'undefined')
+            {
+                dbgWnd.close();
+            }
+            dbgWnd = window.open('','','width=680,height=600,resizable,scrollbars=yes');
+            var sVars = '';
+            var i=0;
+            for (var nm in data)
+            {
+                sVars += '<tr class=' + (++i%2?'odd':'even') + '><td><strong>' + nm + '</strong></td><td>' + jSmart.prototype.print_r(data[nm],'') + '</td></tr>';
+            }
+            dbgWnd.document.write(" \
+               <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en'> \
+               <head> \
+		            <title>jSmart Debug Console</title> \
+                  <style type='text/css'> \
+                     table {width: 100%;} \
+                     td {vertical-align:top;width: 50%;} \
+                     .even td {background-color: #fafafa;} \
+                  </style> \
+               </head> \
+               <body> \
+                  <h1>jSmart Debug Console</h1> \
+                  <h2>assigned template variables</h2> \
+                  <table>" + sVars + "</table> \
+               </body> \
+               </html> \
+            ");
             return '';
         }
     );
