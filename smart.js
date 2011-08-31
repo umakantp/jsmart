@@ -824,6 +824,7 @@
     var modifiers = {};
     var files = {};
     var blocks = null;
+    var scripts = null;
 
     function parse(s, tree)
     {
@@ -1577,6 +1578,7 @@
     {
         this.tree = [];
         this.blocks = {};
+        this.scripts = {};
         blocks = this.blocks;
         parse(stripComments(tpl.replace(/\r\n/g,'\n')), this.tree);
     };
@@ -1602,6 +1604,7 @@
             }
         };
         blocks = this.blocks;
+        scripts = this.scripts;
         var d = obMerge('$',{},data,smarty);
         var res = process(this.tree, d);
         if (jSmart.prototype.debugging)
@@ -1645,6 +1648,16 @@
     jSmart.prototype.getFile = function(name)
     {
         throw new Error('No file for ' + name);
+    }
+
+    /**
+       override this function
+       @param name  value of 'file' parameter in {include_php} and {include_javascript}
+       @return Javascript script
+    */
+    jSmart.prototype.getJavascript = function(name)
+    {
+        throw new Error('No Javascript for ' + name);
     }
 
 
@@ -2031,6 +2044,36 @@
                 return '';
             }
             return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'include_javascript', 
+        function(params, data)
+        {
+            var file = params.__get('file',null,0);
+            if (params.__get('once',true) && file in scripts)
+            {
+                return '';
+            }
+            scripts[file] = true;
+            var s = execute(jSmart.prototype.getJavascript(file), {'$this':data});
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, s, data);
+                return '';
+            }
+            return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'include_php', 
+        function(params, data)
+        {
+            return plugins['include_javascript'].process(params,data);
         }
     );
 

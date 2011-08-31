@@ -74,6 +74,11 @@
 		return fileContent;
 	}
 	
+	jSmart.prototype.getJavascript = function(name) {
+		var code = "$this.$testVar = {'a':'abcd','b':'efgh'}; 'hello!'";
+		return code;
+	}
+	
     jSmart.prototype.registerPlugin(
         'function', 
         'sayHello', 
@@ -210,6 +215,7 @@
 {runTest nm='strip'}
 {runTest nm='while'}
 {runTest nm='include'}
+{runTest nm='include_php'}
 {runTest nm='php'}
 <script type="text/x-jsmart-tmpl" id='parent_tpl'>{fetch file="$testPath/parent.tpl"}</script>
 <script type="text/x-jsmart-tmpl" id='child1_tpl'>{fetch file="$testPath/child1.tpl"}</script>
