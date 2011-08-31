@@ -60,9 +60,18 @@
 		var tplTxt = document.getElementById(name.replace('.','_')).innerHTML;
 		if (isIE)
 		{
-			tplTxt = tplTxt.replace(/\r\n/g,'\n').replace(/^\n*/,'');
+			return tplTxt.replace(/\r\n/g,'\n').replace(/^\n*/,'');
 		}
 		return tplTxt;
+	}
+	
+	jSmart.prototype.getFile = function(name) {
+		var fileContent = document.getElementById(name.replace(/^\//,'').replace('.','_')).innerHTML;
+		if (isIE)
+		{
+			return fileContent.replace(/\r\n/g,'\n').replace(/^\n*/,'');
+		}
+		return fileContent;
 	}
 	
     jSmart.prototype.registerPlugin(
@@ -190,6 +199,7 @@
 {*runTest nm='javascript'*}
 {runTest nm='capture'}
 {runTest nm='eval'}
+{runTest nm='fetch'}
 {runTest nm='for'}
 {runTest nm='foreach'}
 {runTest nm='function'}

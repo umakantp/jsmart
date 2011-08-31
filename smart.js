@@ -1634,7 +1634,17 @@
     */
     jSmart.prototype.getTemplate = function(name)
     {
-        throw new Error('No template for '+ name);
+        throw new Error('No template for ' + name);
+    }
+
+    /**
+       override this function
+       @param name  value of 'file' parameter in {fetch}
+       @return file content
+    */
+    jSmart.prototype.getFile = function(name)
+    {
+        throw new Error('No file for ' + name);
     }
 
 
@@ -1972,6 +1982,21 @@
             var tree = [];
             parse(params.__get('var','',0), tree);
             var s = process(tree, data);
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, s, data);
+                return '';
+            }
+            return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'fetch', 
+        function(params, data)
+        {
+            var s = jSmart.prototype.getFile(params.__get('file',null,0));
             if ('assign' in params)
             {
                 assignVar('$'+params.assign, s, data);
