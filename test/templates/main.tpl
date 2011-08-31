@@ -139,10 +139,11 @@
 <h2 id="qunit-userAgent"></h2>
 <ol id="qunit-tests"></ol>
 
+{$testPath = "{$smarty.server.DOCUMENT_ROOT}/test/templates"}
 
 {function name='includeTest'}
 <script type="text/x-jsmart-tmpl" id='{$nm}_php'>{include file="{$nm}.tpl"}</script>
-<script type="text/x-jsmart-tmpl" id='{$nm}_tpl'>{include_literal file=$nm}</script>
+<script type="text/x-jsmart-tmpl" id='{$nm}_tpl'>{fetch file="$testPath/$nm.tpl"}</script>
 {/function}
 
 
@@ -179,7 +180,7 @@
 	
 {/function}
 
-<script type="text/x-jsmart-tmpl" id='included_tpl'>{include_literal file='included'}</script>
+<script type="text/x-jsmart-tmpl" id='included_tpl'>{fetch file="$testPath/included.tpl"}</script>
 
 {runTest nm='comments'}
 {runTest nm='var'}
@@ -200,8 +201,8 @@
 {runTest nm='while'}
 {runTest nm='include'}
 {runTest nm='php'}
-<script type="text/x-jsmart-tmpl" id='parent_tpl'>{include_literal file='parent'}</script>
-<script type="text/x-jsmart-tmpl" id='child1_tpl'>{include_literal file='child1'}</script>
+<script type="text/x-jsmart-tmpl" id='parent_tpl'>{fetch file="$testPath/parent.tpl"}</script>
+<script type="text/x-jsmart-tmpl" id='child1_tpl'>{fetch file="$testPath/child1.tpl"}</script>
 {runTest nm='child2'}  {*extends*}
 {runTest nm='plugins'}
 {runTest nm='cycle'}

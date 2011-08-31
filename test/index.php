@@ -10,12 +10,6 @@ $smarty->compile_check = true;
 $smarty->debugging = false;
 $smarty->allow_php_tag = true;
 
-function include_literal($params, $smarty)
-{
-	return file_get_contents('./templates/'.$params['file'].'.tpl');
-}
-
-$smarty->registerPlugin('function', 'include_literal', 'include_literal');
 
 $smarty->assign('foo','bar');
 $smarty->assign('a',array('0','1','2','3','4','5','6','7','8','9'));
