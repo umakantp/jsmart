@@ -79,6 +79,10 @@
 		return code;
 	}
 	
+	jSmart.prototype.getConfig = function(name) {
+		return document.getElementById(name.replace(/^\//,'')).innerHTML;
+	}
+	
     jSmart.prototype.registerPlugin(
         'function', 
         'sayHello', 
@@ -196,6 +200,8 @@
 
 <script type="text/x-jsmart-tmpl" id='included_tpl'>{fetch file="$testPath/included.tpl"}</script>
 
+<script type="text/x-jsmart-tmpl" id='test.conf'>{fetch file="$testPath/test.conf"}</script>
+
 {runTest nm='comments'}
 {runTest nm='var'}
 {runTest nm='append'}
@@ -203,6 +209,7 @@
 {runTest nm='call'}
 {*runTest nm='javascript'*}
 {runTest nm='capture'}
+{runTest nm='config_load'}
 {runTest nm='eval'}
 {runTest nm='fetch'}
 {runTest nm='for'}

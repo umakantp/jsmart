@@ -1186,6 +1186,14 @@
                 }
             },
             {
+                re: /#(\w+)#/,  //config variable
+                parse: function(e, s)
+                {
+                    parseVar('$smarty.config.'+RegExp.$1, e.tree);
+                    parseModifiers(s, e);
+                }
+            },
+            {
                 re: /[\w.]+/, //static
                 parse: function(e, s)
                 {
@@ -1579,15 +1587,8 @@
         this.tree = [];
         this.blocks = {};
         this.scripts = {};
-        blocks = this.blocks;
-        parse(stripComments(tpl.replace(/\r\n/g,'\n')), this.tree);
-    };
-
-    jSmart.prototype.fetch = function(data)
-    {
-        var smarty = {
-            smarty: 
-            {
+        this.data = {
+            '$smarty': {
                 block: {},
                 capture: {},
                 cycle: {},
@@ -1604,12 +1605,18 @@
             }
         };
         blocks = this.blocks;
+        parse(stripComments(tpl.replace(/\r\n/g,'\n')), this.tree);
+    };
+
+    jSmart.prototype.fetch = function(data)
+    {
+        blocks = this.blocks;
         scripts = this.scripts;
-        var d = obMerge('$',{},data,smarty);
-        var res = process(this.tree, d);
+        this.data = obMerge('$',this.data,data);
+        var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
         {
-            plugins.debug.process([],d);
+            plugins.debug.process([],this.data);
         }
         return res;
     };
@@ -1629,6 +1636,59 @@
             plugins[name] = {'type': type, 'process': callback};
         }
     };
+
+    jSmart.prototype.configLoad = function(confValues, section, data)
+    {
+        data = data ? data : this.data;
+        var s = confValues.replace(/\r\n/g,'\n').replace(/^\s+|\s+$/g,'');
+        var re = /^\s*(?:\[([^\]]+)\]|(?:(\w+)[ \t]*=[ \t]*("""|'[^'\\\n]*(?:\\.[^'\\\n]*)*'|"[^"\\\n]*(?:\\.[^"\\\n]*)*"|[^\n]*)))/m;
+        var currSect = '';
+        for (var f=s.match(re); f; f=s.match(re))
+        {
+	         s = s.slice(f.index+f[0].length);
+	         if (f[1])
+	         {
+		          currSect = f[1];
+	         }
+	         else if ((!currSect || currSect == section) && currSect.substr(0,1) != '.')
+	         {
+		          if (f[3] == '"""')
+		          {
+			           var triple = s.match(/"""/);
+			           if (triple)
+			           {
+				            data.$smarty.config[f[2]] = s.slice(0,triple.index);
+				            s = s.slice(triple.index + triple[0].length);
+			           }
+		          }
+		          else
+		          {
+			           data.$smarty.config[f[2]] = trimQuotes(f[3]);
+		          }
+	         }
+	         var newln = s.match(/\n+/);
+	         if (newln)
+	         {
+		          s = s.slice(newln.index + newln[0].length);
+	         }
+	         else
+	         {
+		          break;
+	         }
+        }
+    }
+
+    jSmart.prototype.clearConfig = function(varName)
+    {
+        if (varName)
+        {
+            delete this.data.$smarty.config[varName];
+        }
+        else
+        {
+            this.data.$smarty.config = {};
+        }
+    }
 
     /**
        override this function
@@ -1659,6 +1719,17 @@
     {
         throw new Error('No Javascript for ' + name);
     }
+
+    /**
+       override this function
+       @param name  value of 'file' parameter in {config_load}
+       @return config file content
+    */
+    jSmart.prototype.getConfig = function(name)
+    {
+        throw new Error('No config for ' + name);
+    }
+
 
 
     /**     
@@ -2083,6 +2154,16 @@
         function(params, content, data, repeat)
         {
             execute(content, data);
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'config_load', 
+        function(params, data)
+        {
+            jSmart.prototype.configLoad(jSmart.prototype.getConfig(params.__get('file',null,0)), params.__get('section','',1), data);
             return '';
         }
     );
