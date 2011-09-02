@@ -127,3 +127,12 @@ $ob['with | symbol:']
 {$aaa = ['abcd',$foo,"{$foo|upper}"]}
 {$aaa[0]}
 {$aaa[2]}
+
+{$aaa = ['y'=>'yellow','b'=>'blue']}
+{$aaa.y} {$aaa.b}
+
+{$aaa = [y=>'yellow',b=>'blue']}
+{$aaa.y} {$aaa.b}
+
+{$aaa = ["y"=>"[$foo]","b\"b"=>$foo|upper,"{$foo|upper}"]}
+{$aaa.y} {$aaa['b"b']} {$aaa[0]}

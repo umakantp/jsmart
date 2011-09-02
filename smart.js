@@ -20,14 +20,17 @@
         {
             for (var nm in arguments[i]) 
             {
-                if (typeof(arguments[i][nm]) == 'object' && arguments[i][nm] != null)
+                if (arguments[i].hasOwnProperty(nm))
                 {
-                    ob1[prefix+nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
-                    obMerge('', ob1[prefix+nm], arguments[i][nm]);
-                }
-                else
-                {
-                    ob1[prefix+nm] = arguments[i][nm]; 
+                    if (typeof(arguments[i][nm]) == 'object' && arguments[i][nm] != null)
+                    {
+                        ob1[prefix+nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
+                        obMerge('', ob1[prefix+nm], arguments[i][nm]);
+                    }
+                    else
+                    {
+                        ob1[prefix+nm] = arguments[i][nm]; 
+                    }
                 }
             }
         }
@@ -40,7 +43,13 @@
     function countProperties(ob)
     {
         var count = 0;
-        for (var k in ob) { count++; }
+        for (var nm in ob) 
+        {
+            if (ob.hasOwnProperty(nm))
+            {
+                count++; 
+            }
+        }
         return count;
     }
 
@@ -49,7 +58,11 @@
     */
     function trimQuotes(s)
     {
-        return s.replace(/^\s+|\s+$/g,'').replace(/^['"]{1}|['"]{1}$/g,'');
+        if (s.match(/^['"].*['"]$/))
+        {
+            s = eval(s);
+        }
+        return s.replace(/^\s+|\s+$/g,'');
     }
 
     /**
@@ -1012,7 +1025,7 @@
                 parse: function(e, s)
                 {
                     var fnm = RegExp.$1;
-                    var params = parseParams(s,'\\s*,\\s*');
+                    var params = parseParams(s,/^\s*,\s*/);
                     parseFunc(fnm, params, e.tree);
                     e.value += params.str;
                     parseModifiers(s.slice(params.str.length), e);
@@ -1197,7 +1210,7 @@
                 re: /\s*\[\s*/,
                 parse: function(e, s)
                 {
-                    var params = parseParams(s,'\\s*,\\s*');
+                    var params = parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/);
                     parsePluginFunc('__array',params,e.tree);
                     e.value += params.str;
                     var paren = s.slice(params.str.length).match(/\s*\]\s*/);
@@ -1235,7 +1248,7 @@
             s = s.slice(RegExp.lastMatch.length).replace(/^\s+/,'');
 
             parseModifiers.stop = true;
-            var params = parseParams(RegExp.$2?s:'', '\\s*:\\s*');
+            var params = parseParams(RegExp.$2?s:'', /^\s*:\s*/);
             parseModifiers.stop = false;
 
             e.value += params.str;
@@ -1356,7 +1369,7 @@
         return e;
     }
 
-    function parseParams(paramsStr, delim)
+    function parseParams(paramsStr, reDelim, reName)
 	 {
 		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
 		  var params = [];
@@ -1368,25 +1381,24 @@
             return params;
         }
 
-        var named = false;
-        if (!delim)
+        if (!reDelim)
         {
-            delim = /^\s+/;
-            named = true;
-        }
-        else
-        {
-            delim = new RegExp('^'+delim);
+            reDelim = /^\s+/;
+            reName = /^(\w+)\s*=\s*/;
         }
 
         while (s)
         {
             var nm = null;
-            if (named && s.match(/^(\w+)\s*=\s*/))
+            if (reName)
             {
-                nm = RegExp.$1;
-                params.str += s.slice(0,RegExp.lastMatch.lengt);
-                s = s.slice(RegExp.lastMatch.length);
+                var foundName = s.match(reName);
+                if (foundName)
+                {
+                    nm = trimQuotes(foundName[1]);
+                    params.str += s.slice(0,foundName[0].length);
+                    s = s.slice(foundName[0].length);
+                }
             }
 
             var param = parseExpression(s);
@@ -1415,10 +1427,11 @@
             params.str += s.slice(0,param.value.length);
             s = s.slice(param.value.length);
 
-            if (s.match(delim))
+            var foundDelim = s.match(reDelim);
+            if (foundDelim)
             {
-                params.str += s.slice(0,RegExp.lastMatch.length);
-                s = s.slice(RegExp.lastMatch.length);
+                params.str += s.slice(0,foundDelim[0].length);
+                s = s.slice(foundDelim[0].length);
             }
             else
             {
@@ -1792,7 +1805,7 @@
             var a = [];
             for (var nm in params)
             {
-                if (params[nm] && typeof params[nm] != 'function')
+                if (params.hasOwnProperty(nm) && params[nm] && typeof params[nm] != 'function')
                 {
                     a[nm] = params[nm];
                 }
@@ -2016,7 +2029,10 @@
             var s = ((v instanceof Array) ? 'Array['+v.length+']' : 'Object') + '<br>';
             for (var nm in v)
             {
-                s += indent + '&nbsp;&nbsp;<strong>' + nm + '</strong> : ' + jSmart.prototype.print_r(v[nm],indent+'&nbsp;&nbsp;&nbsp;') + '<br>';
+                if (v.hasOwnProperty(nm))
+                {
+                    s += indent + '&nbsp;&nbsp;<strong>' + nm + '</strong> : ' + jSmart.prototype.print_r(v[nm],indent+'&nbsp;&nbsp;&nbsp;') + '<br>';
+                }
             }
             return s;
         }
