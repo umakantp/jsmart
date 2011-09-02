@@ -158,4 +158,4 @@
 {/function}-
 
 {testY y=['ab',$foo,"$foo","{$foo}"]}
-{*testY y=['abc' => 'aaa', 'bbb' => 'zzz', 'nnnnn']*}
+{testY y=['nnnnn', 'abc' => 'aaa', 'bbb' => 'zzz']}

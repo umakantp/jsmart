@@ -19,7 +19,7 @@
 	var isIE = navigator.userAgent.indexOf("MSIE") >= 0;
 	var isOpera = navigator.userAgent.indexOf("Opera") >= 0;
 	
-	Array.prototype.notInForeach = "{foreach} loops only on numerical indexes in Array";
+	Array.prototype.notInForeach = "{foreach} loops only through own properties of Object";
 	
 	var data = {
 		'foo' : 'bar',

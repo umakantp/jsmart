@@ -12,7 +12,7 @@
 
     /**
        merges two or more objects into one and add prefix at the beginning of every property name at the top level
-       objects type is lost, prototype properties become own properties 
+       objects type is lost, only own properties copied
     */
     function obMerge(prefix, ob1, ob2 /*, ...*/)
     {
@@ -38,7 +38,7 @@
     }
 
     /**
-       @return  number of properties in ob
+       @return  number of own properties in ob
     */
     function countProperties(ob)
     {
@@ -597,7 +597,7 @@
                         a = [a];
                     }
 
-                    var total = (a instanceof Array) ? a.length : countProperties(a);
+                    var total = countProperties(a);
 
                     data[node.varName+'__total'] = total;
                     if (node.loopName)
@@ -610,16 +610,12 @@
                     var i=0;
                     for (var key in a)
                     {
-                        if (a instanceof Array)
+                        if (!a.hasOwnProperty(key))
                         {
-                            key = parseInt(key);
-                            if (isNaN(key))
-                            {
-                                continue;
-                            }
+                            continue;
                         }
 
-                        data[node.varName+'__key'] = key;
+                        data[node.varName+'__key'] = isNaN(key) ? key : parseInt(key);
                         if (node.keyName)
                         {
                             data['$'+node.keyName] = data[node.varName+'__key'];
