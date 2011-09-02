@@ -101,6 +101,17 @@ function testRepeat($params, $content, $template, &$repeat)
 }
 $smarty->registerPlugin('block', 'testRepeat', 'testRepeat');
 
+function insert_testInsert($params, $smarty)
+{
+	$s = '';
+	foreach ($params as $nm => $v)
+	{
+		$s .= "[$nm: $v] ";
+	}
+	$smarty->assign('insertResult',$s);
+	return $s;
+}
+
 
 $smarty->display('main.tpl');
 

@@ -75,6 +75,10 @@
 	}
 	
 	jSmart.prototype.getJavascript = function(name) {
+		if (name == '/test_insert.php')
+		{
+			return document.getElementById('test_insert').innerHTML;
+		}
 		var code = "$this.$testVar = {'a':'abcd','b':'efgh'}; 'hello!'";
 		return code;
 	}
@@ -141,6 +145,16 @@
 		}
 	);
 	
+	function insert_testInsert(params, data)
+	{
+		var s = '';
+		for (nm in params)
+		{
+			s += '[' + nm +': ' + params[nm] +'] ';
+		}
+		data['$insertResult'] = s;
+		return s;
+	}
 	
 	function strayFunc(v1, v2)
 	{
@@ -148,6 +162,19 @@
 	}
 	
 </script>
+
+<script type="text/x-jsmart-tmpl" id='test_insert'>
+	function smarty_insert_testInsertWithScript(params, data)
+	{
+		var s = '';
+		for (nm in params)
+		{
+			s += '[' + nm +': ' + params[nm] +'] ';
+		}
+		data['$insertWithScriptResult'] = s;
+		return s;
+	}
+</script>	
 {/literal}
 
 
@@ -216,6 +243,7 @@
 {runTest nm='foreach'}
 {runTest nm='function'}
 {runTest nm='if'}
+{runTest nm='insert'}
 {runTest nm='rldelim'}
 {runTest nm='literal'}
 {runTest nm='section'}

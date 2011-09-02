@@ -1712,7 +1712,8 @@
 
     /**
        override this function
-       @param name  value of 'file' parameter in {include_php} and {include_javascript}
+       @param name  value of 'file' parameter in {include_php} and {include_javascript} 
+                     or value of 'script' parameter in {insert}
        @return Javascript script
     */
     jSmart.prototype.getJavascript = function(name)
@@ -2145,6 +2146,36 @@
         function(params, data)
         {
             return plugins['include_javascript'].process(params,data);
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'insert', 
+        function(params, data)
+        {
+            var fparams = {};
+            for (var nm in params)
+            {
+                if (params.hasOwnProperty(nm) && isNaN(nm) && params[nm] && typeof params[nm] == 'string' && nm != 'name' && nm != 'assign' && nm != 'script')
+                {
+                    fparams[nm] = params[nm];
+                }
+            }
+            var prefix = 'insert_';
+            if ('script' in params)
+            {
+                eval(jSmart.prototype.getJavascript(params.script));
+                prefix = 'smarty_insert_';
+            }
+            var func = eval(prefix+params.__get('name',null,0));            
+            var s = func(fparams, data);
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, s, data);
+                return '';
+            }
+            return s;
         }
     );
 
