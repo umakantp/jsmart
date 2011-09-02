@@ -103,3 +103,6 @@ assign var='num'  value=999
 
 {assign 'cnt' $foo|replace:"bar":"bbbar"|count_characters  scope=global  nocache}  {*short-hand*}
 {$cnt}
+
+{assign var=zzz value=[1,[8,['a',$foo]],3]}
+{$zzz[1][1][1]}

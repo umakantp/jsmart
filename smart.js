@@ -873,7 +873,7 @@
                     }
                     else if (plugin.type == 'function')
                     {
-                        parsePluginFunc(nm, params, tree);
+                        parsePluginFunc(nm, parseParams(params), tree);
                     }
                     if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='while' || nm=='nocache')
                     {
@@ -1019,7 +1019,7 @@
                 }
             },
             {
-                re: /\s*\(\s*/,
+                re: /\s*\(\s*/,  //expression in parentheses
                 parse: function(e, s)
                 {
                     var parens = [];
@@ -1191,6 +1191,20 @@
                 {
                     parseVar('$smarty.config.'+RegExp.$1, e.tree);
                     parseModifiers(s, e);
+                }
+            },
+            {
+                re: /\s*\[\s*/,
+                parse: function(e, s)
+                {
+                    var params = parseParams(s,'\\s*,\\s*');
+                    parsePluginFunc('__array',params,e.tree);
+                    e.value += params.str;
+                    var paren = s.slice(params.str.length).match(/\s*\]\s*/);
+                    if (paren)
+                    {
+                        e.value += paren[0];
+                    }
                 }
             },
             {
@@ -1429,7 +1443,7 @@
         tree.push({
             type: 'plugin',
             name: name,
-            params: parseParams(params)
+            params: params
         });
     }
 
@@ -1440,21 +1454,7 @@
         {
             if (params.__parsed.hasOwnProperty(nm))
             {
-                var node = params.__parsed[nm];
-                var v = '';
-
-                if (node.type == 'var' && isValidVar(node.name, data))
-                {
-                    with (data)
-                    {
-                        v = eval(node.name);
-                    }
-                }
-                else
-                {
-                    v = process([node], data);
-                }
-
+                var v = process([params.__parsed[nm]], data);
                 if (typeof(v) == 'string' && v.match(/^[1-9]\d*$/) && !isNaN(v))
                 {
                     v = parseInt(v);
@@ -1480,26 +1480,6 @@
             return defVal;
         };
         return actualParams;
-    }
-
-    function isValidVar(varName, data)
-    {
-		  if (!varName.match(/^\s*[$]/))
-		  {
-			   return false;
-		  }
-        try
-	     {
-		      with (data)
-		      {
-			       eval(varName);
-		      }
-	     }
-	     catch(e)
-	     {
-		      return false;
-	     }
-	     return true;
     }
 
     function process(tree, data)
@@ -1553,6 +1533,10 @@
             if (typeof s == 'boolean')
             {
                 s = s ? '1' : '';
+            }
+            if (tree.length == 1)
+            {
+                return s;
             }
             res += s;
         }
@@ -1797,6 +1781,23 @@
                 data[params.name+'__p'+i] = params[i];
             }
             return execute(params.name + '(' + p.join(',') + ')', data);
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        '__array', 
+        function(params, data)
+        {
+            var a = [];
+            for (var nm in params)
+            {
+                if (params[nm] && typeof params[nm] != 'function')
+                {
+                    a[nm] = params[nm];
+                }
+            }
+            return a;
         }
     );
 

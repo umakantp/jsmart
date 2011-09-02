@@ -149,3 +149,12 @@
 {testX x={call name='testX' x="{$a|upper}"}}	
 
 {testX x=abcd|upper}
+
+
+{function testY}
+	{foreach $y as $k => $v}
+		[{$k}: {$v}]
+	{/foreach}
+{/function}-
+
+{testY y=['ab',$foo,"$foo","{$foo}"]}

@@ -123,3 +123,7 @@ $ob['with | symbol:']
 {"{sayHello to='everybody'}|upper"}		//modifier is NOT applied!
 
 {{sayHello to='everybody'}|upper|replace:'EVERYBODY':$foo}
+
+{$aaa = ['abcd',$foo,"{$foo|upper}"]}
+{$aaa[0]}
+{$aaa[2]}
