@@ -263,8 +263,11 @@
                         {
                             return execute('(__arg1 / __arg2) % 2'+(node.op=='even'?'==':'!=')+'0', data);
                         }
-
-                        return execute('__arg1 '+node.op+'__arg2', data);
+                        else if (node.op.match(/xor/))
+                        {
+                            return execute('(__arg1 || __arg2) && !(__arg1 && __arg2)', data);
+                        }
+                        return execute('__arg1 '+node.op+' __arg2', data);
                     }
                     else if (node.op == '!')
                     {
@@ -591,7 +594,12 @@
 
                 process: function(node, data)
                 {
-                    var a = (node.arr in data) ? data[node.arr] : trimQuotes(node.arr);
+                    var a = null;
+                    try { a = execute(node.arr,data); } catch(e){}
+                    if (!a)
+                    {
+                        a = trimQuotes(node.arr);
+                    }
                     if (!(a instanceof Object))
                     {
                         a = [a];
@@ -1181,10 +1189,10 @@
                 }
             },
             {
-                re: /\s+xor\s+/,            //TODO
+                re: /\s+xor\s+/,
                 parse: function(e, s)
                 {
-                    parseOperator(RegExp.$1, 'binary', 12, e.tree);
+                    parseOperator('xor', 'binary', 12, e.tree);
                 }
             },
             {
@@ -1232,7 +1240,7 @@
             return false;
         }
 
-        if (s.match(/^[|](\w+)(?:\s*(:)\s*)?/) && (RegExp.$1 in modifiers || RegExp.$1 == 'default' || eval('typeof '+RegExp.$1) == 'function'))
+        if (s.match(/^[|](\w+)(?:\s*(:)\s*)?/))
         {
             e.value += RegExp.lastMatch;
 

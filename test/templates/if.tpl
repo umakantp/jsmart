@@ -180,3 +180,22 @@ f:[{$a != 'aaa'}]		  		//empty string
 {else}
 	err
 {/if}
+
+
+{if true xor false}
+	OK
+{else}
+	err
+{/if}
+
+{if true XOR $foo}
+	err
+{else}
+	OK
+{/if}
+
+{if nullVar XOR false}
+	err
+{else}
+	OK
+{/if}
