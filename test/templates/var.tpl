@@ -136,3 +136,9 @@ $ob['with | symbol:']
 
 {$aaa = ["y"=>"[$foo]","b\"b"=>$foo|upper,"{$foo|upper}"]}
 {$aaa.y} {$aaa['b"b']} {$aaa[0]}
+
+{"[`$ob.prop2.txt`]"}
+{"`{$foo} code here|upper`"} 
+{"[`$foo|replace:b:z`]"} 
+{"[`$num + 3`]"}
+{"[`{sayHello to='world'}`]"}

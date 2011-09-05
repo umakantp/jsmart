@@ -922,11 +922,11 @@
     {
         if (parseText.parseEmbeddedVars)
         {
-            var re = /([$][\w@]+)|`([$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')?\])*)`/;
+            var re = /([$][\w@]+)|`([^`]*)`/;
             for (var found=text.match(re); found; found=text.match(re))
             {
                 tree.push({type: 'text', data: text.slice(0,found.index)});
-                parseVar(found[1]?found[1]:found[2], tree);
+                tree.push( parseExpression(found[1] ? found[1] : found[2]).tree );
                 text = text.slice(found.index + found[0].length);
             }
         }

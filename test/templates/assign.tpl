@@ -106,3 +106,6 @@ assign var='num'  value=999
 
 {assign var=zzz value=[1,[8,['a',$foo]],3]}
 {$zzz[1][1][1]}
+
+{assign var=yyy value="|`$num + 3`|"}
+{"`$yyy`"}
