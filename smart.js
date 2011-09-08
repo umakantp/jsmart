@@ -320,61 +320,20 @@
                     var params = getActualParamValues(node.params, data);
                     params.loop = execute(node.params.loop, data);
 
-                    var sectionProps = {};
-                    data.$smarty.section[params.name] = sectionProps;
+                    var props = {};
+                    data.$smarty.section[params.name] = props;
 
                     var show = params.__get('show',true);
-                    sectionProps.show = show;
+                    props.show = show;
                     if (!show)
                     {
                         return process(node.subTreeElse, data);
                     }
 
-                    var s = '';
-                    if (params.loop instanceof Object)
-                    {
-                        if( this.foreach(
-                            params.name, 
-                            params.__get('start',0),
-                            (params.loop instanceof Array) ? params.loop.length : countProperties(params.loop),
-                            params.__get('step',1),
-                            params.__get('max'),
-                            data,
-                            sectionProps,
-                            function(i) { 
-                                eval(params.name + ' = ' + i + ';'); 
-                                s += process(node.subTree, data);  
-                            }
-                        ))
-                        {
-                            return s;
-                        }
-                    }
-                    else if (parseInt(params.loop))
-                    {
-                        if( this.foreach(
-                            params.name, 
-                            params.__get('start',0),
-                            parseInt(params.loop),
-                            params.__get('step',1),
-                            params.__get('max'),
-                            data,
-                            sectionProps,
-                            function(i) { s += process(node.subTree, data);  }
-                        ))
-                        {
-                            return s;
-                        }
-                    }
-                    return process(node.subTreeElse, data);
-                },
-
-                foreach: function(nm, from, to, step, max, data, props, callback)
-                {
-                    from = parseInt(from);
-                    to = parseInt(to);
-                    step = parseInt(step);
-                    max = parseInt(max);
+                    var from = parseInt(params.__get('start',0));
+                    var to = (params.loop instanceof Object) ? countProperties(params.loop) : isNaN(params.loop) ? 0 : parseInt(params.loop);
+                    var step = parseInt(params.__get('step',1));
+                    var max = parseInt(params.__get('max'));
                     if (isNaN(max))
                     {
                         max = Number.MAX_VALUE;
@@ -404,6 +363,7 @@
                     props.loop = count;  //? - because it is so in Smarty
 
                     count = 0;
+                    var s = '';
                     for (i=from; i>=0 && i<to && count<max; i+=step,++count)
                     {
                         props.first = (i==from);
@@ -413,10 +373,14 @@
                         props.index_next = i+step;
                         props.iteration = props.rownum = count+1;
 
-                        callback(i);
+                        s += process(node.subTree, data);  
                     }
-                    return count;
-                }
+                    if (count)
+                    {
+                        return s;
+                    }
+                    return process(node.subTreeElse, data);
+                },
             },
 
             'for':
@@ -724,27 +688,21 @@
                     {
                         params.prepend = false;
                     }
-                    params.hasChild = params.hasParent = false;
 
-                    var __parseVar = parseVar;
-                    parseVar = function(name, tree)
+                    params.hasChild = params.hasParent = false;
+                    onParseVar = function(nm) 
                     {
-                        if (name.match(/^\s*[$]smarty.block.child\s*$/))
+                        if (nm.match(/^\s*[$]smarty.block.child\s*$/))
                         {
                             params.hasChild = true;
                         }
-                        if (name.match(/^\s*[$]smarty.block.parent\s*$/))
+                        if (nm.match(/^\s*[$]smarty.block.parent\s*$/))
                         {
                             params.hasParent = true;
                         }
-                        tree.push({type:'var', name:prepareVar(name)});
-                        return tree;
-                    };
-
-                    var tree = [];
-                    parse(content, tree);
-
-                    parseVar = __parseVar;
+                    }
+                    var tree = parse(content, []);
+                    onParseVar = function(nm) {}
 
                     var blockName = trimQuotes(params.name?params.name:params[0]);
                     if (!(blockName in blocks))
@@ -934,15 +892,6 @@
         return tree;
     }
 
-    function parseVar(name, tree)
-    {
-        tree.push({
-            type: 'var',
-            name: prepareVar(name)
-        });
-        return tree;
-    }
-
     function parseFunc(name, params, tree)
     {
         params.__parsed.name = parseText(name,[])[0];
@@ -966,15 +915,62 @@
         });
     }
 
+    function parseVar(s, e)
+    {
+        var rootName = prepareVar(e.token);
+        var parts = [{type:'text', data:rootName}];
+
+        var re = /^(?:\.(\$?\w+)|\[\s*)/;
+        for (var op=s.match(re); op; op=s.match(re))
+        {
+            e.token += op[0];
+            s = s.slice(op[0].length);
+            if (op[0].match(/\[/))
+            {
+                var eProp = parseExpression(s);
+                if (eProp.value)
+                {
+                    e.token += eProp.value;
+                    parts.push( eProp.tree );
+                    s = s.slice(eProp.value.length);
+                }
+
+                var closeOp = s.match(/\s*\]/);
+                if (closeOp)
+                {
+                    e.token += closeOp[0];
+                    s = s.slice(closeOp[0].length);
+                }
+            }
+            else
+            {
+               parts.push( parseExpression(op[1]).tree );
+            }
+        }
+
+        e.tree.push({
+            type: 'var',
+            name: prepareVar(e.token),
+            parts: parts
+        });
+
+        e.value += e.token.substr(rootName.length);
+
+        onParseVar(e.token);
+
+        return s;
+    }
+
+    function onParseVar(nm)  {}
+
 
     var tokens = 
         [
             {
-                re: /[$][\w@]+(?:[.]\w+|\[(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|\d+|[$][\w@]+|\w+)?\])*/,  //var
+                re: /\$[\w@]+/,
                 parse: function(e, s)
                 {
-                    parseVar(e.token, e.tree);
-                    parseModifiers(s, e);
+                    parseModifiers(parseVar(s, e), e);
                 }
             },
             {
@@ -998,29 +994,34 @@
                 {
                     var v = eval(e.token);
                     var isVar = v.match(tokens[0].re);
-                    if (isVar && isVar[0].length == v.length)
+                    if (isVar)
                     {
-                        parseVar(v, e.tree);
+                        var eVar = {token:isVar[0], tree:[]};
+                        parseVar(v, eVar);
+                        if (eVar.tree[0].name.length == v.length)
+                        {
+                            e.tree.push( eVar.tree[0] );
+                            return;
+                        }
+                    }
+
+                    var tree = [];
+                    parseText.parseEmbeddedVars = true;
+                    parse(v, tree);
+                    parseText.parseEmbeddedVars = false;
+                    if (tree.length == 1)
+                    {
+                        e.tree.push(tree[0]);
                     }
                     else
                     {
-                        var tree = [];
-                        parseText.parseEmbeddedVars = true;
-                        parse(v, tree);
-                        parseText.parseEmbeddedVars = false;
-                        if (tree.length == 1)
-                        {
-                            e.tree.push(tree[0]);
-                        }
-                        else
-                        {
-                            e.tree.push({
-                                type: 'build-in',
-                                name: '__quoted',
-                                params: {__parsed:tree}
-                            });
-                        }
+                        e.tree.push({
+                            type: 'build-in',
+                            name: '__quoted',
+                            params: {__parsed:tree}
+                        });
                     }
+
                     parseModifiers(s, e);
                 }
             },
@@ -1206,7 +1207,9 @@
                 re: /#(\w+)#/,  //config variable
                 parse: function(e, s)
                 {
-                    parseVar('$smarty.config.'+RegExp.$1, e.tree);
+                    var eVar = {token:'$smarty',tree:[]};
+                    parseVar('.config.'+RegExp.$1, eVar);
+                    e.tree.push( eVar.tree[0] );                    
                     parseModifiers(s, e);
                 }
             },
@@ -1499,6 +1502,28 @@
         return actualParams;
     }
 
+    function __getVarValue(node, data)
+    {
+        var v = data;
+        for (var i=0; i<node.parts.length; ++i)
+        {
+            var nm = process([node.parts[i]],data);
+            if (nm in data.$smarty.section && node.parts[i].type=='text' && process([node.parts[0]],data)!='$smarty')
+            { 
+                nm = data.$smarty.section[nm].index;
+            }
+            if (nm in v)
+            {
+                v = v[nm];
+            }
+            else
+            {
+                return '';
+            }
+        }
+        return v;
+    }
+
     function process(tree, data)
     {
         var res = '';
@@ -1512,13 +1537,7 @@
             }
             else if (node.type == 'var')
             {
-                try {
-                    s = execute(node.name, data);
-                }
-                catch(e)
-                {
-                    s = '';
-                }
+                s = __getVarValue(node,data);
             }
             else if (node.type == 'build-in')
             {

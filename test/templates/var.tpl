@@ -82,7 +82,7 @@ $ob['with | symbol:']
 {'test $foo'}
 {{$foo}}
 
-{"$foo {for $a=0 to 5}$a{/for}"}
+{"$foo {for $i=0 to 5}$i{/for}"}
 
 {$num+7}
 
@@ -142,3 +142,12 @@ $ob['with | symbol:']
 {"[`$foo|replace:b:z`]"} 
 {"[`$num + 3`]"}
 {"[`{sayHello to='world'}`]"}
+
+{$propName = 'txt'}
+{$ob.prop2[$propName]}
+{$ob.prop2.$propName}
+
+{$prop1Name = 'PROP1'}
+{$ob[$prop1Name|lower]}
+
+{$a[$num+2-1]}
