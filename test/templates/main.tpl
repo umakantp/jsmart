@@ -21,6 +21,18 @@
 	
 	Array.prototype.notInForeach = "{foreach} loops only through own properties of Object";
 	
+	
+	TestClassObj = function()
+	{
+		this.prop = 'TestClassObj.prop';
+	}
+	
+	TestClassObj.prototype.func = function()
+	{
+		return 'TestClassObj.func';
+	}
+
+	
 	var data = {
 		'foo' : 'bar',
 		'a' : ['0','1','2','3','4','5','6','7','8','9'],
@@ -53,7 +65,8 @@
 		'long_text': "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n",
 		'aEmpty' : [],
 		'sEmpty' : '',
-		'nullVar': null
+		'nullVar': null,
+		'testClassObj': new TestClassObj
 	};
 	
 	jSmart.prototype.getTemplate = function(name) {

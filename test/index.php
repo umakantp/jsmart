@@ -51,6 +51,17 @@ $smarty->assign(
 	)
 );
 
+class TestClassObj
+{
+	public $prop = 'TestClassObj.prop';
+	public function func()
+	{
+		return 'TestClassObj.func';
+	}
+};
+
+$smarty->assign('testClassObj', new TestClassObj);
+
 $smarty->assign('use_compiled',defined('USE_COMPILED'));
 
 

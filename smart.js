@@ -246,12 +246,18 @@
                         data.__arg2 = params[1];
                         if (node.op == '=')
                         {
-                            var varName = node.params.__parsed[0].name;
-                            assignVar(varName, params[1], data);
+                            getVarValue(node.params.__parsed[0], data, params[1]);
                             return '';
                         }
                         else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/))
                         {
+/*
+                            var res = '';
+                            with ({arg1:getVarValue(node.params.__parsed[0],data), arg2:params[1]})
+                            {
+                                res = eval(getVarValue(node.params.__parsed[0],data) + node.op + params[1]);
+                            }
+*/
                             var varName = node.params.__parsed[0].name;
                             return execute(varName+node.op+'__arg2', data);
                         }
@@ -920,7 +926,7 @@
         var rootName = prepareVar(e.token);
         var parts = [{type:'text', data:rootName}];
 
-        var re = /^(?:\.(\$?\w+)|\[\s*)/;
+        var re = /^(?:(?:\.|->)(\$?\w+)|\[\s*)/;
         for (var op=s.match(re); op; op=s.match(re))
         {
             e.token += op[0];
@@ -928,11 +934,15 @@
             if (op[0].match(/\[/))
             {
                 var eProp = parseExpression(s);
-                if (eProp.value)
+                if (eProp)
                 {
                     e.token += eProp.value;
                     parts.push( eProp.tree );
                     s = s.slice(eProp.value.length);
+                }
+                else
+                {
+                    parts.push({type:'text', data:''});
                 }
 
                 var closeOp = s.match(/\s*\]/);
@@ -1502,23 +1512,44 @@
         return actualParams;
     }
 
-    function __getVarValue(node, data)
+    function getVarValue(node, data, val)
     {
         var v = data;
+        var nm = '';
         for (var i=0; i<node.parts.length; ++i)
         {
-            var nm = process([node.parts[i]],data);
+            nm = process([node.parts[i]],data);
             if (nm in data.$smarty.section && node.parts[i].type=='text' && process([node.parts[0]],data)!='$smarty')
             { 
                 nm = data.$smarty.section[nm].index;
             }
-            if (nm in v)
+
+            if (!nm && typeof val != 'undefined')
+            {
+                var rootNm = process([node.parts[0]],data);
+                if (data[rootNm] instanceof Array)
+                {
+                    nm = data[rootNm].length;
+                }
+            }
+
+            if (typeof val != 'undefined' && i==node.parts.length-1)
+            {
+                v[nm] = val;
+            }
+
+            if (typeof v == 'object' && nm in v)
             {
                 v = v[nm];
             }
             else
             {
-                return '';
+                if (typeof val == 'undefined')
+                {
+                    return '';
+                }
+                v[nm] = {};
+                v = v[nm];
             }
         }
         return v;
@@ -1537,7 +1568,7 @@
             }
             else if (node.type == 'var')
             {
-                s = __getVarValue(node,data);
+                s = getVarValue(node,data);
             }
             else if (node.type == 'build-in')
             {

@@ -60,6 +60,9 @@ $ob['with | symbol:']
 {$test_with_code = "{for $z=1 to 5}[{$z}]{/for}"}
 {$test_with_code}{strayFunc('abc','def')}-
 
+{$test_with_code={sayHello to='whole world'}}
+{$test_with_code}
+
 {strayFunc($ob.prop2.txt,$foo)}-
 
 {$textWithTags = 'Woman Gets <font face="helvetica">New Kidney</font> from Dad she Hasn\'t Seen in <b>years</b>.'}
@@ -70,8 +73,12 @@ $ob['with | symbol:']
 
 {strayFunc($ob.prop2['txt'],$foo)} -
 
+--------------------adding to array-------------------------
 {$a[] = 'zzz'}
 {$a[10]}
+{$a[].ttt = 'vvvvv'}
+{$a[11].ttt}
+---------------------------------------------
 
 {$u="something" scope=parent nocache}
 {$u}
@@ -143,6 +150,9 @@ $ob['with | symbol:']
 {"[`$num + 3`]"}
 {"[`{sayHello to='world'}`]"}
 
+{$pr = 'prop1'}
+{$ob.$pr}
+
 {$propName = 'txt'}
 {$ob.prop2[$propName]}
 {$ob.prop2.$propName}
@@ -151,3 +161,13 @@ $ob['with | symbol:']
 {$ob[$prop1Name|lower]}
 
 {$a[$num+2-1]}
+
+{$ob.prop2.zzz.yyy = 'yyy'}
+{$ob.prop2.zzz.yyy}
+
+{$ob.NEWPROP = 'TEST!'}
+{$NewPropName = 'neyprop'}
+[{$ob[{$NewPropName|upper|replace:'Y':'W'}]}]
+
+
+{$testClassObj->prop}

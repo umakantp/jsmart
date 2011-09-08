@@ -105,6 +105,8 @@
 {$ob.prop2['n'] = 7}
 {$ob.prop2['n']}
 
+{$ob.prop2.n = $num}
+{testX x=$a[$ob.prop2['n']]}
 
 {$a = a}
 {$b = b}
