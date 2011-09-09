@@ -199,3 +199,9 @@ f:[{$a != 'aaa'}]		  		//empty string
 {else}
 	OK
 {/if}
+
+{if 02 eq 2}
+	OK
+{else}
+	err
+{/if}

@@ -171,3 +171,6 @@ $ob['with | symbol:']
 
 
 {$testClassObj->prop}
+
+
+{70|replace:7:8 + 1}

@@ -926,6 +926,68 @@
         var rootName = prepareVar(e.token);
         var parts = [{type:'text', data:rootName}];
 
+        var re = /^(?:\.|->|\[\s*)/;
+        for (var op=s.match(re); op; op=s.match(re))
+        {
+            e.token += op[0];
+            s = s.slice(op[0].length);
+
+            var eProp = {value:'', tree:[]};
+            if (op[0].match(/\[/))
+            {
+                eProp = parseExpression(s);
+                if (eProp)
+                {
+                    e.token += eProp.value;
+                    parts.push( eProp.tree );
+                    s = s.slice(eProp.value.length);
+                }
+
+                var closeOp = s.match(/\s*\]/);
+                if (closeOp)
+                {
+                    e.token += closeOp[0];
+                    s = s.slice(closeOp[0].length);
+                }
+            }
+            else
+            {
+                var parseMod = parseModifiers.stop;
+                parseModifiers.stop = true;
+                if (lookUp(s,eProp))
+                {
+                    e.token += eProp.value;
+                    parts.push( eProp.tree[0] );
+                    s = s.slice(eProp.value.length);
+                }
+                else
+                {
+                    eProp = false;
+                }
+                parseModifiers.stop = parseMod;
+            }
+
+            if (!eProp)
+            {
+                parts.push({type:'text', data:''});
+            }
+        }
+
+        e.tree.push({
+            type: 'var',
+            name: prepareVar(e.token),
+            parts: parts
+        });
+
+        e.value += e.token.substr(rootName.length);
+
+        onParseVar(e.token);
+
+
+/*
+        var rootName = prepareVar(e.token);
+        var parts = [{type:'text', data:rootName}];
+
         var re = /^(?:(?:\.|->)(\$?\w+)|\[\s*)/;
         for (var op=s.match(re); op; op=s.match(re))
         {
@@ -967,7 +1029,7 @@
         e.value += e.token.substr(rootName.length);
 
         onParseVar(e.token);
-
+*/
         return s;
     }
 
@@ -977,7 +1039,7 @@
     var tokens = 
         [
             {
-                re: /\$[\w@]+/,
+                re: /\$[\w@]+/,   //var
                 parse: function(e, s)
                 {
                     parseModifiers(parseVar(s, e), e);
@@ -1031,7 +1093,6 @@
                             params: {__parsed:tree}
                         });
                     }
-
                     parseModifiers(s, e);
                 }
             },
@@ -1224,7 +1285,7 @@
                 }
             },
             {
-                re: /\s*\[\s*/,
+                re: /\s*\[\s*/,   //array
                 parse: function(e, s)
                 {
                     var params = parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/);
@@ -1238,7 +1299,15 @@
                 }
             },
             {
-                re: /[\w.]+/, //static
+                re: /[\d.]+/, //number
+                parse: function(e, s)
+                {
+                    parseText(e.token, e.tree);
+                    parseModifiers(s, e);
+                }
+            },
+            {
+                re: /\w+/, //static
                 parse: function(e, s)
                 {
                     parseText(e.token, e.tree);
@@ -1249,37 +1318,47 @@
 
     function parseModifiers(s, e)
     {
-        if (parseModifiers.stop) {
-            return false;
-        }
-
-        if (s.match(/^[|](\w+)(?:\s*(:)\s*)?/))
+        if (parseModifiers.stop) 
         {
-            e.value += RegExp.lastMatch;
-
-            var fnm = RegExp.$1;
-            if (fnm == 'default')
-            {
-                fnm = 'defaultValue';
-            }
-            s = s.slice(RegExp.lastMatch.length).replace(/^\s+/,'');
-
-            parseModifiers.stop = true;
-            var params = parseParams(RegExp.$2?s:'', /^\s*:\s*/);
-            parseModifiers.stop = false;
-
-            e.value += params.str;
-
-            params.unshift(e.token);
-            params.__parsed.unshift(e.tree.pop());  //modifier has the highest precedence over all the operators
-            e.tree.push(parseFunc(fnm,params,[])[0]);
-
-            s = s.slice(params.str.length);
-
-            parseModifiers(s, e);
-            return true;
+            return;
         }
-        return false;
+
+        var modifier = s.match(/^\|(\w+)/);
+        if (!modifier)
+        {
+            return;
+        }
+
+        e.value += modifier[0];
+
+        var fnm = modifier[1]=='default' ? 'defaultValue' : modifier[1];
+        s = s.slice(modifier[0].length).replace(/^\s+/,'');
+        
+        parseModifiers.stop = true;
+        var params = [];
+        for (var colon=s.match(/^\s*:\s*/); colon; colon=s.match(/^\s*:\s*/))
+        {
+            e.value += s.slice(0,colon[0].length);
+            s = s.slice(colon[0].length);
+            
+            var param = {value:'', tree:[]};
+            if (lookUp(s, param))
+            {
+                e.value += param.value;
+                params.push(param.tree[0]);
+                s = s.slice(param.value.length);
+            }
+            else
+            {
+                parseText('',params);
+            }
+        }
+        parseModifiers.stop = false;
+        
+        params.unshift(e.tree.pop());  //modifiers have the highest priority
+        e.tree.push(parseFunc(fnm,{__parsed:params},[])[0]);
+        
+        parseModifiers(s, e);  //modifiers can be combined
     }
 
     function lookUp(s,e)
@@ -1289,16 +1368,12 @@
             return false;
         }
 
-        if (parseModifiers.stop && e.tree.length)
-        {
-            return false;
-        }
-
         if (s.match('^'+jSmart.prototype.ldelim))
         {
             var tag = findTag('.*',s);
             if (tag)
             {
+                e.token = tag[0];
                 e.value += tag[0];
                 parse(tag[0], e.tree);
                 parseModifiers(s.slice(e.value.length), e);
@@ -1487,7 +1562,7 @@
                 var v = process([params.__parsed[nm]], data);
                 if (typeof(v) == 'string' && v.match(/^[1-9]\d*$/) && !isNaN(v))
                 {
-                    v = parseInt(v);
+                    v = parseInt(v,10);
                 }
                 actualParams[nm] = v;
             }
