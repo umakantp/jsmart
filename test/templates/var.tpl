@@ -170,7 +170,7 @@ $ob['with | symbol:']
 [{$ob[{$NewPropName|upper|replace:'Y':'W'}]}]
 
 
-{$testClassObj->prop}
-
-
 {70|replace:7:8 + 1}
+
+{$testClassObj->prop}
+{$testClassObj->func('call member func PHP style')}

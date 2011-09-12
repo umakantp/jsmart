@@ -119,3 +119,6 @@ ______________________________ not array ________________________
 {foreach from=ghijkl item='myitem'}
 	[{$myitem}]
 {/foreach}
+
+{$Question = ['Answers' => ['one','two']]}
+{foreach from=$Question.Answers key="aid" item="answer" name="Loop"}{$aid}: {$answer}{/foreach}

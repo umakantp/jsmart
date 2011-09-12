@@ -20,7 +20,7 @@
         {
             for (var nm in arguments[i]) 
             {
-                if (arguments[i].hasOwnProperty(nm))
+                if (arguments[i].hasOwnProperty(nm) || typeof arguments[i][nm] == 'function')
                 {
                     if (typeof(arguments[i][nm]) == 'object' && arguments[i][nm] != null)
                     {
@@ -957,7 +957,12 @@
                 if (lookUp(s,eProp))
                 {
                     e.token += eProp.value;
-                    parts.push( eProp.tree[0] );
+                    var part = eProp.tree[0];
+                    if (part.type == 'plugin' && part.name == '__func')
+                    {
+                        part.hasOwner = true;
+                    }
+                    parts.push( part );
                     s = s.slice(eProp.value.length);
                 }
                 else
@@ -983,53 +988,6 @@
 
         onParseVar(e.token);
 
-
-/*
-        var rootName = prepareVar(e.token);
-        var parts = [{type:'text', data:rootName}];
-
-        var re = /^(?:(?:\.|->)(\$?\w+)|\[\s*)/;
-        for (var op=s.match(re); op; op=s.match(re))
-        {
-            e.token += op[0];
-            s = s.slice(op[0].length);
-            if (op[0].match(/\[/))
-            {
-                var eProp = parseExpression(s);
-                if (eProp)
-                {
-                    e.token += eProp.value;
-                    parts.push( eProp.tree );
-                    s = s.slice(eProp.value.length);
-                }
-                else
-                {
-                    parts.push({type:'text', data:''});
-                }
-
-                var closeOp = s.match(/\s*\]/);
-                if (closeOp)
-                {
-                    e.token += closeOp[0];
-                    s = s.slice(closeOp[0].length);
-                }
-            }
-            else
-            {
-               parts.push( parseExpression(op[1]).tree );
-            }
-        }
-
-        e.tree.push({
-            type: 'var',
-            name: prepareVar(e.token),
-            parts: parts
-        });
-
-        e.value += e.token.substr(rootName.length);
-
-        onParseVar(e.token);
-*/
         return s;
     }
 
@@ -1593,38 +1551,48 @@
         var nm = '';
         for (var i=0; i<node.parts.length; ++i)
         {
-            nm = process([node.parts[i]],data);
-            if (nm in data.$smarty.section && node.parts[i].type=='text' && process([node.parts[0]],data)!='$smarty')
-            { 
-                nm = data.$smarty.section[nm].index;
-            }
-
-            if (!nm && typeof val != 'undefined')
+            var part = node.parts[i];
+            if (part.type == 'plugin' && part.name == '__func' && part.hasOwner)
             {
-                var rootNm = process([node.parts[0]],data);
-                if (data[rootNm] instanceof Array)
-                {
-                    nm = data[rootNm].length;
-                }
-            }
-
-            if (typeof val != 'undefined' && i==node.parts.length-1)
-            {
-                v[nm] = val;
-            }
-
-            if (typeof v == 'object' && nm in v)
-            {
-                v = v[nm];
+                data.__owner = v;
+                v = process([node.parts[i]],data);
+                delete data.__owner;
             }
             else
             {
-                if (typeof val == 'undefined')
-                {
-                    return '';
+                nm = process([part],data);
+
+                //section name
+                if (nm in data.$smarty.section && part.type=='text' && process([node.parts[0]],data)!='$smarty')
+                { 
+                    nm = data.$smarty.section[nm].index;
                 }
-                v[nm] = {};
-                v = v[nm];
+
+                //add to array
+                if (!nm && typeof val != 'undefined' && v instanceof Array)
+                {
+                    nm = v.length;
+                }
+
+                //set new value
+                if (typeof val != 'undefined' && i==node.parts.length-1)
+                {
+                    v[nm] = val;
+                }
+
+                if (typeof v == 'object' && nm in v)
+                {
+                    v = v[nm];
+                }
+                else
+                {
+                    if (typeof val == 'undefined')
+                    {
+                        return '';
+                    }
+                    v[nm] = {};
+                    v = v[nm];
+                }
             }
         }
         return v;
@@ -1913,21 +1881,6 @@
     */
     jSmart.prototype.registerPlugin(
         'function', 
-        '__func', 
-        function(params, data)
-        {
-            var p = [];
-            for(var i=0; i<params.length; ++i)
-            {
-                p.push(params.name+'__p'+i);
-                data[params.name+'__p'+i] = params[i];
-            }
-            return execute(params.name + '(' + p.join(',') + ')', data);
-        }
-    );
-
-    jSmart.prototype.registerPlugin(
-        'function', 
         '__array', 
         function(params, data)
         {
@@ -1940,6 +1893,23 @@
                 }
             }
             return a;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        '__func', 
+        function(params, data)
+        {
+            var paramNames = [];
+            var paramValues = {};
+            for(var i=0; i<params.length; ++i)
+            {
+                paramNames.push(params.name+'__p'+i);
+                paramValues[params.name+'__p'+i] = params[i];
+            }
+            var fname = ('__owner' in data && params.name in data.__owner) ? ('__owner.'+params.name) : params.name;
+            return execute(fname + '(' + paramNames.join(',') + ')', obMerge('',{},data,paramValues));
         }
     );
 
