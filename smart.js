@@ -2216,7 +2216,12 @@
         'html_checkboxes', 
         function(params, data)
         {
-            var name = params.__get('name','checkbox');
+            var type = params.__get('type','checkbox');
+            var name = params.__get('name',type);
+            if (type == 'checkbox')
+            {
+                name += '[]';
+            }
             var values = params.__get('values',params.options);
             var output = params.__get('options',[]);
             var useName = ('options' in params);
@@ -2240,7 +2245,7 @@
                 if (values.hasOwnProperty(p))
                 {
                     s = (labels ? '<label>' : '');
-                    s += '<input type="checkbox" name="' + name + '[]" value="' + (useName ? p : values[p]) + '" ';
+                    s += '<input type="' + type + '" name="' + name + '" value="' + (useName ? p : values[p]) + '" ';
                     if (selected == (useName ? p : values[p]))
                     {
                         s += 'checked="checked" ';
@@ -2296,6 +2301,16 @@
             }            
             var name = params.__get('name',false);
             return (name ? ('<select name="' + name + '">\n' + res.join('\n') + '\n</select>') : res.join('\n')) + '\n';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'html_radios',
+        function(params, data)
+        {
+            params.type = 'radio';
+            return plugins['html_checkboxes'].process(params,data);
         }
     );
 
