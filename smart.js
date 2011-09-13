@@ -2218,15 +2218,23 @@
         {
             var name = params.__get('name','checkbox');
             var values = params.__get('values',params.options);
-            var useName = !('values' in params);
-            var output = params.__get('output',params.options);
+            var output = params.__get('options',[]);
+            var useName = ('options' in params);
+            var p;
+            if (!useName)
+            {
+                for (p in params.output)
+                {
+                    output.push(params.output[p]);
+                }
+            }
             var selected = params.__get('selected',false);
             var separator = params.__get('separator','');
             var labels = Boolean(params.__get('labels',true));
 
             var res = [];
+            var i = 0;
             var s = '';
-            var p;
             for (p in values)
             {
                 if (values.hasOwnProperty(p))
@@ -2237,7 +2245,7 @@
                     {
                         s += 'checked="checked" ';
                     }
-                    s += '/>' + output[p];
+                    s += '/>' + output[useName?p:i++];
                     s += (labels ? '</label>' : '');
                     s += separator;
                     res.push(s);
@@ -2249,6 +2257,45 @@
                 return '';
             }
             return res.join('\n');
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'html_options', 
+        function(params, data)
+        {
+            var values = params.__get('values',params.options);
+            var output = params.__get('options',[]);
+            var useName = ('options' in params);
+            var p;
+            if (!useName)
+            {
+                for (p in params.output)
+                {
+                    output.push(params.output[p]);
+                }
+            }
+            var selected = params.__get('selected',false);
+
+            var res = [];
+            var s = '';
+            var i = 0;
+            for (p in values)
+            {
+                if (values.hasOwnProperty(p))
+                {
+                    s = '<option value="' + (useName ? p : values[p]) + '"';
+                    if (selected == (useName ? p : values[p]))
+                    {
+                        s += ' selected="selected"';
+                    }
+                    s += '>' + output[useName ? p : i++] + '</option>';
+                    res.push(s);
+                }
+            }            
+            var name = params.__get('name',false);
+            return (name ? ('<select name="' + name + '">\n' + res.join('\n') + '\n</select>') : res.join('\n')) + '\n';
         }
     );
 

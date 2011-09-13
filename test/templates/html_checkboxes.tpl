@@ -15,3 +15,7 @@
 {foreach $ckeckboxtags as $tag}
 	[{$tag}]
 {/foreach}
+
+{$values = ['a','b']}
+{$output2 = ['x'=>'out1','y'=>'out2']}
+{html_checkboxes values=$values output=$output2}
