@@ -165,6 +165,9 @@ $ob['with | symbol:']
 {$ob.prop2.zzz.yyy = 'yyy'}
 {$ob.prop2.zzz.yyy}
 
+{$ob['prop2']['zzz']["yyy"] = 'new val'}
+{$ob.prop2.zzz.yyy}
+
 {$ob.NEWPROP = 'TEST!'}
 {$NewPropName = 'neyprop'}
 [{$ob[{$NewPropName|upper|replace:'Y':'W'}]}]

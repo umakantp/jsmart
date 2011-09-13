@@ -1,14 +1,12 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <head>
 	<title>jSmart example</title>
-	<script type="text/javascript" src="smart-2.2.min.js"></script>
+	<script type="text/javascript" src="smart.min.js"></script>
 </head>
 <body>
 
 <script id="test_tpl" type="text/x-jsmart-tmpl"> 
-   {literal}                                                  
-     There are some {JScript} books you may find interesting:
-   {/literal}                                                 
+   <h1>{$greeting}</h1>
 
    {foreach $books as $i => $book}
       <div style="background-color: {cycle values="cyan,yellow"};">
@@ -24,31 +22,30 @@
    Total: {$book@total}
 </script>
 
-<div id='someDiv'></div>
-
 <script type="text/javascript">
    var data = {
-	   'books': [
+       greeting: 'Hi, there are some JScript books you may find interesting:',
+	   books: [
 		  {
-			 'title'  : 'JavaScript: The Definitive Guide',          
-			 'author' : 'David Flanagan',                            
-			 'price'  : '31.18'
+			 title  : 'JavaScript: The Definitive Guide',          
+			 author : 'David Flanagan',                            
+			 price  : '31.18'
 		  },
 		  {
-			 'title'  : 'Murach JavaScript and DOM Scripting',
-			 'author' : 'Ray Harris'
+			 title  : 'Murach JavaScript and DOM Scripting',
+			 author : 'Ray Harris'
 		  },
 		  {
-			 'title'  : 'Head First JavaScript',
-			 'author' : 'Michael Morrison',
-			 'price'  : '29.54'
+			 title  : 'Head First JavaScript',
+			 author : 'Michael Morrison',
+			 price  : '29.54'
 		  }
 		]      
 	};
 
 	var tpl = new jSmart(document.getElementById('test_tpl').innerHTML);
 	var res = tpl.fetch(data);
-	document.getElementById('someDiv').innerHTML = res;
+	document.write( res );
 </script>
 
 

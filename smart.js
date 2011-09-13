@@ -225,70 +225,69 @@
 
     var buildInFunctions = 
         {
-            __quoted:
-            {
-                process: function(node, data)
-                {
-                    return getActualParamValues(node.params, data).join('');
-                }
-            },
-
             __operator:
             {
                 process: function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
-
-                    data.__arg1 = params[0];
+                    var args = {arg1: params[0]};
 
                     if (node.optype == 'binary')
                     {
-                        data.__arg2 = params[1];
+                        args.arg2 = params[1];
                         if (node.op == '=')
                         {
-                            getVarValue(node.params.__parsed[0], data, params[1]);
+                            getVarValue(node.params.__parsed[0], data, args.arg2);
                             return '';
                         }
                         else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/))
                         {
-/*
-                            var res = '';
-                            with ({arg1:getVarValue(node.params.__parsed[0],data), arg2:params[1]})
-                            {
-                                res = eval(getVarValue(node.params.__parsed[0],data) + node.op + params[1]);
-                            }
-*/
-                            var varName = node.params.__parsed[0].name;
-                            return execute(varName+node.op+'__arg2', data);
+                            args.arg1 = getVarValue(node.params.__parsed[0], data);
+                            with (args) { eval('arg1' + node.op + 'arg2'); }
+                            return getVarValue(node.params.__parsed[0], data, args.arg1);
                         }
                         else if (node.op.match(/div/))
                         {
-                            return execute('__arg1 % __arg2'+(node.op=='div'?'==':'!=')+'0', data);
+                            with (args) { return eval('arg1%arg2'+(node.op=='div'?'==':'!=')+'0'); }
                         }
                         else if (node.op.match(/even/))
                         {
-                            return execute('(__arg1 / __arg2) % 2'+(node.op=='even'?'==':'!=')+'0', data);
+                            with (args) { return eval('(arg1/arg2)%2'+(node.op=='even'?'==':'!=')+'0'); }
                         }
                         else if (node.op.match(/xor/))
                         {
-                            return execute('(__arg1 || __arg2) && !(__arg1 && __arg2)', data);
+                            with (args) { return eval('(arg1 || arg2) && !(arg1 && arg2)'); }
                         }
-                        return execute('__arg1 '+node.op+' __arg2', data);
+                        with (args) { return eval('arg1 ' + node.op + ' arg2'); }
                     }
                     else if (node.op == '!')
                     {
-                        return execute('!__arg1', data);
+                        with (args) { return eval('!arg1'); }
                     }
                     else 
                     {
-                        var varName = node.params.__parsed[0].type=='var' ? node.params.__parsed[0].name : params[0];
-                        if (node.optype == 'pre-unary')
+                        var isVar = node.params.__parsed[0].type == 'var';
+                        if (isVar)
                         {
-                            return execute(node.op+varName, data);
+                            args.arg1 = getVarValue(node.params.__parsed[0], data);
                         }
-                        else
+                        var v = args.arg1;
+                        with (args)
                         {
-                            return execute(varName+node.op, data);  //?
+                            if (node.optype == 'pre-unary')
+                            {
+                                v = eval(node.op+'arg1');
+                                if (isVar)
+                                {
+                                    getVarValue(node.params.__parsed[0], data, args.arg1);
+                                }
+                            }
+                            else
+                            {
+                                eval('arg1'+node.op);
+                                getVarValue(node.params.__parsed[0], data, args.arg1);
+                            }
+                            return v;
                         }
                     }
                 }
@@ -386,7 +385,7 @@
                         return s;
                     }
                     return process(node.subTreeElse, data);
-                },
+                }
             },
 
             'for':
@@ -869,7 +868,7 @@
             else         //variable
             {
                 tree.push( parseExpression(openTag[1]).tree );
-                if (tree[tree.length-1].name=='__operator' && tree[tree.length-1].op == '=')
+                if (tree[tree.length-1].type=='build-in' && tree[tree.length-1].name=='__operator' && tree[tree.length-1].op == '=')
                 {
                     s = s.replace(/^\n/,'');
                 }
@@ -978,11 +977,7 @@
             }
         }
 
-        e.tree.push({
-            type: 'var',
-            name: prepareVar(e.token),
-            parts: parts
-        });
+        e.tree.push({type: 'var', parts: parts});
 
         e.value += e.token.substr(rootName.length);
 
@@ -1028,7 +1023,7 @@
                     {
                         var eVar = {token:isVar[0], tree:[]};
                         parseVar(v, eVar);
-                        if (eVar.tree[0].name.length == v.length)
+                        if (eVar.token.length == v.length)
                         {
                             e.tree.push( eVar.tree[0] );
                             return;
@@ -1046,7 +1041,7 @@
                     else
                     {
                         e.tree.push({
-                            type: 'build-in',
+                            type: 'plugin',
                             name: '__quoted',
                             params: {__parsed:tree}
                         });
@@ -1915,6 +1910,15 @@
 
     jSmart.prototype.registerPlugin(
         'function', 
+        '__quoted', 
+        function(params, data)
+        {
+            return params.join('');
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
         'append', 
         function(params, data)
         {
@@ -2300,7 +2304,9 @@
         'javascript', 
         function(params, content, data, repeat)
         {
-            execute(content, data);
+            data['$this'] = data;
+            execute(content,data);
+            delete data['$this'];
             return '';
         }
     );

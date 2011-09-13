@@ -284,6 +284,17 @@
 	} );
 </script>
 
+<script type="text/x-jsmart-tmpl" id='javascript_tpl'>{fetch file="$testPath/javascript.tpl"}</script>
+<script type="text/x-jsmart-tmpl" id='javascript_result'>{fetch file="$testPath/javascript_result.txt"}</script>
+<script>
+	test("javascript ONLY", function() {
+		var tpl = new jSmart($('#javascript_tpl').html().replace(/\r\n/g,'\n'));
+		var res_JS_only = tpl.fetch(data);
+		var res2_JS_only = $('#javascript_result').html().replace(/\r\n/g,'\n');
+		equal(res_JS_only, res2_JS_only);
+	} );
+</script>
+
 
 <!-- <script type="text/javascript" src="php.default.min.js"></script> -->
 <script type="text/javascript" src="defplusstrftime.namespaced.min.js"></script>
