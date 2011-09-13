@@ -2213,6 +2213,47 @@
 
     jSmart.prototype.registerPlugin(
         'function', 
+        'html_checkboxes', 
+        function(params, data)
+        {
+            var name = params.__get('name','checkbox');
+            var values = params.__get('values',params.options);
+            var useName = !('values' in params);
+            var output = params.__get('output',params.options);
+            var selected = params.__get('selected',false);
+            var separator = params.__get('separator','');
+            var labels = Boolean(params.__get('labels',true));
+
+            var res = [];
+            var s = '';
+            var p;
+            for (p in values)
+            {
+                if (values.hasOwnProperty(p))
+                {
+                    s = (labels ? '<label>' : '');
+                    s += '<input type="checkbox" name="' + name + '[]" value="' + (useName ? p : values[p]) + '" ';
+                    if (selected == (useName ? p : values[p]))
+                    {
+                        s += 'checked="checked" ';
+                    }
+                    s += '/>' + output[p];
+                    s += (labels ? '</label>' : '');
+                    s += separator;
+                    res.push(s);
+                }
+            }
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, res, data);
+                return '';
+            }
+            return res.join('\n');
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
         'include', 
         function(params, data)
         {

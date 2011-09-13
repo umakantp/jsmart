@@ -271,6 +271,7 @@
 {runTest nm='plugins'}
 {runTest nm='cycle'}
 {runTest nm='counter'}
+{runTest nm='html_checkboxes'}
 {runTest nm='modifiers'}
 {runTest nm='examples'}
 
