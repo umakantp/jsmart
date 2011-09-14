@@ -2316,6 +2316,56 @@
 
     jSmart.prototype.registerPlugin(
         'function', 
+        'html_table', 
+        function(params, data)
+        {
+            var loop = [];
+            if (params.loop instanceof Array)
+            {
+                loop = params.loop
+            }
+            else
+            {
+                var p;
+                for (p in params.loop)
+                {
+                    if (params.loop.hasOwnProperty(p))
+                    {
+                        loop.push( params.loop[p] );
+                    }
+                }
+            }
+            var rows = params.__get('rows',false);
+            var cols = params.__get('cols',3);
+            rows = rows ? rows : Math.ceil(loop.length/cols);
+            var inner = params.__get('inner','cols');
+            var caption = params.__get('caption','');
+            var table_attr = params.__get('table_attr','border="1"');
+            var th_attr = params.__get('th_attr',false);
+            var tr_attr = params.__get('tr_attr',false);
+            var td_attr = params.__get('td_attr',false);
+            var trailpad = params.__get('trailpad','&nbsp;');
+            var hdir = params.__get('hdir','right');
+            var vdir = params.__get('vdir','down');
+
+            var s = '';
+            for (var i=0; i<rows; ++i)
+            {
+                s += '<tr>\n';
+                for (var j=0; j<cols; ++j)
+                {
+                    var idx = (inner=='cols') ? ((vdir=='down'?i:rows-1-i) * cols + (hdir=='right'?j:cols-1-j)) : ((hdir=='right'?j:cols-1-j) * rows + (vdir=='down'?i:rows-1-i));
+                    
+                    s += '<td>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n';
+                }
+                s += '</tr>\n';
+            }
+            return '<table ' + table_attr + '>\n<tbody>\n' + s + '</tbody>\n</table>\n';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
         'include', 
         function(params, data)
         {

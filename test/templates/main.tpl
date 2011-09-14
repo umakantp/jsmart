@@ -274,6 +274,7 @@
 {runTest nm='html_checkboxes'}
 {runTest nm='html_options'}
 {runTest nm='html_radios'}
+{runTest nm='html_table'}
 {runTest nm='modifiers'}
 {runTest nm='examples'}
 
