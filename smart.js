@@ -2320,13 +2320,13 @@
         function(params, data)
         {
             var loop = [];
+            var p;
             if (params.loop instanceof Array)
             {
                 loop = params.loop
             }
             else
             {
-                var p;
                 for (p in params.loop)
                 {
                     if (params.loop.hasOwnProperty(p))
@@ -2336,14 +2336,51 @@
                 }
             }
             var rows = params.__get('rows',false);
-            var cols = params.__get('cols',3);
+            var cols = params.__get('cols',false);
+            if (!cols)
+            {
+                cols = rows ? Math.ceil(loop.length/rows) : 3;
+            }
+            var colNames = [];
+            if (isNaN(cols))
+            {
+                if (typeof cols == 'object')
+                {
+                    for (p in cols)
+                    {
+                        if (cols.hasOwnProperty(p))
+                        {
+                            colNames.push(cols[p]);
+                        }
+                    }
+                }
+                else
+                {
+                    colNames = cols.split(/\s*,\s*/);
+                }
+                cols = colNames.length;
+            }
             rows = rows ? rows : Math.ceil(loop.length/cols);
+            
             var inner = params.__get('inner','cols');
             var caption = params.__get('caption','');
             var table_attr = params.__get('table_attr','border="1"');
             var th_attr = params.__get('th_attr',false);
+            if (th_attr && typeof th_attr != 'object')
+            {
+                th_attr = [th_attr];
+            }
             var tr_attr = params.__get('tr_attr',false);
+            console.log(tr_attr);
+            if (tr_attr && typeof tr_attr != 'object')
+            {
+                tr_attr = [tr_attr];
+            }
             var td_attr = params.__get('td_attr',false);
+            if (td_attr && typeof td_attr != 'object')
+            {
+                td_attr = [td_attr];
+            }
             var trailpad = params.__get('trailpad','&nbsp;');
             var hdir = params.__get('hdir','right');
             var vdir = params.__get('vdir','down');
@@ -2351,16 +2388,28 @@
             var s = '';
             for (var i=0; i<rows; ++i)
             {
-                s += '<tr>\n';
+                s += '<tr' + (tr_attr ? ' '+tr_attr[i%tr_attr.length] : '') + '>\n';
                 for (var j=0; j<cols; ++j)
                 {
                     var idx = (inner=='cols') ? ((vdir=='down'?i:rows-1-i) * cols + (hdir=='right'?j:cols-1-j)) : ((hdir=='right'?j:cols-1-j) * rows + (vdir=='down'?i:rows-1-i));
                     
-                    s += '<td>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n';
+                    s += '<td' + (td_attr ? ' '+td_attr[j%td_attr.length] : '') + '>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n';
                 }
                 s += '</tr>\n';
             }
-            return '<table ' + table_attr + '>\n<tbody>\n' + s + '</tbody>\n</table>\n';
+
+            var sHead = '';
+            if (colNames.length)
+            {
+                sHead = '\n<thead><tr>';
+                for (var i=0; i<colNames.length; ++i)
+                {
+                    sHead += '\n<th' + (th_attr ? ' '+th_attr[i%th_attr.length] : '') + '>' + colNames[hdir=='right'?i:colNames.length-1-i] + '</th>';
+                }
+                sHead += '\n</tr></thead>';
+            }
+
+            return '<table ' + table_attr + '>' + (caption?'\n<caption>'+caption+'</caption>':'') + sHead + '\n<tbody>\n' + s + '</tbody>\n</table>\n';
         }
     );
 
