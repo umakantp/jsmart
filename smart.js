@@ -1244,7 +1244,7 @@
                     var params = parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/);
                     parsePluginFunc('__array',params,e.tree);
                     e.value += params.str;
-                    var paren = s.slice(params.str.length).match(/\s*\]\s*/);
+                    var paren = s.slice(params.str.length).match(/\s*\]/);
                     if (paren)
                     {
                         e.value += paren[0];

@@ -161,3 +161,5 @@
 
 {testY y=['ab',$foo,"$foo","{$foo}"]}
 {testY y=['nnnnn', 'abc' => 'aaa', 'bbb' => 'zzz']}
+
+{testX y=['a','b','c'] x='test'}
