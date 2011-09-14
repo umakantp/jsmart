@@ -272,6 +272,7 @@
 {runTest nm='cycle'}
 {runTest nm='counter'}
 {runTest nm='html_checkboxes'}
+{runTest nm='html_image'}
 {runTest nm='html_options'}
 {runTest nm='html_radios'}
 {runTest nm='html_table'}
