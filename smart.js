@@ -2342,7 +2342,7 @@
         function(params, data)
         {
             params.type = 'radio';
-            return plugins['html_checkboxes'].process(params,data);
+            return plugins.html_checkboxes.process(params,data);
         }
     );
 
@@ -2659,6 +2659,62 @@
         function(params, content, data, repeat)
         {
             return content;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'block', 
+        'textformat', 
+        function(params, content, data, repeat)
+        {
+            if (!content) {
+                return '';
+            }
+
+            var wrap = params.__get('wrap',80);
+            var wrap_char = params.__get('wrap_char','\n');
+            var wrap_cut = params.__get('wrap_cut',false);
+            var indent_char = params.__get('indent_char',' ');
+            var indent = params.__get('indent',0);
+            var indentStr = (new Array(indent+1)).join(indent_char);
+            var indent_first = params.__get('indent_first',0);
+            var indentFirstStr = (new Array(indent_first+1)).join(indent_char);
+
+            var style = params.__get('style','');
+            if (style == 'email')
+            {
+                wrap = 72;
+            }
+
+            var paragraphs = content.split(/[\r\n]/);
+            for (var i=0; i<paragraphs.length; ++i)
+            {
+                var p = paragraphs[i];
+                if (!paragraphs[i])
+                {
+                    continue;
+                }
+                p = p.replace(/^\s+|\s+$/,'').replace(/\s+/g,' ');
+                if (indent_first)
+                {
+                    p = indentFirstStr + p;
+                }
+
+                p = modifiers.wordwrap(p, wrap, wrap_char, wrap_cut);
+
+                if (indent)
+                {
+                    p = p.replace(/^/mg,indentStr);
+                }
+                paragraphs[i] = p;
+            }
+            var s = paragraphs.join(wrap_char+wrap_char);
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, s, data);
+                return '';
+            }
+            return s;
         }
     );
 

@@ -294,6 +294,7 @@
 {runTest nm='html_options'}
 {runTest nm='html_radios'}
 {runTest nm='html_table'}
+{runTest nm='textformat'}
 {runTest nm='modifiers'}
 {runTest nm='examples'}
 
