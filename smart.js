@@ -83,13 +83,11 @@
 
         var reTag = new RegExp('^\\s*('+re+')\\s*$','i');
 
-        var WS = " \n\r\t";
-
         for (var i=0; i<s.length; ++i)
         {
             if (s.substr(i,ldelim.length) == ldelim)
             {
-                if (skipInWS && i+1 < s.length && WS.indexOf(s[i+1]) >= 0)
+                if (skipInWS && i+1 < s.length && s.substr(i+1,1).match(/\s/))
                 {
                     continue;
                 }
@@ -103,7 +101,7 @@
             }
             else if (s.substr(i,rdelim.length) == rdelim)
             {
-                if (skipInWS && i-1 >= 0 && WS.indexOf(s[i-1]) >= 0)
+                if (skipInWS && i-1 >= 0 && s.substr(i-1,1).match(/\s/))
                 {
                     continue;
                 }
@@ -1059,8 +1057,8 @@
                     var fnm = RegExp.$1;
                     var params = parseParams(s,/^\s*,\s*/);
                     parseFunc(fnm, params, e.tree);
-                    e.value += params.str;
-                    parseModifiers(s.slice(params.str.length), e);
+                    e.value += params.toString();
+                    parseModifiers(s.slice(params.toString().length), e);
                 }
             },
             {
@@ -1246,8 +1244,8 @@
                 {
                     var params = parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/);
                     parsePluginFunc('__array',params,e.tree);
-                    e.value += params.str;
-                    var paren = s.slice(params.str.length).match(/\s*\]/);
+                    e.value += params.toString();
+                    var paren = s.slice(params.toString().length).match(/\s*\]/);
                     if (paren)
                     {
                         e.value += paren[0];
@@ -1422,7 +1420,7 @@
 		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
 		  var params = [];
         params.__parsed = [];
-        params.str = '';
+        var paramsStr = '';
 
         if (!s)
         {
@@ -1444,7 +1442,7 @@
                 if (foundName)
                 {
                     nm = trimQuotes(foundName[1]);
-                    params.str += s.slice(0,foundName[0].length);
+                    paramsStr += s.slice(0,foundName[0].length);
                     s = s.slice(foundName[0].length);
                 }
             }
@@ -1472,13 +1470,13 @@
                 }
 		      }
 
-            params.str += s.slice(0,param.value.length);
+            paramsStr += s.slice(0,param.value.length);
             s = s.slice(param.value.length);
 
             var foundDelim = s.match(reDelim);
             if (foundDelim)
             {
-                params.str += s.slice(0,foundDelim[0].length);
+                paramsStr += s.slice(0,foundDelim[0].length);
                 s = s.slice(foundDelim[0].length);
             }
             else
@@ -1486,6 +1484,7 @@
                 break;
             }
         }
+        params.toString = function() { return paramsStr; }
 		  return params;
 	 }
 
