@@ -2346,6 +2346,33 @@
 
     jSmart.prototype.registerPlugin(
         'function', 
+        'html_select_date',
+        function(params, data)
+        {
+            var prefix = params.__get('prefix','Date_');
+            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+            var s = '';
+            s += '<select name="'+prefix+'Month">\n';
+            var i=0;
+            for (i=0; i<months.length; ++i)
+            {
+                s += '<option value="' + i + '">' + months[i] + '</option>\n';
+            }
+            s += '</select>\n'
+
+            s += '<select name="'+prefix+'Day">\n';
+            for (i=0; i<31; ++i)
+            {
+                s += '<option value="' + i + '">' + i + '</option>\n';
+            }
+            s += '</select>\n'
+            return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
         'html_table', 
         function(params, data)
         {
@@ -2416,14 +2443,14 @@
             var vdir = params.__get('vdir','down');
 
             var s = '';
-            for (var i=0; i<rows; ++i)
+            for (var row=0; row<rows; ++row)
             {
-                s += '<tr' + (tr_attr ? ' '+tr_attr[i%tr_attr.length] : '') + '>\n';
-                for (var j=0; j<cols; ++j)
+                s += '<tr' + (tr_attr ? ' '+tr_attr[row%tr_attr.length] : '') + '>\n';
+                for (var col=0; col<cols; ++col)
                 {
-                    var idx = (inner=='cols') ? ((vdir=='down'?i:rows-1-i) * cols + (hdir=='right'?j:cols-1-j)) : ((hdir=='right'?j:cols-1-j) * rows + (vdir=='down'?i:rows-1-i));
+                    var idx = (inner=='cols') ? ((vdir=='down'?row:rows-1-row) * cols + (hdir=='right'?col:cols-1-col)) : ((hdir=='right'?col:cols-1-col) * rows + (vdir=='down'?row:rows-1-row));
                     
-                    s += '<td' + (td_attr ? ' '+td_attr[j%td_attr.length] : '') + '>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n';
+                    s += '<td' + (td_attr ? ' '+td_attr[col%td_attr.length] : '') + '>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n';
                 }
                 s += '</tr>\n';
             }
@@ -2550,6 +2577,78 @@
         {
             jSmart.prototype.configLoad(jSmart.prototype.getConfig(params.__get('file',null,0)), params.__get('section','',1), data);
             return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'mailto', 
+        function(params, data)
+        {
+            var address = params.__get('address',null);
+            var encode = params.__get('encode','none');
+            var text = params.__get('text',address);
+            var cc = jSmart.prototype.PHPJS('rawurlencode','mailto').rawurlencode(params.__get('cc','')).replace('%40','@');
+            var bcc = jSmart.prototype.PHPJS('rawurlencode','mailto').rawurlencode(params.__get('bcc','')).replace('%40','@');
+            var followupto = jSmart.prototype.PHPJS('rawurlencode','mailto').rawurlencode(params.__get('followupto','')).replace('%40','@');
+            var subject = jSmart.prototype.PHPJS('rawurlencode','mailto').rawurlencode( params.__get('subject','') );
+            var newsgroups = jSmart.prototype.PHPJS('rawurlencode','mailto').rawurlencode(params.__get('newsgroups',''));
+            var extra = params.__get('extra','');
+
+            address += (cc?'?cc='+cc:'');
+            address += (bcc?(cc?'&':'?')+'bcc='+bcc:'');
+            address += (subject ? ((cc||bcc)?'&':'?') + 'subject='+subject : '');
+            address += (newsgroups ? ((cc||bcc||subject)?'&':'?') + 'newsgroups='+newsgroups : '');
+            address += (followupto ? ((cc||bcc||subject||newsgroups)?'&':'?') + 'followupto='+followupto : '');
+
+            s = '<a href="mailto:' + address + '" ' + extra + '>' + text + '</a>';
+
+            if (encode == 'javascript')
+            {
+                s = "document.write('" + s + "');";
+                var sEncoded = '';
+                for (var i=0; i<s.length; ++i)
+                {
+                    sEncoded += '%' + jSmart.prototype.PHPJS('bin2hex','mailto').bin2hex(s.substr(i,1));
+                }
+                return '<script type="text/javascript">eval(unescape(\'' + sEncoded + "'))</script>";
+            }
+            else if (encode == 'javascript_charcode')
+            {
+                var codes = [];
+                for (var i=0; i<s.length; ++i) 
+                {
+                    codes.push(jSmart.prototype.PHPJS('ord','mailto').ord(s.substr(i,1)));
+                } 
+                return '<script type="text/javascript" language="javascript">\n<!--\n{document.write(String.fromCharCode('
+                    + codes.join(',') + '))}\n//-->\n</script>\n';    
+            }
+            else if (encode == 'hex')
+            {
+                if (address.match(/^.+\?.+$/))
+                {
+                    throw new Error('mailto: hex encoding does not work with extra attributes. Try javascript.');
+                }
+                var aEncoded = '';
+                for (var i=0; i<address.length; ++i)
+                {
+                    if (address.substr(i,1).match(/\w/))
+                    {
+                        aEncoded += '%' + jSmart.prototype.PHPJS('bin2hex','mailto').bin2hex(address.substr(i,1));
+                    }
+                    else
+                    {
+                        aEncoded += address.substr(i,1);
+                    }
+                }
+                var tEncoded = '';
+                for (var i=0; i<text.length; ++i)
+                {
+                    tEncoded += '&#x' + jSmart.prototype.PHPJS('bin2hex','mailto').bin2hex(text.substr(i,1)) + ';';
+                }
+                return '<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;' + aEncoded + '" ' + extra + '>' + tEncoded + '</a>';
+            }
+            return s;
         }
     );
 
