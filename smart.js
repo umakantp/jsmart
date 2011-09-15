@@ -81,7 +81,7 @@
         var rdelim = jSmart.prototype.right_delimiter;
         var skipInWS = jSmart.prototype.auto_literal;
 
-        var reTag = new RegExp('^ *('+re+') *$','i');
+        var reTag = new RegExp('^\\s*('+re+')\\s*$','i');
 
         var WS = " \n\r\t";
 
@@ -113,7 +113,7 @@
                     var found = sTag.match(reTag);
                     if (found)
                     {
-                        found[0] = ldelim + found[1] + rdelim;
+                        found[0] = s.slice(0,i+rdelim.length);
                         found.index = offset;
                         return found;
                     }

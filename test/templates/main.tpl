@@ -246,14 +246,17 @@
 <script>
 	jSmart.prototype.left_delimiter = '<!--{';
 	jSmart.prototype.right_delimiter = '}-->';
+	jSmart.prototype.auto_literal = false;
 
 	var tplEscape = new jSmart($('#escape_parsing_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
 	data.escapeParse = tplEscape.fetch( {
-		foo: 'bar'
+		foo: 'bar',
+		a: ['0','1','2','3','4','5','6','7','8','9']
 	} );
 	
 	jSmart.prototype.left_delimiter = '{';
 	jSmart.prototype.right_delimiter = '}';
+	jSmart.prototype.auto_literal = true;
 </script>
 {/literal}
 
