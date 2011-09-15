@@ -239,8 +239,23 @@
 {/function}
 
 <script type="text/x-jsmart-tmpl" id='included_tpl'>{fetch file="$testPath/included.tpl"}</script>
-
 <script type="text/x-jsmart-tmpl" id='test.conf'>{fetch file="$testPath/test.conf"}</script>
+
+<script type="text/x-jsmart-tmpl" id='escape_parsing_tpl'>{fetch file="$testPath/escape_parsing.tpl"}</script>
+{literal}
+<script>
+	jSmart.prototype.left_delimiter = '<!--{';
+	jSmart.prototype.right_delimiter = '}-->';
+
+	var tplEscape = new jSmart($('#escape_parsing_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
+	data.escapeParse = tplEscape.fetch( {
+		foo: 'bar'
+	} );
+	
+	jSmart.prototype.left_delimiter = '{';
+	jSmart.prototype.right_delimiter = '}';
+</script>
+{/literal}
 
 {runTest nm='comments'}
 {runTest nm='var'}
@@ -305,10 +320,6 @@
 <script type="text/javascript" src="defplusstrftime.namespaced.min.js"></script>
 {runTest nm='mailto'}
 {runTest nm='phpjs'}
-
-<script>
-	//alert($('#mailto_php').html());
-</script>
 
 </body>
 </html>

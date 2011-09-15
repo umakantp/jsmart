@@ -69,7 +69,7 @@
        finds first {tag} in string
        @param re string with regular expression
        @return  null or s.match(re) result object where 
-       [0] - full tag matched with curly braces (and whitespaces at begin and end): { tag }
+       [0] - full tag matched with delimiters (and whitespaces at the begin and the end): { tag }
        [1] - found part from passed re
        [index] - position of tag starting { in s
     */
@@ -77,15 +77,17 @@
     {
         var openCount = 0;
         var offset = 0;
+        var ldelim = jSmart.prototype.left_delimiter;
+        var rdelim = jSmart.prototype.right_delimiter;
         var skipInWS = jSmart.prototype.auto_literal;
 
-        var reTag = new RegExp('^{ *('+re+') *}$','i');
+        var reTag = new RegExp('^ *('+re+') *$','i');
 
         var WS = " \n\r\t";
 
         for (var i=0; i<s.length; ++i)
         {
-            if (s.substr(i,1) == jSmart.prototype.ldelim)
+            if (s.substr(i,ldelim.length) == ldelim)
             {
                 if (skipInWS && i+1 < s.length && WS.indexOf(s[i+1]) >= 0)
                 {
@@ -99,7 +101,7 @@
                 }
                 ++openCount;
             }
-            else if (s.substr(i,1) == jSmart.prototype.rdelim)
+            else if (s.substr(i,rdelim.length) == rdelim)
             {
                 if (skipInWS && i-1 >= 0 && WS.indexOf(s[i-1]) >= 0)
                 {
@@ -107,15 +109,16 @@
                 }
                 if (!--openCount)
                 {
-                    var sTag = s.slice(0,i+1).replace(/[\r\n]/g, ' ');
+                    var sTag = s.slice(ldelim.length,i).replace(/[\r\n]/g, ' ');
                     var found = sTag.match(reTag);
                     if (found)
                     {
+                        found[0] = ldelim + found[1] + rdelim;
                         found.index = offset;
                         return found;
                     }
                 }
-                if (openCount < 0) //ignore unmatched }
+                if (openCount < 0) //ignore unmatched right delimiter
                 {
                     openCount = 0;
                 }
@@ -786,7 +789,7 @@
                 type: 'function',
                 parse: function(paramStr, tree)
                 {
-                    parseText(jSmart.prototype.ldelim, tree);
+                    parseText(jSmart.prototype.left_delimiter, tree);
                 }
             },
 
@@ -795,7 +798,7 @@
                 type: 'function',
                 parse: function(paramStr, tree)
                 {
-                    parseText(jSmart.prototype.rdelim, tree);
+                    parseText(jSmart.prototype.right_delimiter, tree);
                 }
             }
         };
@@ -1321,7 +1324,7 @@
             return false;
         }
 
-        if (s.match('^'+jSmart.prototype.ldelim))
+        if (s.match('^'+jSmart.prototype.left_delimiter))
         {
             var tag = findTag('.*',s);
             if (tag)
@@ -1688,8 +1691,8 @@
                 config: {},
                 current_dir: '/',
                 template: '',
-                ldelim: jSmart.prototype.ldelim,
-                rdelim: jSmart.prototype.rdelim,
+                ldelim: jSmart.prototype.left_delimiter,
+                rdelim: jSmart.prototype.right_delimiter,
                 version: '2.3'
             }
         };
@@ -1827,8 +1830,8 @@
     */
     jSmart.prototype.auto_literal = true;
 
-    jSmart.prototype.ldelim = '{';
-    jSmart.prototype.rdelim = '}';
+    jSmart.prototype.left_delimiter = '{';
+    jSmart.prototype.right_delimiter = '}';
 
     /** enables the debugging console */
     jSmart.prototype.debugging = false;
@@ -2428,7 +2431,6 @@
                 th_attr = [th_attr];
             }
             var tr_attr = params.__get('tr_attr',false);
-            console.log(tr_attr);
             if (tr_attr && typeof tr_attr != 'object')
             {
                 tr_attr = [tr_attr];

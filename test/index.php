@@ -124,6 +124,14 @@ function insert_testInsert($params, $smarty)
 }
 
 
+$smarty2 = new Smarty;
+$smarty2->left_delimiter = '<!--{';
+$smarty2->right_delimiter = '}-->';
+
+$smarty2->assign('foo','bar');
+
+$smarty->assign('escapeParse',$smarty2->fetch('escape_parsing.tpl'));
+
 $smarty->display('main.tpl');
 
 ?>
