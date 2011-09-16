@@ -2654,6 +2654,30 @@
     );
 
     jSmart.prototype.registerPlugin(
+        'function', 
+        'math', 
+        function(params, data)
+        {
+            /*
+              int - parseInt()
+              abs ceil cos exp floor log max min pow round sin sqrt tan - 
+              with (Math) 
+              {
+              ...
+              }
+              pi() - Math.PI
+              rand(0,getrandmax()) - Math.random( ) 0..1
+              
+
+log10 
+srand - As of PHP 4.2.0, there is no need to seed the random number generator with srand() 
+              
+             */
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
         'block', 
         'nocache', 
         function(params, content, data, repeat)
@@ -2686,11 +2710,11 @@
                 wrap = 72;
             }
 
-            var paragraphs = content.split(/[\r\n]/);
+            var paragraphs = content.split(/\n/);
             for (var i=0; i<paragraphs.length; ++i)
             {
                 var p = paragraphs[i];
-                if (!paragraphs[i])
+                if (!p)
                 {
                     continue;
                 }
@@ -2700,7 +2724,7 @@
                     p = indentFirstStr + p;
                 }
 
-                p = modifiers.wordwrap(p, wrap, wrap_char, wrap_cut);
+                p = modifiers.wordwrap(p, wrap-indent, wrap_char, wrap_cut);
 
                 if (indent)
                 {
@@ -3067,33 +3091,30 @@
         function(s, width, wrapWith, breakWords)
         {
 	         width = width ? width : 80;
-	         wrapWith = wrapWith ? wrapWith : '\n';
+	         wrapWith = wrapWith || '\n';
 	         
-	         width -= Math.min(width,wrapWith.length);
-
 	         var lines = s.split('\n');
-	         var i = 0;
-	         for (i=0; i<lines.length; ++i)
+	         for (var i=0; i<lines.length; ++i)
 	         {
 		          var line = lines[i];
-		          var res = '';
-		          var pos = 0;
-		          while (pos+width < line.length)
+                var parts = ''
+		          while (line.length > width)
 		          {
-			           var part = line.slice(pos,pos+width+1);
-			           if (!breakWords)
-			           {
-				            part = part.replace(/(\s+)\S+$/,'$1');
-			           }
-			           part = part.slice(0,width);
-			           pos += part.length;
-			           res += part.replace(/\s+$/,'').replace(/^\s+/,'') + wrapWith;
-                    while (line.charAt(pos).match(/\s/))
-                    {
-                        ++pos;
-                    }
-		          }
-		          lines[i] = res + line.slice(pos);
+                   var pos = 0;
+                   var found = line.slice(pos).match(/\s+/);
+                   for (;found && (pos+found.index)<=width; found=line.slice(pos).match(/\s+/))
+                   {
+                      pos += found.index + found[0].length;
+                   }
+                   pos = pos || (breakWords ? width : (found ? found.index+found[0].length : line.length));
+                   parts += line.slice(0,pos).replace(/\s+$/,'');// + wrapWith;
+                   if (pos < line.length)
+                   {
+                      parts += wrapWith;
+                   }
+                   line = line.slice(pos);
+                }
+		          lines[i] = parts + line;
 	         }
 	         return lines.join('\n');
         }

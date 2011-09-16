@@ -83,6 +83,14 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 
 {'Two Sisters Reunite after Eighteen Years at Checkout Counter.'|wordwrap:10:"|\n"}
 {$long_text|wordwrap:20}
+-
+{$verylongtxt = 'Smarty is a template engine for PHP. More specifically, it facilitates a manageable way to separate application logic and content from its presentation. This is best described in a situation where the application programmer and the template designer play different roles, or in most cases are not the same person.'}
+{$verylongtxt|wordwrap:40:'ZZZ'}
 
+{$verylongtxt|wordwrap:40:"\n"}
 
-{*sayHello|upper to='me'*}
+{$verylongtxt|wordwrap:40:"\n":true}
+
+{$vlword = 'A very long woooooooooooord.'}
+[{$vlword|wordwrap:8:"\n":false}]
+[{$vlword|wordwrap:8:"\n":true}]
