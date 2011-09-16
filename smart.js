@@ -2658,22 +2658,25 @@
         'math', 
         function(params, data)
         {
-            /*
-              int - parseInt()
-              abs ceil cos exp floor log max min pow round sin sqrt tan - 
-              with (Math) 
-              {
-              ...
-              }
-              pi() - Math.PI
-              rand(0,getrandmax()) - Math.random( ) 0..1
-              
+            with (Math)
+            {
+                with (params)
+                {
+                    var res = eval(params.__get('equation',null).replace(/pi\(\s*\)/g,'PI'));
+                }
+            }
 
-log10 
-srand - As of PHP 4.2.0, there is no need to seed the random number generator with srand() 
-              
-             */
-            return '';
+            if ('format' in params)
+            {
+                res = jSmart.prototype.PHPJS('sprintf','math').sprintf(params.format,res);
+            }
+
+            if ('assign' in params)
+            {
+                assignVar('$'+params.assign, res, data);
+                return '';
+            }
+            return res;
         }
     );
 

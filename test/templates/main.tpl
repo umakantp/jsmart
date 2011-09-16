@@ -323,6 +323,7 @@
 <!-- <script type="text/javascript" src="php.default.min.js"></script> -->
 <script type="text/javascript" src="defplusstrftime.namespaced.min.js"></script>
 {runTest nm='mailto'}
+{runTest nm='math'}
 {runTest nm='phpjs'}
 
 </body>
