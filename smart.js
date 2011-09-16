@@ -2713,7 +2713,7 @@
                 wrap = 72;
             }
 
-            var paragraphs = content.split(/\n/);
+            var paragraphs = content.split('\n');
             for (var i=0; i<paragraphs.length; ++i)
             {
                 var p = paragraphs[i];
