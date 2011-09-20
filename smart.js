@@ -297,14 +297,14 @@
             section: 
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parse: function(params, tree, content)
                 {
                     var subTree = [];
                     var subTreeElse = [];
                     tree.push({
                         type: 'build-in',
                         name: 'section',
-                        params: parseParams(paramStr),
+                        params: params,
                         subTree: subTree,
                         subTreeElse: subTreeElse
                     });
@@ -392,20 +392,25 @@
             'for':
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parseParams: function(paramStr)
                 {
                     var res = paramStr.match(/^\s*\$(\w+)\s*=\s*([^\s]+)\s*to\s*([^\s]+)\s*(?:step\s*([^\s]+))?\s*(.*)$/);
                     if (!res)
                     {
                         throw new Error('Invalid {for} parameters: '+paramStr);
                     }
+                    return parseParams("varName='"+res[1]+"' from="+res[2]+" to="+res[3]+" step="+(res[4]?res[4]:'1')+" "+res[5]);
+                },
+
+                parse: function(params, tree, content)
+                {
                     
                     var subTree = [];
                     var subTreeElse = [];
                     tree.push({
                         type: 'build-in',
                         name: 'for',
-                        params: parseParams("varName='"+res[1]+"' from="+res[2]+" to="+res[3]+" step="+(res[4]?res[4]:'1')+" "+res[5]),
+                        params: params,
                         subTree: subTree,
                         subTreeElse: subTreeElse
                     });
@@ -458,14 +463,14 @@
             'if': 
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parse: function(params, tree, content)
                 {
                     var subTreeIf = [];
                     var subTreeElse = [];
                     tree.push({
                         type: 'build-in',
                         name: 'if',
-                        params: parseParams(paramStr),
+                        params: params,
                         subTreeIf: subTreeIf,
                         subTreeElse: subTreeElse
                     });
@@ -479,7 +484,7 @@
                         var findElseIf = findElse[1].match(/^elseif(.*)/);
                         if (findElseIf)
                         {
-                            buildInFunctions['if'].parse(findElseIf[1], subTreeElse, content.replace(/^\n/,''));
+                            buildInFunctions['if'].parse(parseParams(findElseIf[1]), subTreeElse, content.replace(/^\n/,''));
                         }
                         else
                         {
@@ -508,44 +513,44 @@
             foreach: 
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parseParams: function(paramStr)
                 {
-                    var arrName = null;
-                    var varName = null;
-                    var keyName = null;
-                    var loopName = null;
-
+                    var params = {};
                     var res = paramStr.match(/^\s*[$](\w+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i);
                     if (res)
                     {
-                        arrName = '$'+res[1];
-                        varName = res[4] ? res[4] : res[2];
-                        keyName = res[4] ? res[2] : null;
+                        params.arrName = '$'+res[1];
+                        params.varName = res[4] ? res[4] : res[2];
+                        params.keyName = res[4] ? res[2] : null;
                     }
                     else    //Smarty 2.x syntax
                     {
-                        var params = parseParams(paramStr);
-                        arrName = params['from'];
-                        varName = trimQuotes(params['item']);
+                        params = parseParams(paramStr);
+                        params.arrName = params['from'];
+                        params.varName = trimQuotes(params['item']);
                         if ('key' in params)
                         {
-                            keyName = trimQuotes(params['key']);
+                            params.keyName = trimQuotes(params['key']);
                         }
                         if ('name' in params)
                         {
-                            loopName = trimQuotes(params['name']);
+                            params.loopName = trimQuotes(params['name']);
                         }
                     }
+                    return params;
+                },
 
+                parse: function(params, tree, content)
+                {
                     var subTree = [];
                     var subTreeElse = [];
                     tree.push({
                         type: 'build-in',
                         name: 'foreach',
-                        arr: arrName,
-                        keyName: keyName,
-                        varName: '$'+varName,
-                        loopName: loopName,
+                        arr: params.arrName,
+                        keyName: params.keyName,
+                        varName: '$'+params.varName,
+                        loopName: params.loopName,
                         subTree: subTree,
                         subTreeElse: subTreeElse
                     });
@@ -631,9 +636,8 @@
             'function': 
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parse: function(params, tree, content)
                 {
-                    var params = parseParams(paramStr);
                     var subTree = [];
                     plugins[trimQuotes(params.name?params.name:params[0])] = 
                         {
@@ -654,15 +658,14 @@
             php:
             {
                 type: 'block',
-                parse: function(paramStr, tree, content) {}
+                parse: function(params, tree, content) {}
             },
 
             'extends':
             {
                 type: 'function',
-                parse: function(paramStr, tree)
+                parse: function(params, tree)
                 {
-                    var params = parseParams(paramStr);
                     var file = trimQuotes(params.file?params.file:params[0]);
                     var tpl = jSmart.prototype.getTemplate(file);
                     if (typeof(tpl) != 'string')
@@ -676,10 +679,8 @@
             block:
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parse: function(params, tree, content)
                 {
-                    var params = parseParams(paramStr);
-
                     tree.push({
                         type: 'build-in',
                         name: 'block',
@@ -728,7 +729,7 @@
 
                 processBlocks: function(blockAncestry, headIdx, data)
                 {
-                    var append = true; //(headIdx == blockAncestry.length-1);
+                    var append = true;
                     var prepend = false;
                     var i = headIdx;
                     for (; i>=0; --i)
@@ -767,7 +768,7 @@
             strip:
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parse: function(params, tree, content)
                 {
                     parse(content.replace(/[ \t]*[\r\n]+[ \t]*/g, ''), tree);
                 }
@@ -776,7 +777,7 @@
             literal:
             {
                 type: 'block',
-                parse: function(paramStr, tree, content)
+                parse: function(params, tree, content)
                 {
                     parseText(content, tree);
                 }
@@ -785,7 +786,7 @@
             ldelim:
             {
                 type: 'function',
-                parse: function(paramStr, tree)
+                parse: function(params, tree)
                 {
                     parseText(jSmart.prototype.left_delimiter, tree);
                 }
@@ -794,7 +795,7 @@
             rdelim:
             {
                 type: 'function',
-                parse: function(paramStr, tree)
+                parse: function(params, tree)
                 {
                     parseText(jSmart.prototype.right_delimiter, tree);
                 }
@@ -822,20 +823,22 @@
             if (res)         //function
             {
                 var nm = res[1];
-                var params = (res.length>2) ? res[2] : '';
+                var paramStr = (res.length>2) ? res[2] : '';
 
                 if (nm in buildInFunctions)
                 {
-                    if (buildInFunctions[nm].type == 'block')
+                    var buildIn = buildInFunctions[nm];
+                    var params = ('parseParams' in buildIn)? buildIn.parseParams(paramStr) : parseParams(paramStr);
+                    if (buildIn.type == 'block')
                     {
 					         s = s.replace(/^\n/,'');  	//remove new line after block open tag (like in Smarty)
                         var closeTag = findCloseTag('\/'+nm, nm+' +[^}]*', s);
-                        buildInFunctions[nm].parse(params, tree, s.slice(0,closeTag.index));
+                        buildIn.parse(params, tree, s.slice(0,closeTag.index));
                         s = s.slice(closeTag.index+closeTag[0].length);
                     }
                     else
                     {
-                        buildInFunctions[nm].parse(params, tree);
+                        buildIn.parse(params, tree);
                         if (nm == 'extends')
                         {
                             tree = []; //throw away further parsing except for {block}
@@ -849,12 +852,12 @@
                     if (plugin.type == 'block')
                     {
                         var closeTag = findCloseTag('\/'+nm, nm+' +[^}]*', s);
-                        parsePluginBlock(nm, parseParams(params), tree, s.slice(0,closeTag.index));
+                        parsePluginBlock(nm, parseParams(paramStr), tree, s.slice(0,closeTag.index));
                         s = s.slice(closeTag.index+closeTag[0].length);
                     }
                     else if (plugin.type == 'function')
                     {
-                        parsePluginFunc(nm, parseParams(params), tree);
+                        parsePluginFunc(nm, parseParams(paramStr), tree);
                     }
                     if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='while' || nm=='nocache')
                     {
@@ -1682,6 +1685,7 @@
             '$smarty': {
                 block: {},
                 capture: {},
+                counter: {},
                 cycle: {},
                 foreach: {},
                 section: {},
@@ -1846,7 +1850,7 @@
         {
             return new PHP_JS();
         }
-        throw new Error("Modifier '" + modifier + "' uses '" + fnm + "' implementation from php.js project. Find out more at http://phpjs.org");
+        throw new Error("Modifier '" + modifier + "' uses JavaScript port of PHP function '" + fnm + "'. You can find one at http://phpjs.org");
     }
 
     jSmart.prototype.makeTimeStamp = function(s)
@@ -2013,33 +2017,34 @@
         'counter', 
         function(params, data)
         {
-            var name = '__counter@' + params.__get('name','default');
-            if (name in data)
+            var name = params.__get('name','default');
+            if (name in data.$smarty.counter)
             {
+                var counter = data.$smarty.counter[name];
                 if ('start' in params)
                 {
-                    data[name].value = parseInt(params['start']);
+                    counter.value = parseInt(params['start']);
                 }
                 else
                 {
-                    data[name].value = parseInt(data[name].value);
-                    data[name].skip = parseInt(data[name].skip);
-                    if ('down' == data[name].direction)
+                    counter.value = parseInt(counter.value);
+                    counter.skip = parseInt(counter.skip);
+                    if ('down' == counter.direction)
                     {
-                        data[name].value -= data[name].skip;
+                        counter.value -= counter.skip;
                     }
                     else
                     {
-                        data[name].value += data[name].skip;
+                        counter.value += counter.skip;
                     }
                 }
-                data[name].skip = params.__get('skip',data[name].skip);
-                data[name].direction = params.__get('direction',data[name].direction);
-                data[name].assign = params.__get('assign',data[name].assign);
+                counter.skip = params.__get('skip',counter.skip);
+                counter.direction = params.__get('direction',counter.direction);
+                counter.assign = params.__get('assign',counter.assign);
             }
             else
             {
-                data[name] = {
+                data.$smarty.counter[name] = {
                     value: parseInt(params.__get('start',1)),
                     skip: parseInt(params.__get('skip',1)),
                     direction: params.__get('direction','up'),
@@ -2047,15 +2052,15 @@
                 };
             }
 
-            if (data[name].assign)
+            if (data.$smarty.counter[name].assign)
             {
-                data['$'+data[name].assign] = data[name].value;
+                data['$'+data.$smarty.counter[name].assign] = data.$smarty.counter[name].value;
                 return '';
             }
 
             if (params.__get('print',true))
             {
-                return data[name].value;
+                return data.$smarty.counter[name].value;
             }
 
             return '';
