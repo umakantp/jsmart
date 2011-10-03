@@ -516,7 +516,7 @@
                 parseParams: function(paramStr)
                 {
                     var params = {};
-                    var res = paramStr.match(/^\s*[$](\w+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i);
+                    var res = paramStr.match(/^\s*[$](.+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i);
                     if (res)
                     {
                         params.arrName = '$'+res[1];
@@ -1696,7 +1696,7 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.3'
+                version: '2.5'
             }
         };
         blocks = this.blocks;
@@ -2882,8 +2882,8 @@
         'escape', 
         function(s, esc_type, char_set)
         {
-            esc_type = esc_type ? esc_type : 'html';
-            char_set = char_set ? char_set : 'UTF-8';
+            esc_type = esc_type || 'html';
+            char_set = char_set || 'UTF-8';
 
             switch (esc_type) 
             {
@@ -3098,7 +3098,7 @@
         'wordwrap', 
         function(s, width, wrapWith, breakWords)
         {
-	         width = width ? width : 80;
+	         width = width || 80;
 	         wrapWith = wrapWith || '\n';
 	         
 	         var lines = s.split('\n');
