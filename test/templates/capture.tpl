@@ -31,15 +31,10 @@ this will be captured into variable
 
 {$captureA}
 
-{capture name='testCapture3' append='a'}
-aaa
-{/capture}
-
-{capture name='testCapture4' append='a'}
-bbb
-{/capture}
-
-{foreach $a as $i}
+{$arr = []}
+{capture name='testCapture3' append='arr'}aaa{/capture}
+{capture name='testCapture4' append='arr'}bbb{/capture}
+{foreach $arr as $i}
 	[{$i}]
 {/foreach}
 

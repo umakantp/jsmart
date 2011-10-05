@@ -3,12 +3,12 @@
 date_default_timezone_set('Europe/Moscow');		//to test date_format modifier
 
 define('SMARTY_DIR','./smarty/');
-require_once SMARTY_DIR . 'Smarty.class.php';
+require_once SMARTY_DIR . 'SmartyBC.class.php';
 
-$smarty = new Smarty;
+$smarty = new SmartyBC;
 $smarty->compile_check = true;
 $smarty->debugging = false;
-$smarty->allow_php_tag = true;
+//$smarty->allow_php_tag = true;
 
 
 $smarty->assign('foo','bar');
@@ -16,7 +16,7 @@ $smarty->assign('a',array('0','1','2','3','4','5','6','7','8','9'));
 $smarty->assign('a2',array('0',array('baz'=>'baz')));
 $smarty->assign('o',array('0'=>'0','1'=>'1','2'=>'2','3'=>'3','4'=>'4','5'=>'5','6'=>'6','7'=>'7','8'=>'8','9'=>'9'));
 $smarty->assign('ob', array('prop1'=>'prop1', 'prop2'=> array('txt'=>'txt', 'num'=>777, 'bool_true'=>true)));
-$smarty->assign('code','[$ob.prop2.txt]');
+$smarty->assign('code','[{$ob.prop2.txt}]');
 $smarty->assign('num',7);
 $smarty->assign('long_text', "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n");
 $smarty->assign('aEmpty',array());
@@ -95,6 +95,7 @@ function testRepeat($params, $content, $template, &$repeat)
 {
 	if (!$content && array_key_exists('hide',$params) && $params['hide']==true) {
 		$repeat = false;
+		return '';
 	}
 	static $i = 0;
 	if ($content)
@@ -107,8 +108,8 @@ function testRepeat($params, $content, $template, &$repeat)
 		{
 			$i = 0;
 		}
+		return '['.$content.']';
 	}
-	return '['.$content.']';
 }
 $smarty->registerPlugin('block', 'testRepeat', 'testRepeat');
 
@@ -133,6 +134,14 @@ $smarty2->assign('foo','bar');
 $smarty2->assign('a',array('0','1','2','3','4','5','6','7','8','9'));
 
 $smarty->assign('escapeParse',$smarty2->fetch('escape_parsing.tpl'));
+
+
+
+$smarty3 = new Smarty;
+$smarty3->escape_html = true;
+$smarty3->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
+
+$smarty->assign('escapeHtml',$smarty3->fetch('escape_html.tpl'));
 
 $smarty->display('main.tpl');
 

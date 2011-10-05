@@ -871,11 +871,35 @@
             }
             else         //variable
             {
-                tree.push( parseExpression(openTag[1]).tree );
-                if (tree[tree.length-1].type=='build-in' && tree[tree.length-1].name=='__operator' && tree[tree.length-1].op == '=')
+                var tag = openTag[1],
+                    nf = tag.match(/\s+nofilter*$/);
+                if (nf)
+                {
+                    tag = tag.substring(0, nf.index);
+                }
+                else
+                {
+                    nf = !jSmart.prototype.escape_html;
+                }
+                var node = parseExpression(tag).tree;
+                if (node.type=='build-in' && node.name=='__operator' && node.op == '=')
                 {
                     s = s.replace(/^\n/,'');
                 }
+                else if (!nf)
+                {
+                    //auto escape variable
+                    var data = [node];
+                    data.name = {data: 'escape', type: 'text'};
+                    node =  {
+                        name: '__func',
+                        type: 'plugin',
+                        params: {
+                            __parsed: data
+                        }
+                    };
+                }
+                tree.push(node);
             }
         }
         if (s) 
@@ -1580,7 +1604,7 @@
                     v[nm] = val;
                 }
 
-                if (typeof v == 'object' && nm in v)
+                if (typeof v == 'object' && v !== null && nm in v)
                 {
                     v = v[nm];
                 }
@@ -1702,6 +1726,8 @@
         blocks = this.blocks;
         parse(stripComments(tpl.replace(/\r\n/g,'\n')), this.tree);
     };
+
+    jSmart.prototype.escape_html = false;
 
     jSmart.prototype.fetch = function(data)
     {
@@ -2907,7 +2933,7 @@
             case 'hexentity':
                 var res = '';
                 for (var i=0; i<s.length; ++i) {
-                    res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)) + ';';
+                    res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)).toUpperCase() + ';';
                 } 
                 return res;
             case 'decentity':

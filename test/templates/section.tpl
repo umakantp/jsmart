@@ -1,4 +1,3 @@
-
 {section name='sectionTest' loop=$o max=3}
 	{$o[sectionTest]}
 {/section}

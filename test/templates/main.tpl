@@ -42,7 +42,7 @@
 			'prop1': 'prop1', 
 			'prop2': { 'txt':'txt', 'num':777, 'bool_true': 1 }
 		},
-		'code' : '[$ob.prop2.txt]',
+		'code' : '[{$ob.prop2.txt}]',
 		'num': 7,
 		
 		'books': [
@@ -92,7 +92,8 @@
 		{
 			return document.getElementById('test_insert').innerHTML;
 		}
-		var code = "$this.$testVar = {'a':'abcd','b':'efgh'}; 'hello!'";
+		//var code = "$this.$testVar = {'a':'abcd','b':'efgh'}; 'hello!'"; DOESN'T work in Smarty 3.1.2
+		var code = "'hello!'";
 		return code;
 	}
 	
@@ -248,8 +249,8 @@
 	jSmart.prototype.right_delimiter = '}-->';
 	jSmart.prototype.auto_literal = false;
 
-	var tplEscape = new jSmart($('#escape_parsing_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
-	data.escapeParse = tplEscape.fetch( {
+	var t = new jSmart($('#escape_parsing_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
+	data.escapeParse = t.fetch( {
 		foo: 'bar',
 		a: ['0','1','2','3','4','5','6','7','8','9']
 	} );
@@ -324,6 +325,17 @@
 <script type="text/javascript" src="defplusstrftime.namespaced.min.js"></script>
 {runTest nm='mailto'}
 {runTest nm='math'}
+
+<script type="text/x-jsmart-tmpl" id='escape_html_tpl'>{fetch file="$testPath/escape_html.tpl"}</script>
+{literal}
+<script>
+	jSmart.prototype.escape_html = true;
+	var t = new jSmart($('#escape_html_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
+	data.escapeHtml = t.fetch( { textWithHTML: '<span style="color:red;"><i><b>foo</b></i></span>' } );
+	jSmart.prototype.escape_html = false;
+</script>
+{/literal}
+
 {runTest nm='phpjs'}
 
 </body>

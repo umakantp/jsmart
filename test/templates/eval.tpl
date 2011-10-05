@@ -1,4 +1,3 @@
-
 {eval var=$code}
 
 {eval var=$code assign='zzz'}

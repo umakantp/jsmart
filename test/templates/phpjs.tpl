@@ -19,7 +19,7 @@
 
 {"abcdef67832*@%^%&^"|escape:hex}
 
-{"abcdef67832*@%^%&^"|escape:hexentity}
+[{"abcdef67832*@%^%&^"|escape:hexentity}]
 
 {"abcdef67832*@%^%&^"|escape:decentity}
 
@@ -37,3 +37,7 @@
 {"6/3/1976"|date_format:'%A, %B %e, %Y'}
 {"6/3/1976 13:13:13"|date_format:'%H:%M %A, %B %e, %Y'}
 {"19760603131313"|date_format:'%H:%M %A, %B %e, %Y'}	//mysql timestamp format of YYYYMMDDHHMMSS
+
+
+---------- escape HTML --------------------
+[{$escapeHtml}]

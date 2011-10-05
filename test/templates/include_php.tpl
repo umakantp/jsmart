@@ -1,7 +1,7 @@
 {include_php "$testPath/test.php"}
 {include_php "$testPath/test.php"}
 
-{$testVar.a}
+{*$testVar.a*}
 
 {include_php "$testPath/test.php"}
 {include_php "$testPath/test.php" once=false}
