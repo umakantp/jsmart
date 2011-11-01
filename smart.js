@@ -513,28 +513,16 @@
                 parseParams: function(paramStr)
                 {
                     var params = {};
-                    var res = paramStr.match(/^\s*[$](.+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i);
-                    if (res)
+                    var res = paramStr.match(/^\s*([$].+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i);
+                    if (res) //Smarty 3.x syntax => Smarty 2.x syntax
                     {
-                        params.arrName = res[1];
-                        params.varName = res[4] ? res[4] : res[2];
-                        params.keyName = res[4] ? res[2] : null;
-                    }
-                    else    //Smarty 2.x syntax
-                    {
-                        params = parseParams(paramStr);
-                        params.arrName = params['from'].replace(/^\$/,'');
-                        params.varName = trimQuotes(params['item']);
-                        if ('key' in params)
+                        paramStr = 'from='+res[1] + ' item='+(res[4]||res[2]);
+                        if (res[4])
                         {
-                            params.keyName = trimQuotes(params['key']);
-                        }
-                        if ('name' in params)
-                        {
-                            params.loopName = trimQuotes(params['name']);
+                            paramStr += ' key='+res[2];
                         }
                     }
-                    return params;
+                    return parseParams(paramStr);
                 },
 
                 parse: function(params, tree, content)
@@ -544,10 +532,7 @@
                     tree.push({
                         type: 'build-in',
                         name: 'foreach',
-                        arr: params.arrName,
-                        keyName: params.keyName,
-                        varName: params.varName,
-                        loopName: params.loopName,
+                        params: params,
                         subTree: subTree,
                         subTreeElse: subTreeElse
                     });
@@ -566,12 +551,8 @@
 
                 process: function(node, data)
                 {
-                    var a = null;
-                    try { a = execute(node.arr,data); } catch(e){}
-                    if (!a)
-                    {
-                        a = trimQuotes(node.arr);
-                    }
+                    var params = getActualParamValues(node.params, data);
+                    var a = params.from;
                     if (!(a instanceof Object))
                     {
                         a = [a];
@@ -579,11 +560,11 @@
 
                     var total = countProperties(a);
 
-                    data[node.varName+'__total'] = total;
-                    if (node.loopName)
+                    data[params.item+'__total'] = total;
+                    if ('name' in params)
                     {
-                        data.smarty.foreach[node.loopName] = {};
-                        data.smarty.foreach[node.loopName]['total'] = total;
+                        data.smarty.foreach[params.name] = {};
+                        data.smarty.foreach[params.name].total = total;
                     }
 
                     var s='';
@@ -595,32 +576,32 @@
                             continue;
                         }
 
-                        data[node.varName+'__key'] = isNaN(key) ? key : parseInt(key);
-                        if (node.keyName)
+                        data[params.item+'__key'] = isNaN(key) ? key : parseInt(key);
+                        if ('key' in params)
                         {
-                            data[node.keyName] = data[node.varName+'__key'];
+                            data[params.key] = data[params.item+'__key'];
                         }
-                        data[node.varName] = a[key];
-                        data[node.varName+'__index'] = parseInt(i);
-                        data[node.varName+'__iteration'] = parseInt(i+1);
-                        data[node.varName+'__first'] = (i===0);
-                        data[node.varName+'__last'] = (i==total-1);
+                        data[params.item] = a[key];
+                        data[params.item+'__index'] = parseInt(i);
+                        data[params.item+'__iteration'] = parseInt(i+1);
+                        data[params.item+'__first'] = (i===0);
+                        data[params.item+'__last'] = (i==total-1);
                         
-                        if (node.loopName)
+                        if ('name' in params)
                         {
-                            data.smarty.foreach[node.loopName].index = parseInt(i);
-                            data.smarty.foreach[node.loopName].iteration = parseInt(i+1);
-                            data.smarty.foreach[node.loopName].first = (i===0) ? 1 : '';
-                            data.smarty.foreach[node.loopName].last = (i==total-1) ? 1 : '';
+                            data.smarty.foreach[params.name].index = parseInt(i);
+                            data.smarty.foreach[params.name].iteration = parseInt(i+1);
+                            data.smarty.foreach[params.name].first = (i===0) ? 1 : '';
+                            data.smarty.foreach[params.name].last = (i==total-1) ? 1 : '';
                         }
 
                         s += process(node.subTree, data);
                         ++i;
                     }
-                    data[node.varName+'__show'] = (i>0);
-                    if (node.loopName)
+                    data[params.item+'__show'] = (i>0);
+                    if (params.name)
                     {
-                        data.smarty.foreach[node.loopName].show = (i>0) ? 1 : '';
+                        data.smarty.foreach[params.name].show = (i>0) ? 1 : '';
                     }
                     if (i>0)
                     {
