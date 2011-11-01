@@ -166,7 +166,7 @@
 		{
 			s += '[' + nm +': ' + params[nm] +'] ';
 		}
-		data['$insertResult'] = s;
+		data['insertResult'] = s;
 		return s;
 	}
 	
@@ -185,7 +185,7 @@
 		{
 			s += '[' + nm +': ' + params[nm] +'] ';
 		}
-		data['$insertWithScriptResult'] = s;
+		data['insertWithScriptResult'] = s;
 		return s;
 	}
 </script>	

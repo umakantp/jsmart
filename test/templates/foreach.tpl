@@ -73,11 +73,11 @@ this is just@total text@index
 
 idx:[{$idx}]
 
-
+============================================
 {foreach from=$a key=mykey item=myitem}
 	[{$mykey}]:[{$myitem}]
 {/foreach}
-
+============================================
 
 {foreach from=$o item=myitem}
 	[{$myitem}]

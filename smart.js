@@ -3,8 +3,8 @@
  * http://code.google.com/p/jsmart/
  *
  * Copyright 2011, Max Miroshnikov <miroshnikov at gmail dot com> 
- * jSmart is licensed under the GNU General Public License
- * http://www.apache.org/licenses/LICENSE-2.0
+ * jSmart is licensed under the GNU Lesser General Public License
+ * http://www.gnu.org/licenses/lgpl.html
  */
 
 
@@ -14,9 +14,9 @@
        merges two or more objects into one and add prefix at the beginning of every property name at the top level
        objects type is lost, only own properties copied
     */
-    function obMerge(prefix, ob1, ob2 /*, ...*/)
+    function obMerge(ob1, ob2 /*, ...*/)
     {
-        for (var i=2; i<arguments.length; ++i)
+        for (var i=1; i<arguments.length; ++i)
         {
             for (var nm in arguments[i]) 
             {
@@ -24,12 +24,12 @@
                 {
                     if (typeof(arguments[i][nm]) == 'object' && arguments[i][nm] != null)
                     {
-                        ob1[prefix+nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
-                        obMerge('', ob1[prefix+nm], arguments[i][nm]);
+                        ob1[nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
+                        obMerge(ob1[nm], arguments[i][nm]);
                     }
                     else
                     {
-                        ob1[prefix+nm] = arguments[i][nm]; 
+                        ob1[nm] = arguments[i][nm]; 
                     }
                 }
             }
@@ -182,25 +182,23 @@
         return null;
     }
 
-    function prepareVar(code)
-    {
-        return code.replace(/([$]\w+)@(index|iteration|first|last|show|total)/gi, "$1__$2");
-    }
-
     function execute(code, data)
     {
         if (typeof(code) == 'string')
         {
-            with (modifiers)
+            with ({'__code':code})
             {
-                with (data)
+                with (modifiers)
                 {
-                    try {
-                        return eval(code);
-                    }
-                    catch(e)
+                    with (data)
                     {
-                        throw new Error(e.message + ' in \n' + code);
+                        try {
+                            return eval(__code);
+                        }
+                        catch(e)
+                        {
+                            throw new Error(e.message + ' in \n' + code);
+                        }
                     }
                 }
             }
@@ -324,10 +322,9 @@
                 process: function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
-                    params.loop = execute(node.params.loop, data);
 
                     var props = {};
-                    data.$smarty.section[params.name] = props;
+                    data.smarty.section[params.name] = props;
 
                     var show = params.__get('show',true);
                     props.show = show;
@@ -449,7 +446,7 @@
 			           
                     for (var i=parseInt(params.from); count<total; i+=step,++count)
                     {
-                        data['$'+params.varName] = i;
+                        data[params.varName] = i;
                         s += process(node.subTree, data);
                     }
                     if (!count)
@@ -519,14 +516,14 @@
                     var res = paramStr.match(/^\s*[$](.+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i);
                     if (res)
                     {
-                        params.arrName = '$'+res[1];
+                        params.arrName = res[1];
                         params.varName = res[4] ? res[4] : res[2];
                         params.keyName = res[4] ? res[2] : null;
                     }
                     else    //Smarty 2.x syntax
                     {
                         params = parseParams(paramStr);
-                        params.arrName = params['from'];
+                        params.arrName = params['from'].replace(/^\$/,'');
                         params.varName = trimQuotes(params['item']);
                         if ('key' in params)
                         {
@@ -549,7 +546,7 @@
                         name: 'foreach',
                         arr: params.arrName,
                         keyName: params.keyName,
-                        varName: '$'+params.varName,
+                        varName: params.varName,
                         loopName: params.loopName,
                         subTree: subTree,
                         subTreeElse: subTreeElse
@@ -585,8 +582,8 @@
                     data[node.varName+'__total'] = total;
                     if (node.loopName)
                     {
-                        data.$smarty.foreach[node.loopName] = {};
-                        data.$smarty.foreach[node.loopName]['total'] = total;
+                        data.smarty.foreach[node.loopName] = {};
+                        data.smarty.foreach[node.loopName]['total'] = total;
                     }
 
                     var s='';
@@ -601,7 +598,7 @@
                         data[node.varName+'__key'] = isNaN(key) ? key : parseInt(key);
                         if (node.keyName)
                         {
-                            data['$'+node.keyName] = data[node.varName+'__key'];
+                            data[node.keyName] = data[node.varName+'__key'];
                         }
                         data[node.varName] = a[key];
                         data[node.varName+'__index'] = parseInt(i);
@@ -611,10 +608,10 @@
                         
                         if (node.loopName)
                         {
-                            data.$smarty.foreach[node.loopName].index = parseInt(i);
-                            data.$smarty.foreach[node.loopName].iteration = parseInt(i+1);
-                            data.$smarty.foreach[node.loopName].first = (i===0) ? 1 : '';
-                            data.$smarty.foreach[node.loopName].last = (i==total-1) ? 1 : '';
+                            data.smarty.foreach[node.loopName].index = parseInt(i);
+                            data.smarty.foreach[node.loopName].iteration = parseInt(i+1);
+                            data.smarty.foreach[node.loopName].first = (i===0) ? 1 : '';
+                            data.smarty.foreach[node.loopName].last = (i==total-1) ? 1 : '';
                         }
 
                         s += process(node.subTree, data);
@@ -623,7 +620,7 @@
                     data[node.varName+'__show'] = (i>0);
                     if (node.loopName)
                     {
-                        data.$smarty.foreach[node.loopName].show = (i>0) ? 1 : '';
+                        data.smarty.foreach[node.loopName].show = (i>0) ? 1 : '';
                     }
                     if (i>0)
                     {
@@ -648,7 +645,7 @@
                             {
                                 var defaults = getActualParamValues(this.defautParams,data);
                                 delete defaults.name;
-                                return process(this.subTree, obMerge('$',obMerge('',{},data),defaults,params));
+                                return process(this.subTree, obMerge(obMerge({},data),defaults,params));
                             }
                         };
                     parse(content.replace(/\n+$/,''), subTree);
@@ -721,10 +718,10 @@
 
                 process: function(node, data)
                 {
-                    data.$smarty.block.parent = data.$smarty.block.child = '';
+                    data.smarty.block.parent = data.smarty.block.child = '';
                     var blockName = trimQuotes(node.params.name?node.params.name:node.params[0]);
                     this.processBlocks(blocks[blockName], blocks[blockName].length-1, data);
-                    return data.$smarty.block.child;
+                    return data.smarty.block.child;
                 },
 
                 processBlocks: function(blockAncestry, headIdx, data)
@@ -736,28 +733,28 @@
                     {
                         if (blockAncestry[i].params.hasParent)
                         {
-                            var tmpChild = data.$smarty.block.child;
-                            data.$smarty.block.child = '';
+                            var tmpChild = data.smarty.block.child;
+                            data.smarty.block.child = '';
                             this.processBlocks(blockAncestry, i-1, data);
-                            data.$smarty.block.parent = data.$smarty.block.child;
-                            data.$smarty.block.child = tmpChild;
+                            data.smarty.block.parent = data.smarty.block.child;
+                            data.smarty.block.child = tmpChild;
                         }
 
-                        var tmpChild = data.$smarty.block.child;
+                        var tmpChild = data.smarty.block.child;
                         var s = process(blockAncestry[i].tree, data);
-                        data.$smarty.block.child = tmpChild;
+                        data.smarty.block.child = tmpChild;
 
                         if (blockAncestry[i].params.hasChild)
                         {
-                            data.$smarty.block.child = s;
+                            data.smarty.block.child = s;
                         }
                         else if (append)
                         {
-                            data.$smarty.block.child = s + data.$smarty.block.child;
+                            data.smarty.block.child = s + data.smarty.block.child;
                         }
                         else if (prepend)
                         {
-                            data.$smarty.block.child += s;
+                            data.smarty.block.child += s;
                         }
                         append = blockAncestry[i].params.append;
                         prepend = blockAncestry[i].params.prepend;
@@ -948,10 +945,10 @@
         });
     }
 
-    function parseVar(s, e)
+    function parseVar(s, e, nm)
     {
-        var rootName = prepareVar(e.token);
-        var parts = [{type:'text', data:rootName}];
+        var rootName = e.token;
+        var parts = [{type:'text', data:nm.replace(/^(\w+)@(index|iteration|first|last|show|total)/gi, "$1__$2")}];
 
         var re = /^(?:\.|->|\[\s*)/;
         for (var op=s.match(re); op; op=s.match(re))
@@ -1020,10 +1017,10 @@
     var tokens = 
         [
             {
-                re: /\$[\w@]+/,   //var
+                re: /\$([\w@]+)/,   //var
                 parse: function(e, s)
                 {
-                    parseModifiers(parseVar(s, e), e);
+                    parseModifiers(parseVar(s, e, RegExp.$1), e);
                 }
             },
             {
@@ -1050,7 +1047,7 @@
                     if (isVar)
                     {
                         var eVar = {token:isVar[0], tree:[]};
-                        parseVar(v, eVar);
+                        parseVar(v, eVar, isVar[1]);
                         if (eVar.token.length == v.length)
                         {
                             e.tree.push( eVar.tree[0] );
@@ -1260,7 +1257,7 @@
                 parse: function(e, s)
                 {
                     var eVar = {token:'$smarty',tree:[]};
-                    parseVar('.config.'+RegExp.$1, eVar);
+                    parseVar('.config.'+RegExp.$1, eVar, 'smarty');
                     e.tree.push( eVar.tree[0] );                    
                     parseModifiers(s, e);
                 }
@@ -1587,9 +1584,9 @@
                 nm = process([part],data);
 
                 //section name
-                if (nm in data.$smarty.section && part.type=='text' && process([node.parts[0]],data)!='$smarty')
+                if (nm in data.smarty.section && part.type=='text' && process([node.parts[0]],data)!='smarty')
                 { 
-                    nm = data.$smarty.section[nm].index;
+                    nm = data.smarty.section[nm].index;
                 }
 
                 //add to array
@@ -1706,7 +1703,7 @@
         this.blocks = {};
         this.scripts = {};
         this.data = {
-            '$smarty': {
+            'smarty': {
                 block: {},
                 capture: {},
                 counter: {},
@@ -1733,7 +1730,7 @@
     {
         blocks = this.blocks;
         scripts = this.scripts;
-        this.data = obMerge('$',this.data,data);
+        this.data = obMerge(this.data,data);
         var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
         {
@@ -1778,13 +1775,13 @@
 			           var triple = s.match(/"""/);
 			           if (triple)
 			           {
-				            data.$smarty.config[f[2]] = s.slice(0,triple.index);
+				            data.smarty.config[f[2]] = s.slice(0,triple.index);
 				            s = s.slice(triple.index + triple[0].length);
 			           }
 		          }
 		          else
 		          {
-			           data.$smarty.config[f[2]] = trimQuotes(f[3]);
+			           data.smarty.config[f[2]] = trimQuotes(f[3]);
 		          }
 	         }
 	         var newln = s.match(/\n+/);
@@ -1803,11 +1800,11 @@
     {
         if (varName)
         {
-            delete this.data.$smarty.config[varName];
+            delete this.data.smarty.config[varName];
         }
         else
         {
-            this.data.$smarty.config = {};
+            this.data.smarty.config = {};
         }
     }
 
@@ -1936,7 +1933,7 @@
                 paramValues[params.name+'__p'+i] = params[i];
             }
             var fname = ('__owner' in data && params.name in data.__owner) ? ('__owner.'+params.name) : params.name;
-            return execute(fname + '(' + paramNames.join(',') + ')', obMerge('',{},data,paramValues));
+            return execute(fname + '(' + paramNames.join(',') + ')', obMerge({},data,paramValues));
         }
     );
 
@@ -1954,7 +1951,7 @@
         'append', 
         function(params, data)
         {
-            var varName = '$' + params.__get('var',null,0);
+            var varName = params.__get('var',null,0);
             if (!(varName in data) || !(data[varName] instanceof Array))
             {
                 data[varName] = [];
@@ -1978,7 +1975,7 @@
         'assign', 
         function(params, data)
         {
-            assignVar('$'+params.__get('var',null,0), params.__get('value',null,1), data);
+            assignVar(params.__get('var',null,0), params.__get('value',null,1), data);
             return '';
         }
     );
@@ -1995,7 +1992,7 @@
             var s = plugins[fname].process(params, data);
             if (assignTo)
             {
-                assignVar('$'+assignTo, s, data);
+                assignVar(assignTo, s, data);
                 return '';
             }
             return s;
@@ -2010,17 +2007,16 @@
             if (content)
             {
                 content = content.replace(/^\n/,'');
-                data.$smarty.capture[params.__get('name','default',0)] = content;
+                data.smarty.capture[params.__get('name','default',0)] = content;
 
                 if ('assign' in params)
                 {
-                    assignVar('$'+params.assign, content, data);
+                    assignVar(params.assign, content, data);
                 }
 
                 var append = params.__get('append',false);
                 if (append)
                 {
-                    append = '$'+append;
 				        if (append in data)
 				        {
 					         if (data[append] instanceof Array)
@@ -2044,9 +2040,9 @@
         function(params, data)
         {
             var name = params.__get('name','default');
-            if (name in data.$smarty.counter)
+            if (name in data.smarty.counter)
             {
-                var counter = data.$smarty.counter[name];
+                var counter = data.smarty.counter[name];
                 if ('start' in params)
                 {
                     counter.value = parseInt(params['start']);
@@ -2070,7 +2066,7 @@
             }
             else
             {
-                data.$smarty.counter[name] = {
+                data.smarty.counter[name] = {
                     value: parseInt(params.__get('start',1)),
                     skip: parseInt(params.__get('skip',1)),
                     direction: params.__get('direction','up'),
@@ -2078,15 +2074,15 @@
                 };
             }
 
-            if (data.$smarty.counter[name].assign)
+            if (data.smarty.counter[name].assign)
             {
-                data['$'+data.$smarty.counter[name].assign] = data.$smarty.counter[name].value;
+                data[data.smarty.counter[name].assign] = data.smarty.counter[name].value;
                 return '';
             }
 
             if (params.__get('print',true))
             {
-                return data.$smarty.counter[name].value;
+                return data.smarty.counter[name].value;
             }
 
             return '';
@@ -2100,15 +2096,15 @@
         {
             var name = params.__get('name','default');
             var reset = params.__get('reset',false);
-            if (!(name in data.$smarty.cycle))
+            if (!(name in data.smarty.cycle))
             {
-                data.$smarty.cycle[name] = {arr: [''], delimiter: params.__get('delimiter',','), index: 0};
+                data.smarty.cycle[name] = {arr: [''], delimiter: params.__get('delimiter',','), index: 0};
                 reset = true;
             }
 
             if (params.__get('delimiter',false))
             {
-                data.$smarty.cycle[name].delimiter = params.delimiter;
+                data.smarty.cycle[name].delimiter = params.delimiter;
             }
             var values = params.__get('values',false);
             if (values)
@@ -2123,35 +2119,35 @@
                 }
                 else
                 {
-                    arr = values.split(data.$smarty.cycle[name].delimiter);
+                    arr = values.split(data.smarty.cycle[name].delimiter);
                 }
                 
-                if (arr.length != data.$smarty.cycle[name].arr.length || arr[0] != data.$smarty.cycle[name].arr[0])
+                if (arr.length != data.smarty.cycle[name].arr.length || arr[0] != data.smarty.cycle[name].arr[0])
                 {
-                    data.$smarty.cycle[name].arr = arr;
-                    data.$smarty.cycle[name].index = 0;
+                    data.smarty.cycle[name].arr = arr;
+                    data.smarty.cycle[name].index = 0;
                     reset = true;
                 }
             }
 
             if (params.__get('advance','true'))
             {
-                data.$smarty.cycle[name].index += 1;
+                data.smarty.cycle[name].index += 1;
             }
-            if (data.$smarty.cycle[name].index >= data.$smarty.cycle[name].arr.length || reset)
+            if (data.smarty.cycle[name].index >= data.smarty.cycle[name].arr.length || reset)
             {
-                data.$smarty.cycle[name].index = 0;
+                data.smarty.cycle[name].index = 0;
             }
 
             if (params.__get('assign',false))
             {
-                assignVar('$'+params.assign, data.$smarty.cycle[name].arr[ data.$smarty.cycle[name].index ], data);
+                assignVar(params.assign, data.smarty.cycle[name].arr[ data.smarty.cycle[name].index ], data);
                 return '';
             }
 
             if (params.__get('print',true))
             {
-                return data.$smarty.cycle[name].arr[ data.$smarty.cycle[name].index ];
+                return data.smarty.cycle[name].arr[ data.smarty.cycle[name].index ];
             }
 
             return '';
@@ -2222,7 +2218,7 @@
             var s = process(tree, data);
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, s, data);
+                assignVar(params.assign, s, data);
                 return '';
             }
             return s;
@@ -2237,7 +2233,7 @@
             var s = jSmart.prototype.getFile(params.__get('file',null,0));
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, s, data);
+                assignVar(params.assign, s, data);
                 return '';
             }
             return s;
@@ -2291,7 +2287,7 @@
             }
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, res, data);
+                assignVar(params.assign, res, data);
                 return '';
             }
             return res.join('\n');
@@ -2518,12 +2514,12 @@
                 }
                 parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
             }
-            var incData = obMerge('$',obMerge('',{},data),params);
-            incData.$smarty.template = file;
+            var incData = obMerge(obMerge({},data),params);
+            incData.smarty.template = file;
             var s = process(files[file], incData);
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, s, data);
+                assignVar(params.assign, s, data);
                 return '';
             }
             return s;
@@ -2544,7 +2540,7 @@
             var s = execute(jSmart.prototype.getJavascript(file), {'$this':data});
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, s, data);
+                assignVar(params.assign, s, data);
                 return '';
             }
             return s;
@@ -2583,7 +2579,7 @@
             var s = func(fparams, data);
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, s, data);
+                assignVar(params.assign, s, data);
                 return '';
             }
             return s;
@@ -2704,7 +2700,7 @@
 
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, res, data);
+                assignVar(params.assign, res, data);
                 return '';
             }
             return res;
@@ -2769,7 +2765,7 @@
             var s = paragraphs.join(wrap_char+wrap_char);
             if ('assign' in params)
             {
-                assignVar('$'+params.assign, s, data);
+                assignVar(params.assign, s, data);
                 return '';
             }
             return s;

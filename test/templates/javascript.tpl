@@ -1,8 +1,8 @@
 {javascript}
 	var abcdef = 'test';
-	if (typeof abcdef == 'string' && $foo == 'bar')
+	if (typeof abcdef == 'string' && foo == 'bar')
 	{
-		$this.$JSresult = $foo;
+		$this.JSresult = foo;
 	}
 {/javascript}
 [{$JSresult}]
