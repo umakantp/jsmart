@@ -998,21 +998,21 @@
     var tokens = 
         [
             {
-                re: /\$([\w@]+)/,   //var
+                re: /^\$([\w@]+)/,   //var
                 parse: function(e, s)
                 {
                     parseModifiers(parseVar(s, e, RegExp.$1), e);
                 }
             },
             {
-                re: /(true|false)/,  //bool
+                re: /^(true|false)/i,  //bool
                 parse: function(e, s)
                 {
                     parseText(e.token.match(/true/i) ? '1' : '', e.tree);
                 }
             },
             {
-                re: /'[^'\\]*(?:\\.[^'\\]*)*'/, //single quotes
+                re: /^'[^'\\]*(?:\\.[^'\\]*)*'/, //single quotes
                 parse: function(e, s)
                 {
                     parseText(eval(e.token), e.tree);
@@ -1020,7 +1020,7 @@
                 }
             },
             {
-                re: /"[^"\\]*(?:\\.[^"\\]*)*"/,  //double quotes
+                re: /^"[^"\\]*(?:\\.[^"\\]*)*"/,  //double quotes
                 parse: function(e, s)
                 {
                     var v = eval(e.token);
@@ -1056,7 +1056,7 @@
                 }
             },
             {
-                re: /(\w+)\s*[(]/,  //func()
+                re: /^(\w+)\s*[(]/,  //func()
                 parse: function(e, s)
                 {
                     var fnm = RegExp.$1;
@@ -1067,7 +1067,7 @@
                 }
             },
             {
-                re: /\s*\(\s*/,  //expression in parentheses
+                re: /^\s*\(\s*/,  //expression in parentheses
                 parse: function(e, s)
                 {
                     var parens = [];
@@ -1077,7 +1077,7 @@
                 }
             },
             {
-                re: /\s*\)\s*/,
+                re: /^\s*\)\s*/,
                 parse: function(e, s)
                 {
                     if (e.tree.parent) //it may be the end of func() or (expr)
@@ -1087,7 +1087,7 @@
                 }
             },
             {
-                re: /\s*(\+\+|--)\s*/,
+                re: /^\s*(\+\+|--)\s*/,
                 parse: function(e, s)
                 {
                     if (e.tree.length && e.tree[e.tree.length-1].type == 'var')
@@ -1101,14 +1101,14 @@
                 }
             },
             {
-                re: /\s*(==|!=|===|!==)\s*/,
+                re: /^\s*(==|!=|===|!==)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1, 'binary', 6, e.tree);
                 }
             },
             {
-                re: /\s+(eq|ne|neq)\s+/,
+                re: /^\s+(eq|ne|neq)\s+/i,
                 parse: function(e, s)
                 {
                     var op = RegExp.$1.replace(/ne(q)?/,'!=').replace(/eq/,'==');
@@ -1116,42 +1116,42 @@
                 }
             },
             {
-                re: /\s*!\s*/,
+                re: /^\s*!\s*/,
                 parse: function(e, s)
                 {
                     parseOperator('!', 'pre-unary', 2, e.tree);
                 }
             },
             {
-                re: /\s+not\s+/,
+                re: /^\s+not\s+/i,
                 parse: function(e, s)
                 {
                     parseOperator('!', 'pre-unary', 2, e.tree);
                 }
             },
             {
-                re: /\s*(=|\+=|-=|\*=|\/=|%=)\s*/,
+                re: /^\s*(=|\+=|-=|\*=|\/=|%=)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1, 'binary', 10, e.tree);
                 }
             },
             {
-                re: /\s*(\*|\/|%)\s*/,
+                re: /^\s*(\*|\/|%)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1, 'binary', 3, e.tree);
                 }
             },
             {
-                re: /\s+mod\s+/,
+                re: /^\s+mod\s+/i,
                 parse: function(e, s)
                 {
                     parseOperator('%', 'binary', 3, e.tree);
                 }
             },
             {
-                re: /\s*(\+|-)\s*/,
+                re: /^\s*(\+|-)\s*/,
                 parse: function(e, s)
                 {
                     if (!e.tree.length || e.tree[e.tree.length-1].name == '__operator')
@@ -1165,14 +1165,14 @@
                 }
             },
             {
-                re: /\s*(<|<=|>|>=|<>)\s*/,
+                re: /^\s*(<|<=|>|>=|<>)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1.replace(/<>/,'!='), 'binary', 5, e.tree);
                 }
             },
             {
-                re: /\s+(lt|lte|le|gt|gte|ge)\s+/,
+                re: /^\s+(lt|lte|le|gt|gte|ge)\s+/i,
                 parse: function(e, s)
                 {
                     var op = RegExp.$1.replace(/lt/,'<').replace(/l(t)?e/,'<=').replace(/gt/,'>').replace(/g(t)?e/,'>=');
@@ -1180,14 +1180,14 @@
                 }
             },
             {
-                re: /\s+(is\s+(not\s+)?div\s+by)\s+/,
+                re: /^\s+(is\s+(not\s+)?div\s+by)\s+/i,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$2?'div_not':'div', 'binary', 7, e.tree);
                 }
             },
             {
-                re: /\s+is\s+(not\s+)?(even|odd)(\s+by\s+)?\s*/,
+                re: /^\s+is\s+(not\s+)?(even|odd)(\s+by\s+)?\s*/i,
                 parse: function(e, s)
                 {
                     var op = RegExp.$1 ? ((RegExp.$2=='odd')?'even':'even_not') : ((RegExp.$2=='odd')?'even_not':'even');
@@ -1199,42 +1199,42 @@
                 }
             },
             {
-                re: /\s*(&&)\s*/,
+                re: /^\s*(&&)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1, 'binary', 8, e.tree);
                 }
             },
             {
-                re: /\s*(\|\|)\s*/,
+                re: /^\s*(\|\|)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1, 'binary', 9, e.tree);
                 }
             },
             {
-                re: /\s+and\s+/,
+                re: /^\s+and\s+/i,
                 parse: function(e, s)
                 {
                     parseOperator('&&', 'binary', 11, e.tree);
                 }
             },
             {
-                re: /\s+xor\s+/,
+                re: /^\s+xor\s+/i,
                 parse: function(e, s)
                 {
                     parseOperator('xor', 'binary', 12, e.tree);
                 }
             },
             {
-                re: /\s+or\s+/,
+                re: /^\s+or\s+/i,
                 parse: function(e, s)
                 {
                     parseOperator('||', 'binary', 13, e.tree);
                 }
             },
             {
-                re: /#(\w+)#/,  //config variable
+                re: /^#(\w+)#/,  //config variable
                 parse: function(e, s)
                 {
                     var eVar = {token:'$smarty',tree:[]};
@@ -1244,7 +1244,7 @@
                 }
             },
             {
-                re: /\s*\[\s*/,   //array
+                re: /^\s*\[\s*/,   //array
                 parse: function(e, s)
                 {
                     var params = parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/);
@@ -1258,7 +1258,7 @@
                 }
             },
             {
-                re: /[\d.]+/, //number
+                re: /^[\d.]+/, //number
                 parse: function(e, s)
                 {
                     parseText(e.token, e.tree);
@@ -1266,7 +1266,7 @@
                 }
             },
             {
-                re: /\w+/, //static
+                re: /^\w+/, //static
                 parse: function(e, s)
                 {
                     parseText(e.token, e.tree);
@@ -1342,7 +1342,7 @@
 
         for (var i=0; i<tokens.length; ++i)
         {
-            if (s.match(new RegExp('^'+tokens[i].re.source,'i')))
+            if (s.match(tokens[i].re))
             {
                 e.token = RegExp.lastMatch;
                 e.value += RegExp.lastMatch;
