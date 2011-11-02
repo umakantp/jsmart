@@ -11,26 +11,18 @@
 (function() {
 
     /**
-       merges two or more objects into one and add prefix at the beginning of every property name at the top level
-       objects type is lost, only own properties copied
+       merges two or more objects into one 
+       shallow copy for objects
     */
     function obMerge(ob1, ob2 /*, ...*/)
     {
         for (var i=1; i<arguments.length; ++i)
         {
-            for (var nm in arguments[i]) 
+            for (var i=1; i<arguments.length; ++i)
             {
-                if (arguments[i].hasOwnProperty(nm) || typeof arguments[i][nm] == 'function')
+                for (var nm in arguments[i]) 
                 {
-                    if (typeof(arguments[i][nm]) == 'object' && arguments[i][nm] != null)
-                    {
-                        ob1[nm] = (arguments[i][nm] instanceof Array) ? new Array : new Object;
-                        obMerge(ob1[nm], arguments[i][nm]);
-                    }
-                    else
-                    {
-                        ob1[nm] = arguments[i][nm]; 
-                    }
+                    ob1[nm] = arguments[i][nm]; 
                 }
             }
         }
@@ -626,7 +618,7 @@
                             {
                                 var defaults = getActualParamValues(this.defautParams,data);
                                 delete defaults.name;
-                                return process(this.subTree, obMerge(obMerge({},data),defaults,params));
+                                return process(this.subTree, obMerge({},data,defaults,params));
                             }
                         };
                     parse(content.replace(/\n+$/,''), subTree);
@@ -1683,7 +1675,7 @@
         this.tree = [];
         this.blocks = {};
         this.scripts = {};
-        this.data = {
+        this.smarty = {
             'smarty': {
                 block: {},
                 capture: {},
@@ -1711,7 +1703,7 @@
     {
         blocks = this.blocks;
         scripts = this.scripts;
-        this.data = obMerge(this.data,data);
+        this.data = obMerge(data,this.smarty);
         var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
         {
@@ -2495,7 +2487,7 @@
                 }
                 parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
             }
-            var incData = obMerge(obMerge({},data),params);
+            var incData = obMerge({},data,params);
             incData.smarty.template = file;
             var s = process(files[file], incData);
             if ('assign' in params)

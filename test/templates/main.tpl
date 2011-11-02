@@ -33,42 +33,6 @@
 	}
 
 	
-	var data = {
-		'foo' : 'bar',
-		'a' : ['0','1','2','3','4','5','6','7','8','9'],
-		'a2' : ['0',{baz:'baz'}],
-		'o' : { '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9' },
-		'ob' : {
-			'prop1': 'prop1', 
-			'prop2': { 'txt':'txt', 'num':777, 'bool_true': 1 }
-		},
-		'code' : '[{$ob.prop2.txt}]',
-		'num': 7,
-		
-		'books': [
-					{
-						'title'  : 'JavaScript: The Definitive Guide',          
-						'author' : 'David Flanagan',                            
-						'price'  : '31.18'
-					},
-					{
-						'title'  : 'Murach JavaScript and DOM Scripting',
-						'author' : 'Ray Harris',
-						'price' : ''
-					},
-					{
-						'title'  : 'Head First JavaScript',
-						'author' : 'Michael Morrison',
-						'price'  : '29.54'
-					}
-		],
-		'long_text': "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n",
-		'aEmpty' : [],
-		'sEmpty' : '',
-		'nullVar': null,
-		'testClassObj': new TestClassObj
-	};
-	
 	jSmart.prototype.getTemplate = function(name) {
 		var tplTxt = document.getElementById(name.replace('.','_')).innerHTML;
 		if (isIE)
@@ -189,6 +153,53 @@
 		return s;
 	}
 </script>	
+
+
+<script>
+	escapeParse = '';
+	escapeHtml = '';
+	
+	function getData()
+	{
+		return {
+			'foo' : 'bar',
+			'a' : ['0','1','2','3','4','5','6','7','8','9'],
+			'a2' : ['0',{baz:'baz'}],
+			'o' : { '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9' },
+			'ob' : {
+				'prop1': 'prop1', 
+				'prop2': { 'txt':'txt', 'num':777, 'bool_true': 1 }
+			},
+			'code' : '[{$ob.prop2.txt}]',
+			'num': 7,
+			
+			'books': [
+						{
+							'title'  : 'JavaScript: The Definitive Guide',          
+							'author' : 'David Flanagan',                            
+							'price'  : '31.18'
+						},
+						{
+							'title'  : 'Murach JavaScript and DOM Scripting',
+							'author' : 'Ray Harris',
+							'price' : ''
+						},
+						{
+							'title'  : 'Head First JavaScript',
+							'author' : 'Michael Morrison',
+							'price'  : '29.54'
+						}
+			],
+			'long_text': "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n",
+			'aEmpty' : [],
+			'sEmpty' : '',
+			'nullVar': null,
+			'testClassObj': new TestClassObj,
+			'escapeParse': escapeParse,
+			'escapeHtml': escapeHtml
+		};
+	}
+</script>
 {/literal}
 
 
@@ -214,7 +225,7 @@
 		try 
 		{
 			var tpl = new jSmart($('#{$nm}_tpl').html());
-			var res_{$nm} = tpl.fetch(data);
+			var res_{$nm} = tpl.fetch(getData());
 		} catch(e) 
 		{
 			alert(e.name + ' ' + e.message);
@@ -250,7 +261,7 @@
 	jSmart.prototype.auto_literal = false;
 
 	var t = new jSmart($('#escape_parsing_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
-	data.escapeParse = t.fetch( {
+	escapeParse = t.fetch( {
 		foo: 'bar',
 		a: ['0','1','2','3','4','5','6','7','8','9']
 	} );
@@ -303,8 +314,8 @@
 <script>
 	test("from JS string", function() {
 		var tpl = new jSmart($('#function_tpl').html());
-		var res_JS_string = tpl.fetch(data);
-		var res2_JS_string = $('#function_tpl').html().fetch(data);
+		var res_JS_string = tpl.fetch(getData());
+		var res2_JS_string = $('#function_tpl').html().fetch(getData());
 		equal(res_JS_string, res2_JS_string);
 	} );
 </script>
@@ -314,7 +325,7 @@
 <script>
 	test("javascript ONLY", function() {
 		var tpl = new jSmart($('#javascript_tpl').html().replace(/\r\n/g,'\n'));
-		var res_JS_only = tpl.fetch(data);
+		var res_JS_only = tpl.fetch(getData());
 		var res2_JS_only = $('#javascript_result').html().replace(/\r\n/g,'\n');
 		equal(res_JS_only, res2_JS_only);
 	} );
@@ -331,7 +342,7 @@
 <script>
 	jSmart.prototype.escape_html = true;
 	var t = new jSmart($('#escape_html_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
-	data.escapeHtml = t.fetch( { textWithHTML: '<span style="color:red;"><i><b>foo</b></i></span>' } );
+	escapeHtml = t.fetch( { textWithHTML: '<span style="color:red;"><i><b>foo</b></i></span>' } );
 	jSmart.prototype.escape_html = false;
 </script>
 {/literal}

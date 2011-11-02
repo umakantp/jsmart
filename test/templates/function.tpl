@@ -74,8 +74,9 @@
 {function testFunc7} property: {$par.txt} {/function}	//param is an Object's property
 {testFunc7 par=$ob.prop2}
 
-{function 'testFunc8'} {$par.prop2.txt = 'zzzz'} {$par.prop2.txt} {/function}  // assign property
-{testFunc8 par=$ob}
+{function 'testFunc8'} {$par = 'zzzz'} {$par} {/function}  // change local object
+{testFunc8 par=$foo}
+{$foo}
 
 {function "testFunc9"} {$par.prop3 = 'new'} {$par.prop3} {/function}  // set new property
 {testFunc9 par=$ob}
