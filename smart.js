@@ -59,7 +59,7 @@
 
     /**
        finds first {tag} in string
-       @param re string with regular expression
+       @param re string with regular expression or an empty string to find any tag
        @return  null or s.match(re) result object where 
        [0] - full tag matched with delimiters (and whitespaces at the begin and the end): { tag }
        [1] - found part from passed re
@@ -73,7 +73,8 @@
         var rdelim = jSmart.prototype.right_delimiter;
         var skipInWS = jSmart.prototype.auto_literal;
 
-        var reTag = new RegExp('^\\s*('+re+')\\s*$','i');
+        var reAny = /^\s*(.+)\s*$/i;
+        var reTag = re ? new RegExp('^\\s*('+re+')\\s*$','i') : reAny;
 
         for (var i=0; i<s.length; ++i)
         {
@@ -200,17 +201,13 @@
 
     function assignVar(nm, val, data)
     {
-        with ( {__data:data, __v: val} )
-        { 
-            if (nm.match(/\[\]$/))  //push to array
-            {
-                nm = nm.replace(/\[\]$/,'');
-                eval('__data.'+nm+'.push(__v)'); 
-            }
-            else
-            {
-                eval('__data.'+nm+'=__v'); 
-            }
+        if (nm.match(/\[\]$/))  //ar[] = 
+        {
+            data[ nm.replace(/\[\]$/,'') ].push(val); 
+        }
+        else
+        {
+            data[nm] = val; 
         }
     }
 
@@ -221,65 +218,96 @@
                 process: function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
-                    var args = {arg1: params[0]};
+                    var arg1 = params[0];
 
                     if (node.optype == 'binary')
                     {
-                        args.arg2 = params[1];
+                        var arg2 = params[1];
                         if (node.op == '=')
                         {
-                            getVarValue(node.params.__parsed[0], data, args.arg2);
+                            getVarValue(node.params.__parsed[0], data, arg2);
                             return '';
                         }
                         else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/))
                         {
-                            args.arg1 = getVarValue(node.params.__parsed[0], data);
-                            with (args) { eval('arg1' + node.op + 'arg2'); }
-                            return getVarValue(node.params.__parsed[0], data, args.arg1);
+                            arg1 = getVarValue(node.params.__parsed[0], data);
+                            switch (node.op) 
+                            {
+                            case '+=': arg1+=arg2; break;
+                            case '-=': arg1-=arg2; break;
+                            case '*=': arg1*=arg2; break;
+                            case '/=': arg1/=arg2; break;
+                            case '%=': arg1%=arg2; break;
+                            }
+                            return getVarValue(node.params.__parsed[0], data, arg1);
                         }
                         else if (node.op.match(/div/))
                         {
-                            with (args) { return eval('arg1%arg2'+(node.op=='div'?'==':'!=')+'0'); }
+                            return (node.op!='div')^(arg1%arg2==0);
                         }
                         else if (node.op.match(/even/))
                         {
-                            with (args) { return eval('(arg1/arg2)%2'+(node.op=='even'?'==':'!=')+'0'); }
+                            return (node.op!='even')^((arg1/arg2)%2==0);
                         }
                         else if (node.op.match(/xor/))
                         {
-                            with (args) { return eval('(arg1 || arg2) && !(arg1 && arg2)'); }
+                            return (arg1||arg2) && !(arg1&&arg2);
                         }
-                        with (args) { return eval('arg1 ' + node.op + ' arg2'); }
+
+                        switch (node.op)
+                        {
+                        case '==': return arg1==arg2;
+                        case '!=': return arg1!=arg2;
+                        case '+':  return arg1+arg2;
+                        case '-':  return arg1-arg2;
+                        case '*':  return arg1*arg2;
+                        case '/':  return arg1/arg2;
+                        case '%':  return arg1%arg2;
+                        case '&&': return arg1&&arg2;
+                        case '||': return arg1||arg2;
+                        case '<':  return arg1<arg2;
+                        case '<=': return arg1<=arg2;
+                        case '>':  return arg1>arg2;
+                        case '>=': return arg1>=arg2;
+                        case '===': return arg1===arg2;
+                        case '!==': return arg1!==arg2;
+                        }
                     }
                     else if (node.op == '!')
                     {
-                        with (args) { return eval('!arg1'); }
+                        return !arg1;
                     }
                     else 
                     {
                         var isVar = node.params.__parsed[0].type == 'var';
                         if (isVar)
                         {
-                            args.arg1 = getVarValue(node.params.__parsed[0], data);
+                            arg1 = getVarValue(node.params.__parsed[0], data);
                         }
-                        var v = args.arg1;
-                        with (args)
+                        var v = arg1;
+                        if (node.optype == 'pre-unary')
                         {
-                            if (node.optype == 'pre-unary')
+                            switch (node.op)
                             {
-                                v = eval(node.op+'arg1');
-                                if (isVar)
-                                {
-                                    getVarValue(node.params.__parsed[0], data, args.arg1);
-                                }
+                            case '-':  v=-arg1;  break;
+                            case '++': v=++arg1; break;
+                            case '--': v=--arg1; break;
                             }
-                            else
+                            if (isVar)
                             {
-                                eval('arg1'+node.op);
-                                getVarValue(node.params.__parsed[0], data, args.arg1);
+                                getVarValue(node.params.__parsed[0], data, arg1);
                             }
-                            return v;
                         }
+                        else
+                        {
+                            switch (node.op)
+                            {
+                            case '++': arg1++; break;
+                            case '--': arg1--; break;
+                            }
+                            getVarValue(node.params.__parsed[0], data, arg1);
+                        }
+                        return v;
                     }
                 }
             },
@@ -336,7 +364,7 @@
 
                     if (from < 0)
                     {
-                        from = to + from;
+                        from += to;
                         if (from < 0)
                         {
                             from = 0;
@@ -780,8 +808,7 @@
 
     function parse(s, tree)
     {
-        var reTag = '.+';
-        for (var openTag=findTag(reTag,s); openTag; openTag=findTag(reTag,s))
+        for (var openTag=findTag('',s); openTag; openTag=findTag('',s))
         {
             if (openTag.index)
             {
@@ -1004,9 +1031,10 @@
                 }
             },
             {
-                re: /^'[^'\\]*(?:\\.[^'\\]*)*'/, //single quotes
+                re: /^'([^'\\]*(?:\\.[^'\\]*)*)'/, //single quotes
                 parse: function(e, s)
                 {
+//                    parseText(RegExp.$1.replace(/\\(['"])/g,'$1'), e.tree);
                     parseText(eval(e.token), e.tree);
                     parseModifiers(s, e);
                 }
@@ -1319,9 +1347,9 @@
             return false;
         }
 
-        if (s.match('^'+jSmart.prototype.left_delimiter))
+        if (s.substr(0,jSmart.prototype.left_delimiter.length)==jSmart.prototype.left_delimiter)
         {
-            var tag = findTag('.*',s);
+            var tag = findTag('',s);
             if (tag)
             {
                 e.token = tag[0];
