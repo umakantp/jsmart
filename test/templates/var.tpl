@@ -177,3 +177,11 @@ $ob['with | symbol:']
 
 {$testClassObj->prop}
 {$testClassObj->func('call member func PHP style')}
+
+{$y=0}
+{$y++}
+{$y++}
+
+{$x=1}
+{$x++}
+{$x++}

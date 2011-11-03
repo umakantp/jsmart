@@ -45,16 +45,17 @@
         return count;
     }
 
+    function evalString(s)
+    {
+        return s.replace(/\\t/,'\t').replace(/\\n/,'\n').replace(/\\(['"\\])/g,'$1');
+    }
+
     /**
        @return  s trimmed and without quotes
     */
     function trimQuotes(s)
     {
-        if (s.match(/^['"].*['"]$/))
-        {
-            s = eval(s);
-        }
-        return s.replace(/^\s+|\s+$/g,'');
+        return evalString(s.replace(/^['"](.*)['"]$/,'$1')).replace(/^\s+|\s+$/g,'');
     }
 
     /**
@@ -1034,16 +1035,15 @@
                 re: /^'([^'\\]*(?:\\.[^'\\]*)*)'/, //single quotes
                 parse: function(e, s)
                 {
-//                    parseText(RegExp.$1.replace(/\\(['"])/g,'$1'), e.tree);
-                    parseText(eval(e.token), e.tree);
+                    parseText(evalString(RegExp.$1), e.tree);
                     parseModifiers(s, e);
                 }
             },
             {
-                re: /^"[^"\\]*(?:\\.[^"\\]*)*"/,  //double quotes
+                re: /^"([^"\\]*(?:\\.[^"\\]*)*)"/,  //double quotes
                 parse: function(e, s)
                 {
-                    var v = eval(e.token);
+                    var v = evalString(RegExp.$1);
                     var isVar = v.match(tokens[0].re);
                     if (isVar)
                     {
