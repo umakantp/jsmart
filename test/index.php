@@ -137,11 +137,38 @@ $smarty->assign('escapeParse',$smarty2->fetch('escape_parsing.tpl'));
 
 
 
-$smarty3 = new Smarty;
-$smarty3->escape_html = true;
-$smarty3->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
+function preFilterTest($tpl_source, Smarty_Internal_Template $template) {
+	return preg_replace("/<!--.*-->/U",'changed in PRE filter',$tpl_source);
+}
+function varFilterTest($v) {
+	return preg_replace("/FILTER_TEST/",'changed in VAR filter',$v);
+}
+function outputFilterTest($tpl_source, Smarty_Internal_Template $template) {
+	return preg_replace("/FILTER_TEST/",'changed in POST filter',$tpl_source);
+}
 
-$smarty->assign('escapeHtml',$smarty3->fetch('escape_html.tpl'));
+
+function filterTest()
+{
+	return "FILTER_TEST";
+}
+
+$smarty3 = new Smarty;
+$smarty3->registerFilter('pre','preFilterTest');
+$smarty3->registerFilter('variable','varFilterTest');
+$smarty3->registerFilter('output','outputFilterTest');
+$smarty3->assign('foo','FILTER_TEST');
+$smarty3->assign('t','test');
+$smarty->assign('filtered',$smarty3->fetch('filtered.tpl'));
+
+
+
+
+$smarty4 = new Smarty;
+$smarty4->escape_html = true;
+$smarty4->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
+
+$smarty->assign('escapeHtml',$smarty4->fetch('escape_html.tpl'));
 
 $smarty->display('main.tpl');
 

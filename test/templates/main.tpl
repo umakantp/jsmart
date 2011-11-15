@@ -157,6 +157,7 @@
 
 <script>
 	escapeParse = '';
+	filtered = '';
 	escapeHtml = '';
 	
 	function getData()
@@ -196,6 +197,7 @@
 			'nullVar': null,
 			'testClassObj': new TestClassObj,
 			'escapeParse': escapeParse,
+			'filtered': filtered,
 			'escapeHtml': escapeHtml
 		};
 	}
@@ -348,6 +350,21 @@
 {/literal}
 
 {runTest nm='phpjs'}
+
+
+
+<script type="text/x-jsmart-tmpl" id='filtered_tpl'>{fetch file="$testPath/filtered.tpl"}</script>
+{literal}
+<script>
+	jSmart.prototype.registerFilter('pre',function(s) {return s.replace(/<!--.*-->/g,'changed in PRE filter');});
+	jSmart.prototype.registerFilter('variable',function(s) {return (new String(s)).replace(/FILTER_TEST/g,'changed in VAR filter');});
+	jSmart.prototype.registerFilter('post',function(s) {return s.replace(/FILTER_TEST/g,'changed in POST filter');});
+	var t = new jSmart($('#filtered_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
+	filtered = t.fetch( {foo: 'FILTER_TEST', 't':'test'} );
+</script>
+{/literal}
+
+{runTest nm='filters'}
 
 </body>
 </html>

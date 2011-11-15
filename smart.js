@@ -45,6 +45,24 @@
         return count;
     }
 
+    /**
+       IE workaround
+    */
+    function findInArray(a, v)
+    {
+        if (Array.prototype.indexOf) {
+            return a.indexOf(v);
+        }
+        for (var i=0; i < a.length; ++i) 
+        {
+            if (a[i] === v) 
+            { 
+                return i; 
+            }
+        }
+        return -1;
+    }
+
     function evalString(s)
     {
         return s.replace(/\\t/,'\t').replace(/\\n/,'\n').replace(/\\(['"\\])/g,'$1');
@@ -685,17 +703,10 @@
                         name: 'block',
                         params: params
                     });
-                    
-                    if (!('append' in params))
-                    {
-                        params.append = false;
-                    }
-                    if (!('prepend' in params))
-                    {
-                        params.prepend = false;
-                    }
-
+                    params.append = findInArray(params,'append') >= 0;
+                    params.prepend = findInArray(params,'prepend') >= 0;
                     params.hasChild = params.hasParent = false;
+
                     onParseVar = function(nm) 
                     {
                         if (nm.match(/^\s*[$]smarty.block.child\s*$/))
@@ -1487,12 +1498,6 @@
 		      {
 				    params.push(param.value);
                 params.__parsed.push(param.tree);
-
-                if (isNaN(param.value))
-                {
-                    params[param.value] = true;
-                    params.__parsed[param.value] = parseText('1',[]);
-                }
 		      }
 
             paramsStr += s.slice(0,param.value.length);
