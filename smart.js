@@ -106,7 +106,7 @@
                 if (!openCount)
                 {
                     s = s.slice(i);
-                    offset += i;
+                    offset += parseInt(i);
                     i = 0;
                 }
                 ++openCount;
@@ -1723,7 +1723,7 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.5'
+                version: '2.6'
             }
         };
         blocks = this.blocks;
