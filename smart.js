@@ -2510,19 +2510,24 @@
         function(params, data)
         {
             var file = params.__get('file',null,0);
-            if (!(file in files))
+            var tree = [];
+            if (findInArray(params,'nocache')>=0 || !(file in files))
             {
-                files[file] = [];
                 var tpl = jSmart.prototype.getTemplate(file);
                 if (typeof(tpl) != 'string')
                 {
                     throw new Error('No template for '+ file);
                 }
-                parse(stripComments(tpl.replace(/\r\n/g,'\n')), files[file]);
+                parse(stripComments(tpl.replace(/\r\n/g,'\n')), tree);
+                files[file] = tree;
+            }
+            else
+            {
+                tree = files[file];
             }
             var incData = obMerge({},data,params);
             incData.smarty.template = file;
-            var s = process(files[file], incData);
+            var s = process(tree, incData);
             if ('assign' in params)
             {
                 assignVar(params.assign, s, data);
