@@ -440,7 +440,6 @@
 
                 parse: function(params, tree, content)
                 {
-                    
                     var subTree = [];
                     var subTreeElse = [];
                     tree.push({
@@ -837,7 +836,7 @@
                 if (nm in buildInFunctions)
                 {
                     var buildIn = buildInFunctions[nm];
-                    var params = ('parseParams' in buildIn)? buildIn.parseParams(paramStr) : parseParams(paramStr);
+                    var params = ('parseParams' in buildIn ? buildIn.parseParams : parseParams)(paramStr);
                     if (buildIn.type == 'block')
                     {
 					         s = s.replace(/^\n/,'');  	//remove new line after block open tag (like in Smarty)
@@ -1650,11 +1649,11 @@
                 if (plugin.type == 'block')
                 {
                     var repeat = {value:true};
-                    plugins[node.name].process(getActualParamValues(node.params,data), '', data, repeat);
+                    plugin.process(getActualParamValues(node.params,data), '', data, repeat);
                     while (repeat.value)
                     {
                         repeat.value = false;
-                        s += plugins[node.name].process(
+                        s += plugin.process(
                             getActualParamValues(node.params,data), 
                             process(node.subTree, data), 
                             data, 
@@ -1664,7 +1663,7 @@
                 }
                 else if (plugin.type == 'function')
                 {
-                    s = plugins[node.name].process(getActualParamValues(node.params,data), data);
+                    s = plugin.process(getActualParamValues(node.params,data), data);
                 }
             }
             if (typeof s == 'boolean')
