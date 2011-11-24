@@ -815,6 +815,7 @@
     var modifiers = {};
     var files = {};
     var blocks = null;
+    var filters = {'pre':[],'variable':[],'post':[]};
     var scripts = null;
 
     function parse(s, tree)
@@ -1701,6 +1702,16 @@
         return sRes + s;
     }
 
+    function applyFilter(type, s)
+    {
+        var f = filters[type];
+        for (var i=0; i<f.length; ++i)
+        {
+            s = f[i](s);
+        }
+        return s;
+    }
+
 
     jSmart = function(tpl)
     {
@@ -1726,7 +1737,7 @@
             }
         };
         blocks = this.blocks;
-        parse(stripComments(tpl.replace(/\r\n/g,'\n')), this.tree);
+        parse( applyFilter('pre',stripComments(tpl.replace(/\r\n/g,'\n'))), this.tree);
     };
 
     jSmart.prototype.escape_html = false;
@@ -1745,7 +1756,7 @@
     };
 
     /**
-       @param type  valid values are 'function', 'block' or 'modifier'
+       @param type  valid values are 'function', 'block', 'modifier'
        @param callback  func(params,data)  or  block(params,content,data,repeat)
     */
     jSmart.prototype.registerPlugin = function(type, name, callback)
@@ -1759,6 +1770,15 @@
             plugins[name] = {'type': type, 'process': callback};
         }
     };
+
+    /**
+       @param type  valid values are 'pre', 'variable', 'post'
+       @param callback function(textValue) { ... }
+    */
+    jSmart.prototype.registerFilter = function(type, callback)
+    {
+        filters[type=='output'?'post':type].push(callback);
+    }
 
     jSmart.prototype.configLoad = function(confValues, section, data)
     {

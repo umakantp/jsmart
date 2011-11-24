@@ -140,6 +140,9 @@ $smarty->assign('escapeParse',$smarty2->fetch('escape_parsing.tpl'));
 function preFilterTest($tpl_source, Smarty_Internal_Template $template) {
 	return preg_replace("/<!--.*-->/U",'changed in PRE filter',$tpl_source);
 }
+function preFilterTest2($tpl_source, Smarty_Internal_Template $template) {
+	return preg_replace("/changed/",'----------',$tpl_source);
+}
 function varFilterTest($v) {
 	return preg_replace("/FILTER_TEST/",'changed in VAR filter',$v);
 }
@@ -155,6 +158,7 @@ function filterTest()
 
 $smarty3 = new Smarty;
 $smarty3->registerFilter('pre','preFilterTest');
+$smarty3->registerFilter('pre','preFilterTest2');
 $smarty3->registerFilter('variable','varFilterTest');
 $smarty3->registerFilter('output','outputFilterTest');
 $smarty3->assign('foo','FILTER_TEST');
