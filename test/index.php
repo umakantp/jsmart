@@ -166,14 +166,19 @@ $smarty3->assign('t','test');
 $smarty->assign('filtered',$smarty3->fetch('filtered.tpl'));
 
 
-
-
 $smarty4 = new Smarty;
 $smarty4->escape_html = true;
 $smarty4->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
-
 $smarty->assign('escapeHtml',$smarty4->fetch('escape_html.tpl'));
 
+
+$smarty5 = new Smarty;
+$smarty5->default_modifiers = array("replace:'text_to_replace':'replaced'", 'escape:"htmlall"');	//<-no template variables allowed here (e.g. 'replace:'a':$b' - error)
+$smarty5->assign('replace_me','<b>text_to_replace</b>');
+$smarty->assign('defaultModifier',$smarty5->fetch('default_modifiers.tpl'));
+
+
 $smarty->display('main.tpl');
+
 
 ?>

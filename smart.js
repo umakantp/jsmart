@@ -252,8 +252,16 @@
                 {
                     var params = getActualParamValues(node.params, data);
                     var res = process([node.expression],data);
+                    
                     if (findInArray(params, 'nofilter') < 0)
                     {
+                        for (var i=0; i<default_modifiers.length; ++i)
+                        {
+                            var m = default_modifiers[i];
+                            m.params.__parsed[0] = {type:'text', data:res};
+                            res = process([m],data);
+                        }
+
                         if (jSmart.prototype.escape_html)
                         {
                             res = modifiers.escape(res);
@@ -848,6 +856,7 @@
     var files = {};
     var blocks = null;
     var filters = {'pre':[],'variable':[],'post':[]};
+    var default_modifiers = [];
     var scripts = null;
 
     function parse(s, tree)
@@ -1838,6 +1847,26 @@
         else
         {
             this.data.smarty.config = {};
+        }
+    }
+
+    /**
+       add modifier to implicitly apply to every variable in a template
+       @param modifiers  single string (e.g. "replace:'from':'to'") 
+                         or array of strings (e.g. ['escape:"htmlall"', "replace:'from':'to'"]) 
+     */
+    jSmart.prototype.addDefaultModifier = function(modifiers)
+    {
+        if (!(modifiers instanceof Array))
+        {
+            modifiers = [modifiers];
+        }
+
+        for (var i=0; i<modifiers.length; ++i)
+        {
+            var e = { value:'', tree:[0] };
+            parseModifiers('|'+modifiers[i], e);
+            default_modifiers.push( e.tree[0] );
         }
     }
 

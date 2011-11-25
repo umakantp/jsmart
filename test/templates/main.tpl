@@ -159,6 +159,7 @@
 	escapeParse = '';
 	filtered = '';
 	escapeHtml = '';
+	defaultModifier = '';
 	
 	function getData()
 	{
@@ -198,7 +199,8 @@
 			'testClassObj': new TestClassObj,
 			'escapeParse': escapeParse,
 			'filtered': filtered,
-			'escapeHtml': escapeHtml
+			'escapeHtml': escapeHtml,
+			'defaultModifier': defaultModifier
 		};
 	}
 </script>
@@ -354,6 +356,7 @@
 
 
 <script type="text/x-jsmart-tmpl" id='filtered_tpl'>{fetch file="$testPath/filtered.tpl"}</script>
+<script type="text/x-jsmart-tmpl" id='default_modifiers_tpl'>{fetch file="$testPath/default_modifiers.tpl"}</script>
 {literal}
 <script>
 	function filterTest()
@@ -366,10 +369,18 @@
 	jSmart.prototype.registerFilter('post',function(s) {return s.replace(/FILTER_TEST/g,'changed in POST filter');});
 	var t = new jSmart($('#filtered_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
 	filtered = t.fetch( {foo: 'FILTER_TEST', 't':'test'} );
+	
+</script>
+
+<script>
+	jSmart.prototype.addDefaultModifier( ["replace:'text_to_replace':'replaced'", 'escape:"htmlall"'] );	//,    //'upper'
+	var t = new jSmart($('#default_modifiers_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
+	defaultModifier = t.fetch( {replace_me: '<b>text_to_replace</b>' } );
 </script>
 {/literal}
 
 {runTest nm='filters'}
+
 
 </body>
 </html>
