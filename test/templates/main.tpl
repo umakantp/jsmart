@@ -281,7 +281,6 @@
 {runTest nm='append'}
 {runTest nm='assign'}
 {runTest nm='call'}
-{*runTest nm='javascript'*}
 {runTest nm='capture'}
 {runTest nm='config_load'}
 {runTest nm='eval'}
@@ -316,10 +315,16 @@
 
 
 <script>
-	test("from JS string", function() {
+	try 
+	{
 		var tpl = new jSmart($('#function_tpl').html());
 		var res_JS_string = tpl.fetch(getData());
 		var res2_JS_string = $('#function_tpl').html().fetch(getData());
+	} catch(e) 
+	{
+		alert(e.name + ' ' + e.message);
+	}
+	test("from JS string", function() {
 		equal(res_JS_string, res2_JS_string);
 	} );
 </script>
@@ -327,10 +332,16 @@
 <script type="text/x-jsmart-tmpl" id='javascript_tpl'>{fetch file="$testPath/javascript.tpl"}</script>
 <script type="text/x-jsmart-tmpl" id='javascript_result'>{fetch file="$testPath/javascript_result.txt"}</script>
 <script>
-	test("javascript ONLY", function() {
+	try 
+	{
 		var tpl = new jSmart($('#javascript_tpl').html().replace(/\r\n/g,'\n'));
 		var res_JS_only = tpl.fetch(getData());
 		var res2_JS_only = $('#javascript_result').html().replace(/\r\n/g,'\n');
+	} catch(e) 
+	{
+		alert(e.name + ' ' + e.message);
+	}
+	test("javascript ONLY", function() {
 		equal(res_JS_only, res2_JS_only);
 	} );
 </script>
@@ -373,7 +384,7 @@
 </script>
 
 <script>
-	jSmart.prototype.addDefaultModifier( ["replace:'text_to_replace':'replaced'", 'escape:"htmlall"'] );	//,    //'upper'
+	jSmart.prototype.addDefaultModifier( ["replace:'text_to_replace':'replaced'", 'escape:"htmlall"'] );
 	var t = new jSmart($('#default_modifiers_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
 	defaultModifier = t.fetch( {replace_me: '<b>text_to_replace</b>' } );
 </script>
