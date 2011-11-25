@@ -232,7 +232,39 @@
 
     var buildInFunctions = 
         {
-            __operator:
+            expression:
+            {
+                parse: function(s, tree)
+                {
+                    var e = parseExpression(s);
+
+                    tree.push({
+                        type: 'build-in',
+                        name: 'expression',
+                        expression: e.tree,
+                        params: parseParams(s.slice(e.value.length).replace(/^\s+|\s+$/g,''))
+                    });
+
+                    return e.tree;
+                    
+                },
+                process: function(node, data)
+                {
+                    var params = getActualParamValues(node.params, data);
+                    var res = process([node.expression],data);
+                    if (findInArray(params, 'nofilter') < 0)
+                    {
+                        if (jSmart.prototype.escape_html)
+                        {
+                            res = modifiers.escape(res);
+                        }
+                        res = applyFilter('variable',res);
+                    }
+                    return res;
+                }
+            },
+
+            operator:
             {
                 process: function(node, data)
                 {
@@ -875,40 +907,16 @@
                 }
                 else   //variable
                 {
-                    tree.push( parseExpression(openTag[1]).tree );
+                    buildInFunctions.expression.parse(openTag[1],tree);
                 }
             }
             else         //variable
             {
-                var tag = openTag[1],
-                    nf = tag.match(/\s+nofilter*$/);
-                if (nf)
-                {
-                    tag = tag.substring(0, nf.index);
-                }
-                else
-                {
-                    nf = !jSmart.prototype.escape_html;
-                }
-                var node = parseExpression(tag).tree;
-                if (node.type=='build-in' && node.name=='__operator' && node.op == '=')
+                var node = buildInFunctions.expression.parse(openTag[1],tree);
+                if (node.type=='build-in' && node.name=='operator' && node.op == '=')
                 {
                     s = s.replace(/^\n/,'');
                 }
-                else if (!nf)
-                {
-                    //auto escape variable
-                    var data = [node];
-                    data.name = {data: 'escape', type: 'text'};
-                    node =  {
-                        name: '__func',
-                        type: 'plugin',
-                        params: {
-                            __parsed: data
-                        }
-                    };
-                }
-                tree.push(node);
             }
         }
         if (s) 
@@ -949,7 +957,7 @@
     {
         tree.push({
             type: 'build-in',
-            name: '__operator',
+            name: 'operator',
             op: op,
             optype: type,
             precedence: precedence,
@@ -1185,7 +1193,7 @@
                 re: /^\s*(\+|-)\s*/,
                 parse: function(e, s)
                 {
-                    if (!e.tree.length || e.tree[e.tree.length-1].name == '__operator')
+                    if (!e.tree.length || e.tree[e.tree.length-1].name == 'operator')
                     {
                         parseOperator(RegExp.$1, 'pre-unary', 4, e.tree);
                     }
@@ -1387,7 +1395,7 @@
     function bundleOp(i, tree, precedence)
     {
         var op = tree[i];
-        if (op.name == '__operator' && op.precedence == precedence && !op.params.__parsed)
+        if (op.name == 'operator' && op.precedence == precedence && !op.params.__parsed)
         {
             if (op.optype == 'binary')
             {
@@ -1752,7 +1760,7 @@
         {
             plugins.debug.process([],this.data);
         }
-        return res;
+        return applyFilter('post',res);
     };
 
     /**
