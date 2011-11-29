@@ -855,7 +855,6 @@
     var modifiers = {};
     var files = {};
     var blocks = null;
-    var filters = {'pre':[],'variable':[],'post':[]};
     var scripts = null;
 
     function parse(s, tree)
@@ -1725,6 +1724,7 @@
         this.blocks = {};
         this.scripts = {};
         this.default_modifiers = [];
+        this.filters = {'variable':[], 'post':[]};
         this.smarty = {
             'smarty': {
                 block: {},
@@ -1744,6 +1744,7 @@
             }
         };
         blocks = this.blocks;
+        filters = {'pre':jSmart.prototype.filters_global.pre};
         parse( applyFilter('pre',stripComments(tpl.replace(/\r\n/g,'\n'))), this.tree);
     };
 
@@ -1753,6 +1754,10 @@
         scripts = this.scripts;
         escape_html = this.escape_html;
         default_modifiers = jSmart.prototype.default_modifiers_global.concat(this.default_modifiers);
+        filters = {
+            'variable': jSmart.prototype.filters_global.variable.concat(this.filters.variable), 
+            'post': jSmart.prototype.filters_global.post.concat(this.filters.post)
+        };
         this.data = obMerge(data,this.smarty);
         var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
@@ -1786,8 +1791,10 @@
     */
     jSmart.prototype.registerFilter = function(type, callback)
     {
-        filters[type=='output'?'post':type].push(callback);
+        (this.tree ? this.filters : jSmart.prototype.filters_global)[type=='output'?'post':type].push(callback);
     }
+
+    jSmart.prototype.filters_global = {'pre':[],'variable':[],'post':[]};
 
     jSmart.prototype.configLoad = function(confValues, section, data)
     {
