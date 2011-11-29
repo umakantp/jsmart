@@ -3,9 +3,11 @@
 	if (typeof abcdef == 'string' && foo == 'bar')
 	{
 		$this.JSresult = foo;
+		foo = 'zar';
 	}
 {/javascript}
 [{$JSresult}]
+[{$foo}]
 
 {$num += 3}
 {$num}
