@@ -5,11 +5,9 @@ date_default_timezone_set('Europe/Moscow');		//to test date_format modifier
 define('SMARTY_DIR','./smarty/');
 require_once SMARTY_DIR . 'SmartyBC.class.php';
 
-$smarty = new SmartyBC;
+$smarty = new Smarty;
 $smarty->compile_check = true;
 $smarty->debugging = false;
-//$smarty->allow_php_tag = true;
-
 
 $smarty->assign('foo','bar');
 $smarty->assign('a',array('0','1','2','3','4','5','6','7','8','9'));
@@ -125,15 +123,21 @@ function insert_testInsert($params, $smarty)
 }
 
 
-$smarty2 = new Smarty;
-$smarty2->left_delimiter = '<!--{';
-$smarty2->right_delimiter = '}-->';
-$smarty2->auto_literal = false;
+$smarty2 = new SmartyBC;
+$smarty2->assign('testPath', $_SERVER['DOCUMENT_ROOT'].'/test/templates');
+$smarty->assign('includePHP', $smarty2->fetch('include_php.tpl'));
+$smarty->assign('php', $smarty2->fetch('php.tpl'));
 
-$smarty2->assign('foo','bar');
-$smarty2->assign('a',array('0','1','2','3','4','5','6','7','8','9'));
 
-$smarty->assign('escapeParse',$smarty2->fetch('escape_parsing.tpl'));
+$smarty3 = new Smarty;
+$smarty3->left_delimiter = '<!--{';
+$smarty3->right_delimiter = '}-->';
+$smarty3->auto_literal = false;
+
+$smarty3->assign('foo','bar');
+$smarty3->assign('a',array('0','1','2','3','4','5','6','7','8','9'));
+
+$smarty->assign('escapeParse',$smarty3->fetch('escape_parsing.tpl'));
 
 
 
@@ -156,26 +160,26 @@ function filterTest()
 	return "FILTER_TEST";
 }
 
-$smarty3 = new Smarty;
-$smarty3->registerFilter('pre','preFilterTest');
-$smarty3->registerFilter('pre','preFilterTest2');
-$smarty3->registerFilter('variable','varFilterTest');
-$smarty3->registerFilter('output','outputFilterTest');
-$smarty3->assign('foo','FILTER_TEST');
-$smarty3->assign('t','test');
-$smarty->assign('filtered',$smarty3->fetch('filtered.tpl'));
-
-
 $smarty4 = new Smarty;
-$smarty4->escape_html = true;
-$smarty4->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
-$smarty->assign('escapeHtml',$smarty4->fetch('escape_html.tpl'));
+$smarty4->registerFilter('pre','preFilterTest');
+$smarty4->registerFilter('pre','preFilterTest2');
+$smarty4->registerFilter('variable','varFilterTest');
+$smarty4->registerFilter('output','outputFilterTest');
+$smarty4->assign('foo','FILTER_TEST');
+$smarty4->assign('t','test');
+$smarty->assign('filtered',$smarty4->fetch('filtered.tpl'));
 
 
 $smarty5 = new Smarty;
-$smarty5->default_modifiers = array("replace:'text_to_replace':'replaced'", 'escape:"htmlall"');	//<-no template variables allowed here (e.g. 'replace:'a':$b' - error)
-$smarty5->assign('replace_me','<b>text_to_replace</b>');
-$smarty->assign('defaultModifier',$smarty5->fetch('default_modifiers.tpl'));
+$smarty5->escape_html = true;
+$smarty5->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
+$smarty->assign('escapeHtml',$smarty5->fetch('escape_html.tpl'));
+
+
+$smarty6 = new Smarty;
+$smarty6->default_modifiers = array("replace:'text_to_replace':'replaced'", 'escape:"htmlall"');	//<-no template variables allowed here (e.g. 'replace:'a':$b' - error)
+$smarty6->assign('replace_me','<b>text_to_replace</b>');
+$smarty->assign('defaultModifier',$smarty6->fetch('default_modifiers.tpl'));
 
 
 $smarty->display('main.tpl');

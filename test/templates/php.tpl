@@ -1,3 +1,3 @@
-{php}
-	$txt = 'php tags are not parsed in' . strtoupper('jsmart');
-{/php}
+[ {php} 
+	$txtFromPHP = 'php tags are not parsed in' . strtoupper('jsmart'); 
+{/php} ]

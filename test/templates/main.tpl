@@ -160,6 +160,8 @@
 	filtered = '';
 	escapeHtml = '';
 	defaultModifier = '';
+	includePHP = '';
+	phpTag = '';
 	
 	function getData()
 	{
@@ -197,6 +199,8 @@
 			'sEmpty' : '',
 			'nullVar': null,
 			'testClassObj': new TestClassObj,
+			'includePHP': includePHP,
+			'php': phpTag,
 			'escapeParse': escapeParse,
 			'filtered': filtered,
 			'escapeHtml': escapeHtml,
@@ -296,8 +300,6 @@
 {runTest nm='strip'}
 {runTest nm='while'}
 {runTest nm='include'}
-{runTest nm='include_php'}
-{runTest nm='php'}
 <script type="text/x-jsmart-tmpl" id='parent_tpl'>{fetch file="$testPath/parent.tpl"}</script>
 <script type="text/x-jsmart-tmpl" id='child1_tpl'>{fetch file="$testPath/child1.tpl"}</script>
 {runTest nm='child2'}  {*extends*}
@@ -329,6 +331,7 @@
 	} );
 </script>
 
+
 <script type="text/x-jsmart-tmpl" id='javascript_tpl'>{fetch file="$testPath/javascript.tpl"}</script>
 <script type="text/x-jsmart-tmpl" id='javascript_result'>{fetch file="$testPath/javascript_result.txt"}</script>
 <script>
@@ -345,6 +348,28 @@
 		equal(res_JS_only, res2_JS_only);
 	} );
 </script>
+
+
+<script type="text/x-jsmart-tmpl" id='include_php_tpl'>{fetch file="$testPath/include_php.tpl"}</script>
+<script type="text/x-jsmart-tmpl" id='php_tpl'>{fetch file="$testPath/php.tpl"}</script>
+{literal}
+<script>
+	try 
+	{
+		var t = new jSmart($('#include_php_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
+		includePHP = t.fetch( {replace_me: '<b>text_to_replace</b>' } );
+		
+		t = new jSmart($('#php_tpl').html().replace(/\r\n/g,'\n').replace(/^\n*/,''));
+		phpTag = t.fetch( {} );
+	} catch(e) 
+	{
+		alert(e.name + ' ' + e.message);
+	}
+</script>
+{/literal}
+
+{runTest nm='deprecated'}
+
 
 
 <!-- <script type="text/javascript" src="php.default.min.js"></script> -->
