@@ -856,7 +856,6 @@
     var files = {};
     var blocks = null;
     var filters = {'pre':[],'variable':[],'post':[]};
-    var default_modifiers = [];
     var scripts = null;
 
     function parse(s, tree)
@@ -1725,6 +1724,7 @@
         this.tree = [];
         this.blocks = {};
         this.scripts = {};
+        this.default_modifiers = [];
         this.smarty = {
             'smarty': {
                 block: {},
@@ -1752,6 +1752,7 @@
         blocks = this.blocks;
         scripts = this.scripts;
         escape_html = this.escape_html;
+        default_modifiers = jSmart.prototype.default_modifiers_global.concat(this.default_modifiers);
         this.data = obMerge(data,this.smarty);
         var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
@@ -1857,9 +1858,11 @@
         {
             var e = { value:'', tree:[0] };
             parseModifiers('|'+modifiers[i], e);
-            default_modifiers.push( e.tree[0] );
+            (this.tree ? this.default_modifiers : this.default_modifiers_global).push( e.tree[0] );
         }
     }
+
+    jSmart.prototype.default_modifiers_global = [];
 
     /**
        override this function
