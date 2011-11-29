@@ -1083,23 +1083,13 @@
                             return;
                         }
                     }
-
-                    var tree = [];
                     parseText.parseEmbeddedVars = true;
-                    parse(v, tree);
+                    e.tree.push({
+                        type: 'plugin',
+                        name: '__quoted',
+                        params: {__parsed: parse(v,[])}
+                    });
                     parseText.parseEmbeddedVars = false;
-                    if (tree.length == 1)
-                    {
-                        e.tree.push(tree[0]);
-                    }
-                    else
-                    {
-                        e.tree.push({
-                            type: 'plugin',
-                            name: '__quoted',
-                            params: {__parsed:tree}
-                        });
-                    }
                     parseModifiers(s, e);
                 }
             },
