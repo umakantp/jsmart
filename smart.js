@@ -262,7 +262,7 @@
                             res = process([m],data);
                         }
 
-                        if (jSmart.prototype.escape_html)
+                        if (escape_html)
                         {
                             res = modifiers.escape(res);
                         }
@@ -1747,12 +1747,11 @@
         parse( applyFilter('pre',stripComments(tpl.replace(/\r\n/g,'\n'))), this.tree);
     };
 
-    jSmart.prototype.escape_html = false;
-
     jSmart.prototype.fetch = function(data)
     {
         blocks = this.blocks;
         scripts = this.scripts;
+        escape_html = this.escape_html;
         this.data = obMerge(data,this.smarty);
         var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
@@ -1761,6 +1760,8 @@
         }
         return applyFilter('post',res);
     };
+
+    jSmart.prototype.escape_html = false;
 
     /**
        @param type  valid values are 'function', 'block', 'modifier'
