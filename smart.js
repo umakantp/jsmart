@@ -872,6 +872,36 @@
                 {
                     parseText(jSmart.prototype.right_delimiter, tree);
                 }
+            },
+
+            'while':
+            {
+                type: 'block',
+                parse: function(params, tree, content)
+                {
+                    tree.push({
+                        type: 'build-in',
+                        name: 'while',
+                        params: params,
+                        subTree: parse(content, [])
+                    });
+                },
+
+                process: function(node, data)
+                {
+                    var s = '';
+                    while (getActualParamValues(node.params,data)[0])
+                    {
+                        if (data.smarty['break']) 
+                        {
+                            break;
+                        }
+                        s += process(node.subTree, data);
+                        data.smarty['continue'] = false;
+                    }
+                    data.smarty['break'] = false;
+                    return s;
+                }
             }
         };
 
@@ -931,7 +961,7 @@
                     {
                         parsePluginFunc(nm, parseParams(paramStr), tree);
                     }
-                    if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='while' || nm=='nocache')
+                    if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='nocache')
                     {
                         s = s.replace(/^\n/,'');
                     }
@@ -2890,20 +2920,6 @@
             return s;
         }
     );
-
-    jSmart.prototype.registerPlugin(
-        'block', 
-        'while', 
-        function(params, content, data, repeat)
-        {
-            if (content)
-            {
-                repeat.value = Boolean(params[0]);
-                return repeat.value ? content.replace(/^\n/,'') : '';
-            }
-        }
-    );
-
 
 
     /**
