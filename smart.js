@@ -403,7 +403,7 @@
                     var params = getActualParamValues(node.params, data);
 
                     var props = {};
-                    data.smarty.section[params.name] = props;
+                    data.smarty.section[params.__get('name',null,0)] = props;
 
                     var show = params.__get('show',true);
                     props.show = show;
@@ -448,6 +448,11 @@
                     var s = '';
                     for (i=from; i>=0 && i<to && count<max; i+=step,++count)
                     {
+                        if (data.smarty['break']) 
+                        {
+                            break;
+                        }
+
                         props.first = (i==from);
                         props.last = ((i+step)<0 || (i+step)>=to);
                         props.index = i;
@@ -456,7 +461,10 @@
                         props.iteration = props.rownum = count+1;
 
                         s += process(node.subTree, data);  
+                        data.smarty['continue'] = false;
                     }
+                    data.smarty['break'] = false;
+
                     if (count)
                     {
                         return s;
@@ -524,9 +532,16 @@
 			           
                     for (var i=parseInt(params.from); count<total; i+=step,++count)
                     {
+                        if (data.smarty['break']) 
+                        {
+                            break;
+                        }
                         data[params.varName] = i;
                         s += process(node.subTree, data);
+                        data.smarty['continue'] = false;
                     }
+                    data.smarty['break'] = false;
+
                     if (!count)
                     {
                         s = process(node.subTreeElse, data);
@@ -645,13 +660,18 @@
                         data.smarty.foreach[params.name].total = total;
                     }
 
-                    var s='';
+                    var s = '';
                     var i=0;
                     for (var key in a)
                     {
                         if (!a.hasOwnProperty(key))
                         {
                             continue;
+                        }
+
+                        if (data.smarty['break']) 
+                        {
+                            break;
                         }
 
                         data[params.item+'__key'] = isNaN(key) ? key : parseInt(key);
@@ -673,9 +693,13 @@
                             data.smarty.foreach[params.name].last = (i==total-1) ? 1 : '';
                         }
 
-                        s += process(node.subTree, data);
                         ++i;
+
+                        s += process(node.subTree, data);
+                        data.smarty['continue'] = false;
                     }
+                    data.smarty['break'] = false;
+
                     data[params.item+'__show'] = (i>0);
                     if (params.name)
                     {
@@ -683,7 +707,7 @@
                     }
                     if (i>0)
                     {
-                        return s;                
+                        return s;
                     }
                     return process(node.subTreeElse, data);
                 }
@@ -1681,6 +1705,11 @@
                 return s;
             }
             res += s;
+
+            if (data.smarty['continue'] || data.smarty['break'])
+            {
+                return res;
+            }
         }
         return res;    
     }
@@ -1728,7 +1757,9 @@
         this.smarty = {
             'smarty': {
                 block: {},
+                'break': false,
                 capture: {},
+                'continue': false,
                 counter: {},
                 cycle: {},
                 foreach: {},
@@ -1740,7 +1771,7 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.6'
+                version: '2.7'
             }
         };
         blocks = this.blocks;
@@ -2045,6 +2076,16 @@
 
     jSmart.prototype.registerPlugin(
         'function', 
+        'break', 
+        function(params, data)
+        {
+            data.smarty['break'] = true;
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
         'call', 
         function(params, data)
         {
@@ -2093,6 +2134,16 @@
 				        }
                 }
             }
+            return '';
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'function', 
+        'continue', 
+        function(params, data)
+        {
+            data.smarty['continue'] = true;
             return '';
         }
     );

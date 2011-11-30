@@ -122,3 +122,35 @@ ______________________________ not array ________________________
 
 {$Question = ['Answers' => ['one','two']]}
 {foreach from=$Question.Answers key="aid" item="answer" name="Loop"}{$aid}: {$answer}{/foreach}
+
+---------------------
+{$colors = ['black'=>'#000', 'blue'=>'#00F', 'green'=>'#0F0', 'red'=>'#F00', 'white'=>'#FFF']}
+{foreach $colors as $color_name=>$color_code}
+	{if $color_name == "red"}
+		{continue}
+	{/if}
+	<span style="color:{$color_code}">[{$color_code@index}][{$color_code@iteration}][{$color_code@first}][{$color_code@last}][{$color_code@total}] {$color_name}</span>
+{/foreach}
+[{$color_code@show}] [{$color_code@total}]
+---------------------
+{foreach $colors as $color_name=>$color_code}
+	{if $color_name == "red"}
+		{break}
+	{/if}
+	<span style="color:{$color_code}">[{$color_code@index}][{$color_code@iteration}][{$color_code@first}][{$color_code@last}][{$color_code@total}] {$color_name}</span>
+{/foreach}
+[{$color_code@show}] [{$color_code@total}]
+---------------------
+
+{$numbers = ['1', '2', '3', '4', '5']}
+{foreach $numbers as $num}
+	-----
+	{if $num == "2"}
+		{continue}
+	{/if}
+	{if $num == "4"}
+		{break}
+	{/if}
+	[{$num@index}][{$num@iteration}][{$num@first}][{$num@last}][{$num@total}] {$num}
+{/foreach}
+[{$num@show}] [{$num@total}]

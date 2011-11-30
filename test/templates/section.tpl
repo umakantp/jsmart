@@ -95,7 +95,21 @@
 
 st1.total: {$smarty.section.st1.total}
 
+-------------------------------------------
+{$numbers = ['1', '2', '3', '4', '5']}
+{section num loop=$numbers}
+	{if $numbers[num] == '2'}
+		skip 2
+		{continue}
+	{/if}
+	{if $numbers[num] == '4'}
+		last 4
+		{break}
+	{/if}
+	[{$numbers[num]}]
+{/section}
 
+-------------------------------------------
 -{*  error in smarty
 {section name='sectionTest' loop=10 start=2 step=2 show=true}
   |
