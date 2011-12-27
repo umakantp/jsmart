@@ -17,6 +17,8 @@
 
 {"ab'cd"|escape:quotes}
 {"ab\'cd"|escape:quotes}
+{"'ab'cd'"|escape:'quotes'}
+{"\'ab\'cd\'"|escape:'quotes'}
 
 {"abcdef67832*@%^%&^"|escape:hex}
 

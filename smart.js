@@ -3088,7 +3088,7 @@
             case 'urlpathinfo':
                 return jSmart.prototype.PHPJS('rawurlencode','escape').rawurlencode(s).replace(/%2F/g, '/');
             case 'quotes': 
-                return s.replace(/([^\\])'/, "$1\\'");
+                return s.replace(/(^|[^\\])'/g, "$1\\'");
             case 'hex':
                 var res = '';
                 for (var i=0; i<s.length; ++i) 
