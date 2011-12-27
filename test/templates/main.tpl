@@ -314,7 +314,7 @@
 {runTest nm='textformat'}
 {runTest nm='modifiers'}
 {runTest nm='examples'}
-
+{runTest nm='setfilter'}
 
 <script>
 	try 

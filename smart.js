@@ -261,12 +261,17 @@
                             m.params.__parsed[0] = {type:'text', data:res};
                             res = process([m],data);
                         }
-
                         if (escape_html)
                         {
                             res = modifiers.escape(res);
                         }
                         res = applyFilter('variable',res);
+                        for (var i=0; i<tpl_modifiers.length; ++i)
+                        {
+                            var m = tpl_modifiers[i];
+                            m.params.__parsed[0] = {type:'text', data:res};
+                            res = process([m],data);
+                        }
                     }
                     return res;
                 }
@@ -471,6 +476,35 @@
                     }
                     return process(node.subTreeElse, data);
                 }
+            },
+
+            setfilter:
+            {
+                type: 'block',
+                parseParams: function(paramStr)
+                {
+                    var e = { value:'', tree:[0] };
+                    parseModifiers('|'+paramStr, e);
+                    return e.tree;
+                },
+
+                parse: function(params, tree, content)
+                {
+                    tree.push({
+                        type: 'build-in',
+                        name: 'setfilter',
+                        params: params,
+                        subTree: parse(content,[])
+                    });
+                },
+
+                process: function(node, data)
+                {
+                    tpl_modifiers = node.params;
+                    var s = process(node.subTree, data);
+                    tpl_modifiers = [];
+                    return s;
+                }                
             },
 
             'for':
@@ -910,6 +944,7 @@
     var files = {};
     var blocks = null;
     var scripts = null;
+    var tpl_modifiers = [];
 
     function parse(s, tree)
     {
@@ -925,7 +960,7 @@
             if (res)         //function
             {
                 var nm = res[1];
-                var paramStr = (res.length>2) ? res[2] : '';
+                var paramStr = (res.length>2) ? res[2].replace(/^\s+|\s+$/g,'') : '';
 
                 if (nm in buildInFunctions)
                 {
@@ -1604,7 +1639,7 @@
             if (params.__parsed.hasOwnProperty(nm))
             {
                 var v = process([params.__parsed[nm]], data);
-                if (typeof(v) == 'string' && v.match(/^[1-9]\d*$/) && !isNaN(v))
+                if (typeof(v) == 'string' && v.match(/^[1-9]\d{0,14}$/) && !isNaN(v))
                 {
                     v = parseInt(v,10);
                 }
