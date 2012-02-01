@@ -177,6 +177,9 @@ $ob['with | symbol:']
 
 {$testClassObj->prop}
 {$testClassObj->func('call member func PHP style')}
+{$testClassObj->obData.ob1}
+{$testClassObj->obData.ob2.value}
+[[ {$testClassObj->obData.ob2.value} ]]
 
 {$y=0}
 {$y++}

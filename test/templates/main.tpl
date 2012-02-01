@@ -25,6 +25,10 @@
 	TestClassObj = function()
 	{
 		this.prop = 'TestClassObj.prop';
+		this.obData = {
+			'ob1' : 'test1',
+			'ob2' : { 'value' : 'test2' }
+		};
 	}
 	
 	TestClassObj.prototype.func = function()

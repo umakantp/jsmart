@@ -765,7 +765,7 @@
                                 return process(this.subTree, obMerge({},data,defaults,params));
                             }
                         };
-                    parse(content.replace(/\n+$/,''), subTree);
+                    parse(content, subTree);
                 }
             },
 
@@ -996,7 +996,7 @@
                     {
                         parsePluginFunc(nm, parseParams(paramStr), tree);
                     }
-                    if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include' || nm=='nocache')
+                    if (nm=='append' || nm=='assign' || nm=='capture' || nm=='eval' || nm=='include')
                     {
                         s = s.replace(/^\n/,'');
                     }
@@ -1792,11 +1792,6 @@
                 throw new Error('Unclosed {*');
             }
             s = s.slice(closeTag.index+closeTag[0].length);
-            if (sRes.match(/\n+$/) && s.match(/^\n+/))
-            {
-                sRes = sRes.replace(/\n+$/,'\n');
-                s = s.replace(/^\n/,'')
-            }
         }
         return sRes + s;
     }

@@ -52,6 +52,10 @@ $smarty->assign(
 class TestClassObj
 {
 	public $prop = 'TestClassObj.prop';
+	public $obData = array(
+		'ob1' => 'test1',
+		'ob2' => array( 'value' => 'test2' )
+	);
 	public function func()
 	{
 		return 'TestClassObj.func';
