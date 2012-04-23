@@ -1,4 +1,4 @@
-/** 
+/**
  * @preserve jSmart Javascript template engine
  * http://code.google.com/p/jsmart/
  *
@@ -18,13 +18,10 @@
     {
         for (var i=1; i<arguments.length; ++i)
         {
-            for (var i=1; i<arguments.length; ++i)
-            {
-                for (var nm in arguments[i]) 
-                {
-                    ob1[nm] = arguments[i][nm]; 
-                }
-            }
+           for (var nm in arguments[i]) 
+           {
+              ob1[nm] = arguments[i][nm]; 
+           }
         }
         return ob1;
     }
@@ -1836,7 +1833,7 @@
         };
         blocks = this.blocks;
         filters = {'pre':jSmart.prototype.filters_global.pre};
-        parse( applyFilter('pre',stripComments(tpl.replace(/\r\n/g,'\n'))), this.tree);
+        parse( applyFilter('pre',stripComments((new String(tpl?tpl:'')).replace(/\r\n/g,'\n'))), this.tree);
     };
 
     jSmart.prototype.fetch = function(data)
@@ -1849,7 +1846,7 @@
             'variable': jSmart.prototype.filters_global.variable.concat(this.filters.variable), 
             'post': jSmart.prototype.filters_global.post.concat(this.filters.post)
         };
-        this.data = obMerge(data,this.smarty);
+        this.data = obMerge((typeof data == 'object') ? data : {}, this.smarty);
         var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
         {

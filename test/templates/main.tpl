@@ -353,6 +353,20 @@
 	} );
 </script>
 
+<script>
+	try 
+	{
+		var tpl = new jSmart;
+		var emptyString = tpl.fetch();
+	} catch(e) 
+	{
+		alert(e.name + ' ' + e.message);
+	}
+	test("empty template and data", function() {
+		equal(emptyString, '');
+	} );
+</script>
+
 
 <script type="text/x-jsmart-tmpl" id='include_php_tpl'>{fetch file="$testPath/include_php.tpl"}</script>
 <script type="text/x-jsmart-tmpl" id='php_tpl'>{fetch file="$testPath/php.tpl"}</script>
