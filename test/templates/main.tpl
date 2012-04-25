@@ -236,7 +236,11 @@
 	<script>
 		try 
 		{
-			var tpl = new jSmart($('#{$nm}_tpl').html());
+			var tpl1 = new jSmart($('#{$nm}_tpl').html());
+			var cache = tpl1.tree;
+			
+			var tpl = new jSmart;
+			tpl.tree = cache;
 			var res_{$nm} = tpl.fetch(getData());
 		} catch(e) 
 		{

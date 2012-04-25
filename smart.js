@@ -559,8 +559,8 @@
 
                     var count = 0;
                     var s = '';
-			           var total = Math.min( Math.ceil( ((step > 0 ? to-from : from-to)+1) / Math.abs(step)  ), max);
-			           
+                    var total = Math.min( Math.ceil( ((step > 0 ? to-from : from-to)+1) / Math.abs(step)  ), max);
+
                     for (var i=parseInt(params.from); count<total; i+=step,++count)
                     {
                         if (data.smarty['break']) 
@@ -965,7 +965,7 @@
                     var params = ('parseParams' in buildIn ? buildIn.parseParams : parseParams)(paramStr);
                     if (buildIn.type == 'block')
                     {
-					         s = s.replace(/^\n/,'');  	//remove new line after block open tag (like in Smarty)
+                        s = s.replace(/^\n/,'');  //remove new line after block open tag (like in Smarty)
                         var closeTag = findCloseTag('\/'+nm, nm+' +[^}]*', s);
                         buildIn.parse(params, tree, s.slice(0,closeTag.index));
                         s = s.slice(closeTag.index+closeTag[0].length);
@@ -1543,9 +1543,9 @@
     }
 
     function parseParams(paramsStr, reDelim, reName)
-	 {
-		  var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
-		  var params = [];
+    {
+        var s = paramsStr.replace(/\n/g,' ').replace(/^\s+|\s+$/g,'');
+        var params = [];
         params.__parsed = [];
         var paramsStr = '';
 
@@ -1580,16 +1580,16 @@
                 break;
             }
             
-		      if (nm)
-		      {
-				    params[nm] = param.value;
+            if (nm)
+            {
+                params[nm] = param.value;
                 params.__parsed[nm] = param.tree; 
-		      }
-		      else
-		      {
-				    params.push(param.value);
+            }
+            else
+            {
+                params.push(param.value);
                 params.__parsed.push(param.tree);
-		      }
+            }
 
             paramsStr += s.slice(0,param.value.length);
             s = s.slice(param.value.length);
@@ -1606,8 +1606,8 @@
             }
         }
         params.toString = function() { return paramsStr; }
-		  return params;
-	 }
+        return params;
+    }
 
     function parsePluginBlock(name, params, tree, content)
     {
@@ -1807,7 +1807,7 @@
     jSmart = function(tpl)
     {
         this.tree = [];
-        this.blocks = {};
+        this.tree.blocks = {};
         this.scripts = {};
         this.default_modifiers = [];
         this.filters = {'variable':[], 'post':[]};
@@ -1828,17 +1828,17 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.7'
+                version: '2.8'
             }
         };
-        blocks = this.blocks;
+        blocks = this.tree.blocks;
         filters = {'pre':jSmart.prototype.filters_global.pre};
         parse( applyFilter('pre',stripComments((new String(tpl?tpl:'')).replace(/\r\n/g,'\n'))), this.tree);
     };
 
     jSmart.prototype.fetch = function(data)
     {
-        blocks = this.blocks;
+        blocks = this.tree.blocks;
         scripts = this.scripts;
         escape_html = this.escape_html;
         default_modifiers = jSmart.prototype.default_modifiers_global.concat(this.default_modifiers);
@@ -2178,13 +2178,13 @@
                 var append = params.__get('append',false);
                 if (append)
                 {
-				        if (append in data)
-				        {
-					         if (data[append] instanceof Array)
-					         {
-						          data[append].push(content);
-					         }
-				        }
+                    if (append in data)
+                    {
+                        if (data[append] instanceof Array)
+                        {
+                            data[append].push(content);
+                        }
+                    }
 				        else
 				        {
 					         data[append] = [content];
