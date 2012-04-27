@@ -777,13 +777,8 @@
                 type: 'function',
                 parse: function(params, tree)
                 {
-                    var file = trimQuotes(params.file?params.file:params[0]);
-                    var tpl = jSmart.prototype.getTemplate(file);
-                    if (typeof(tpl) != 'string')
-                    {
-                        throw new Error('No template for '+ file);
-                    }
-                    parse(stripComments(tpl.replace(/\r\n/g,'\n')), tree);
+                    tree.splice(0,tree.length);
+                    getTemplate(trimQuotes(params.file?params.file:params[0]),tree);
                 }
             },
 
@@ -1776,6 +1771,25 @@
         return res;    
     }
 
+    function getTemplate(name, tree, nocache)
+    {
+        if (nocache || !(name in files))
+        {
+            var tpl = jSmart.prototype.getTemplate(name);
+            if (typeof(tpl) != 'string')
+            {
+                throw new Error('No template for '+ name);
+            }
+            parse(applyFilters(jSmart.prototype.filters_global.pre, stripComments(tpl.replace(/\r\n/g,'\n'))), tree);
+            files[name] = tree;
+        }
+        else
+        {
+            tree = files[name];
+        }
+        return tree;
+    }
+
     function stripComments(s)
     {
         var sRes = '';
@@ -2673,24 +2687,9 @@
         function(params, data)
         {
             var file = params.__get('file',null,0);
-            var tree = [];
-            if (findInArray(params,'nocache')>=0 || !(file in files))
-            {
-                var tpl = jSmart.prototype.getTemplate(file);
-                if (typeof(tpl) != 'string')
-                {
-                    throw new Error('No template for '+ file);
-                }
-                parse(stripComments(tpl.replace(/\r\n/g,'\n')), tree);
-                files[file] = tree;
-            }
-            else
-            {
-                tree = files[file];
-            }
             var incData = obMerge({},data,params);
             incData.smarty.template = file;
-            var s = process(tree, incData);
+            var s = process(getTemplate(file,[],findInArray(params,'nocache')>=0), incData);
             if ('assign' in params)
             {
                 assignVar(params.assign, s, data);
