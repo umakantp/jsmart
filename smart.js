@@ -262,7 +262,7 @@
                         {
                             res = modifiers.escape(res);
                         }
-                        res = applyFilter('variable',res);
+                        res = applyFilters(varFilters,res);
                         for (var i=0; i<tpl_modifiers.length; ++i)
                         {
                             var m = tpl_modifiers[i];
@@ -1793,12 +1793,11 @@
         return sRes + s;
     }
 
-    function applyFilter(type, s)
+    function applyFilters(filters, s)
     {
-        var f = filters[type];
-        for (var i=0; i<f.length; ++i)
+        for (var i=0; i<filters.length; ++i)
         {
-            s = f[i](s);
+            s = filters[i](s);
         }
         return s;
     }
@@ -1832,8 +1831,10 @@
             }
         };
         blocks = this.tree.blocks;
-        filters = {'pre':jSmart.prototype.filters_global.pre};
-        parse( applyFilter('pre',stripComments((new String(tpl?tpl:'')).replace(/\r\n/g,'\n'))), this.tree);
+        parse( 
+            applyFilters(jSmart.prototype.filters_global.pre, stripComments((new String(tpl?tpl:'')).replace(/\r\n/g,'\n'))), 
+            this.tree
+        );
     };
 
     jSmart.prototype.fetch = function(data)
@@ -1842,17 +1843,14 @@
         scripts = this.scripts;
         escape_html = this.escape_html;
         default_modifiers = jSmart.prototype.default_modifiers_global.concat(this.default_modifiers);
-        filters = {
-            'variable': jSmart.prototype.filters_global.variable.concat(this.filters.variable), 
-            'post': jSmart.prototype.filters_global.post.concat(this.filters.post)
-        };
         this.data = obMerge((typeof data == 'object') ? data : {}, this.smarty);
+        varFilters = jSmart.prototype.filters_global.variable.concat(this.filters.variable);
         var res = process(this.tree, this.data);
         if (jSmart.prototype.debugging)
         {
             plugins.debug.process([],this.data);
         }
-        return applyFilter('post',res);
+        return applyFilters(jSmart.prototype.filters_global.post.concat(this.filters.post), res);
     };
 
     jSmart.prototype.escape_html = false;

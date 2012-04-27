@@ -245,6 +245,7 @@
 		} catch(e) 
 		{
 			alert(e.name + ' ' + e.message);
+			throw e;
 		}
 		test("{$nm}", function() {
 			var resJS = res_{$nm};
@@ -267,6 +268,7 @@
 {/function}
 
 <script type="text/x-jsmart-tmpl" id='included_tpl'>{fetch file="$testPath/included.tpl"}</script>
+<script type="text/x-jsmart-tmpl" id='included2_tpl'>{fetch file="$testPath/included2.tpl"}</script>
 <script type="text/x-jsmart-tmpl" id='test.conf'>{fetch file="$testPath/test.conf"}</script>
 
 <script type="text/x-jsmart-tmpl" id='escape_parsing_tpl'>{fetch file="$testPath/escape_parsing.tpl"}</script>
