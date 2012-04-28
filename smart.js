@@ -263,11 +263,10 @@
                             res = modifiers.escape(res);
                         }
                         res = applyFilters(varFilters,res);
-                        for (var i=0; i<tpl_modifiers.length; ++i)
-                        {
-                            var m = tpl_modifiers[i];
-                            m.params.__parsed[0] = {type:'text', data:res};
-                            res = process([m],data);
+
+                        if (tpl_modifiers.length) {
+                            __t = function(){ return res; }	
+                            res = process(tpl_modifiers,data);
                         }
                     }
                     return res;
@@ -480,9 +479,7 @@
                 type: 'block',
                 parseParams: function(paramStr)
                 {
-                    var e = { value:'', tree:[0] };
-                    parseModifiers('|'+paramStr, e);
-                    return e.tree;
+                    return [parseExpression('__t()|' + paramStr).tree];
                 },
 
                 parse: function(params, tree, content)
