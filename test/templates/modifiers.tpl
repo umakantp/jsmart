@@ -94,3 +94,7 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {$vlword = 'A very long woooooooooooord.'}
 [{$vlword|wordwrap:8:"\n":false}]
 [{$vlword|wordwrap:8:"\n":true}]
+
+{strayFunc('b','ar')|replace:'b,ar':'bar'|replace:'bar':'zar'}
+{strayNoArgs()|replace:'bar':'zar'}
+{strayNoArgs()|replace:strayNoArgs():'zar'}

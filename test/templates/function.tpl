@@ -50,6 +50,10 @@
 
 {testFunc5 par=strayFunc($foo,'abc')}		//variable
 
+{testFunc5 par=strayNoArgs()}
+
+{testFunc5 par=strayNoArgs()|replace:'bar':'zar'}
+
 {testFunc5 par="before {if $foo}aaa{else}zzzz{/if} {for $ccc=1 to 7}|{$ccc}|{/for} after"}	//template
 
 {testFunc5 par={counter}}

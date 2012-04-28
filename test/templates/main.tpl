@@ -143,6 +143,11 @@
 		return v1 + ',' + v2;
 	}
 	
+	function strayNoArgs()
+	{
+		return 'bar';
+	}
+	
 </script>
 
 <script type="text/x-jsmart-tmpl" id='test_insert'>

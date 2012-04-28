@@ -1173,11 +1173,12 @@
                 }
             },
             {
-                re: /^(\w+)\s*[(]/,  //func()
+                re: /^(\w+)\s*[(]([)]?)/,  //func()
                 parse: function(e, s)
                 {
                     var fnm = RegExp.$1;
-                    var params = parseParams(s,/^\s*,\s*/);
+                    var noArgs = RegExp.$2;
+                    var params = parseParams(noArgs?'':s,/^\s*,\s*/);
                     parseFunc(fnm, params, e.tree);
                     e.value += params.toString();
                     parseModifiers(s.slice(params.toString().length), e);
