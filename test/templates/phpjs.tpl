@@ -7,7 +7,6 @@
 {5|string_format:"[%d]"}
 
 
-{'&"\'<>'|escape}
 {'&\'<>'|escape:htmlall}
 {'<b>text_to_replace</b>'|replace:'text_to_replace':'replaced'|escape:htmlall}
 

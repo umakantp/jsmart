@@ -3059,15 +3059,20 @@
     jSmart.prototype.registerPlugin(
         'modifier', 
         'escape', 
-        function(s, esc_type, char_set)
+        function(s, esc_type, char_set, double_encode)
         {
+            s = new String(s);
             esc_type = esc_type || 'html';
             char_set = char_set || 'UTF-8';
+            double_encode = (typeof double_encode != 'undefined') ? Boolean(double_encode) : true;
 
             switch (esc_type) 
             {
             case 'html':
-                return jSmart.prototype.PHPJS('htmlspecialchars','escape').htmlspecialchars(s, 3/*=ENT_QUOTES*/, char_set);
+                if (double_encode) {
+			           s = s.replace(/&/g, '&amp;');
+		          }
+                return s.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#039;').replace(/"/g,'&quot;');
             case 'htmlall':
                 return jSmart.prototype.PHPJS('htmlentities','escape').htmlentities(s, 3, char_set);
             case 'url':

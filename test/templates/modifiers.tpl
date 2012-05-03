@@ -98,3 +98,9 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {strayFunc('b','ar')|replace:'b,ar':'bar'|replace:'bar':'zar'}
 {strayNoArgs()|replace:'bar':'zar'}
 {strayNoArgs()|replace:strayNoArgs():'zar'}
+
+
+{'&"\'<>'|escape}
+{'<b>"te&xt"</b>'|escape:html:''}
+{'<b>"double&encode"</b>'|escape:html:'':true}
+{"<b>'no double&encode'</b>"|escape:html:'':0}
