@@ -791,6 +791,7 @@
                     });
                     params.append = findInArray(params,'append') >= 0;
                     params.prepend = findInArray(params,'prepend') >= 0;
+                    params.hide = findInArray(params,'hide') >= 0;
                     params.hasChild = params.hasParent = false;
 
                     onParseVar = function(nm) 
@@ -823,11 +824,14 @@
                     return data.smarty.block.child;
                 },
 
-                processBlocks: function(blockAncestry, headIdx, data)
+                processBlocks: function(blockAncestry, i, data)
                 {
+                    if (!i && blockAncestry[i].params.hide) {
+                        data.smarty.block.child = '';
+                        return;
+                    }
                     var append = true;
                     var prepend = false;
-                    var i = headIdx;
                     for (; i>=0; --i)
                     {
                         if (blockAncestry[i].params.hasParent)

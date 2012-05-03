@@ -1,6 +1,6 @@
 -{block name="b1"}parent 1{/block}-
 -{block name="b2"}parent 2{/block}-
--{block name="b3"}parent 3{/block}-
+-{block name="b3" hide}parent 3{/block}-
 <h1>
    Hello from {block name="hello"}parent template{/block}!
 </h1>
@@ -35,6 +35,8 @@
 <title>{block name="title4"}Parent Title{/block}</title>
 
 {block name='outblock1'} [{block name='inblock1'}pInblock1{/block}] {/block}-
+
+{block 'hide_me' hide}hide this block{/block}-
 
 
 //parent child mixed
