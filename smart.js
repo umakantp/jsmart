@@ -2993,6 +2993,33 @@
 
     jSmart.prototype.registerPlugin(
         'modifier', 
+        'count', 
+        function(v, recursive)
+        {
+            if (v === null || typeof v === 'undefined') {
+                return 0;
+            } else if (v.constructor !== Array && v.constructor !== Object) {
+                return 1;
+            }
+
+            recursive = Boolean(recursive);
+            var k, cnt = 0;
+            for (k in v) 
+            {
+                if (v.hasOwnProperty(k)) 
+                {
+                    cnt++;
+                    if (recursive && v[k] && (v[k].constructor === Array || v[k].constructor === Object)) {
+                        cnt += modifiers.count(v[k], true);
+                    }
+                }
+            }
+            return cnt;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier', 
         'count_characters', 
         function(s, includeWhitespaces)
         {

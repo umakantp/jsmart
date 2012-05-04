@@ -104,3 +104,12 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {'<b>"te&xt"</b>'|escape:html:''}
 {'<b>"double&encode"</b>'|escape:html:'':true}
 {"<b>'no double&encode'</b>"|escape:html:'':0}
+
+
+
+{$verylongtxt|count}
+{$arr = ['a','b','c']}
+{$arr|count}
+{$pers = ['name'=>['first'=>'John','last'=>'Doe'],'age'=>36]}
+{$pers|count}
+{$pers|count:1}
