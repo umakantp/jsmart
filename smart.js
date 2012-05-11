@@ -3218,7 +3218,7 @@
             replaceWith = new String(replaceWith);
             var res = '';
             var pos = -1;
-            for (pos=s.indexOf(search,pos); pos>=0; pos=s.indexOf(search,pos))
+            for (pos=s.indexOf(search); pos>=0; pos=s.indexOf(search))
             {
                 res += s.slice(0,pos) + replaceWith;
                 pos += search.length;

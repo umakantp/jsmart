@@ -63,6 +63,7 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {$t|replace:'abc|d':'abc:d'}
 {'abcd\'|abcd'|replace:'d':'x'}
 {'$fake|replace:f:c'}
+{'aaaaaa'|replace:'a':'z'}
 
 {$long_text|strip}
 {$long_text|strip:'-'}
