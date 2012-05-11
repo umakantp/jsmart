@@ -16,3 +16,7 @@
    ===
 {/while}
 
+{$nnn = 5}
+{while $nnn-->=0}
+   [{$nnn}]
+{/while}
