@@ -1843,7 +1843,7 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.8'
+                version: '2.9'
             }
         };
         blocks = this.tree.blocks;
@@ -2032,7 +2032,7 @@
     {
         if (eval('typeof '+fnm) == 'function')
         {
-            return window;
+            return (typeof window == 'object') ? window : global;
         }
         else if (typeof(PHP_JS) == 'function')
         {
