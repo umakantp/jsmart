@@ -1057,7 +1057,7 @@
     function parseVar(s, e, nm)
     {
         var rootName = e.token;
-        var parts = [{type:'text', data:nm.replace(/^(\w+)@(index|iteration|first|last|show|total)/gi, "$1__$2")}];
+        var parts = [{type:'text', data:nm.replace(/^(\w+)@(key|index|iteration|first|last|show|total)/gi, "$1__$2")}];
 
         var re = /^(?:\.|\s*->\s*|\[\s*)/;
         for (var op=s.match(re); op; op=s.match(re))

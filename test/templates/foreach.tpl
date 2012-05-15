@@ -2,6 +2,10 @@
 	[{$v@index}] {$k}:{$v}
 {/foreach}
 ------------------------------------------
+{foreach $o as $v}
+	[{$v@index}] {$v@key}:{$v}
+{/foreach}
+------------------------------------------
 {foreach		
 	$o		as		$k		=>		$v}
 	[{$v@index}] {$k}:{$v}
@@ -11,12 +15,14 @@
 {$k}
 {$v}
 ------------------------------------------
-
 {foreach $a as $vvv}
 	|{$vvv}|
 {/foreach}
-
-
+------------------------------------------
+{foreach $a as $vvv}
+	{$vvv@key}:|{$vvv}|
+{/foreach}
+------------------------------------------
 {foreach $a as $i}{$i}{foreachelse}
 error
 {/foreach}
