@@ -226,8 +226,6 @@
 <h2 id="qunit-userAgent"></h2>
 <ol id="qunit-tests"></ol>
 
-{$testPath = "{$smarty.server.DOCUMENT_ROOT}/test/templates"}
-
 {function name='includeTest'}
 <script type="text/x-jsmart-tmpl" id='{$nm}_php'>{include file="{$nm}.tpl"}</script>
 <script type="text/x-jsmart-tmpl" id='{$nm}_tpl'>{fetch file="$testPath/$nm.tpl"}</script>

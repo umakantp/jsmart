@@ -1,5 +1,7 @@
 <?php
 
+ini_set('display_errors', 1);
+
 date_default_timezone_set('Europe/Moscow');		//to test date_format modifier
 
 define('SMARTY_DIR','./smarty/');
@@ -190,6 +192,7 @@ $smarty6->default_modifiers = array("replace:'text_to_replace':'replaced'", 'esc
 $smarty6->assign('replace_me','<b>text_to_replace</b>');
 $smarty->assign('defaultModifier',$smarty6->fetch('default_modifiers.tpl'));
 
+$smarty->assign('testPath',dirname(__FILE__).'/templates');
 
 $smarty->display('main.tpl');
 

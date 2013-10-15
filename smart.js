@@ -120,12 +120,12 @@
                     var found = sTag.match(reTag);
                     if (found)
                     {
-                        found[0] = s.slice(0,i+rdelim.length);
                         found.index = offset;
+                        found[0] = s.slice(0,i+rdelim.length);
                         return found;
                     }
                 }
-                if (openCount < 0) //ignore unmatched right delimiter
+                if (openCount < 0) //ignore any number of unmatched right delimiters
                 {
                     openCount = 0;
                 }

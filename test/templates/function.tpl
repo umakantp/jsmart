@@ -73,7 +73,7 @@
 
 {function name="testFunc6"} {$par.prop2.txt} {/function}	//param is an Object
 {testFunc6 par=$ob}
-{testFunc6 par="$ob"}
+{*testFunc6 par="$ob"*}  {* TODO *}
 
 {function testFunc7} property: {$par.txt} {/function}	//param is an Object's property
 {testFunc7 par=$ob.prop2}

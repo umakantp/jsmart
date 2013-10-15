@@ -81,7 +81,7 @@ assign var='num'  value=999
 [{$testOb.prop1}]
 
 {assign var="testOb" value="$ob"}
-[{$testOb.prop1}]
+{*[{$testOb.prop1}]*}    {* TODO *}
 
 {assign var="testOb" value='$ob'}
 [{$testOb}]
