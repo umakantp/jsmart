@@ -116,6 +116,6 @@ ____________________
 
 NOTICE
 ____________________
-This project was originally hosted at (Google code)[http://code.google.com/p/jsmart/] and was created by (miroshnikov)[https://github.com/miroshnikov].
+This project was originally hosted at [Google code](http://code.google.com/p/jsmart/) and was created by [miroshnikov](https://github.com/miroshnikov).
 Since author was not very active on project. I have forked and planned on pushing further improvements and features.
 
