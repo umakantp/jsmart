@@ -1,26 +1,26 @@
 jsmart
 ======
 
-jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template syntax and all the features (functions, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
+jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functions, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
 
-jSmart is written entirely in JavaScript, does not have any DOM/DHTML/browser or third-party JavaScript library dependencies and can be run in a web browser as well as a standalone JavaScript interpreter or CommonJS environments like node.js.
+jSmart is written entirely in JavaScript, does not have any DOM/DHTML/browser or third-party JavaScript library dependencies and can be run in a web browser as well as a standalone JavaScript interpreter or [CommonJS](http://www.commonjs.org/) environments like [node.js](http://nodejs.org/).
 
-jSmart supports plugin architecture, you can extend it with custom plugins: functions, blocks and variable modifiers, templates inclusion, templates inheritance and overriding, caching, escape HTML.
+jSmart supports plugin architecture, you can [extend it with custom plugins](https://github.com/umakantp/jsmart/wiki/Create-Plugin): functions, blocks and variable modifiers, [templates inclusion](https://github.com/umakantp/jsmart/wiki/Include-Templates), [templates inheritance](https://github.com/umakantp/jsmart/wiki/Template-Inheritance) and overriding, [caching](https://github.com/umakantp/jsmart/wiki/Caching), [escape HTML](https://github.com/umakantp/jsmart/wiki/escape_html).
 
-jSmart has some limited support of the PHP syntax and allows you to use the same Smarty templates on both server and client side, for both PHP and Javascript.
+jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty_template_in_javascript), for both PHP and Javascript.
 
 
 A Quick Introduction
 ____________________
 
-1. Include jSmart library Javascript file in your header (get the current release from the download page)
+1. Include jSmart library Javascript file in your header (get the current release by cloning this repo)
 
         <html>
             <head>
                 <script language="javascript" src="smart-2.9.min.js"></script>
             </head>
 
-2. Create template, use PHP Smarty syntax. Put the template's text in _&lt;script&gt;_ with the _type="text/x-jsmart-tmpl"_ so a browser will not try to parse it and mess it up.
+2. Create template, use [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax). Put the template's text in _&lt;script&gt;_ with the _type="text/x-jsmart-tmpl"_ so a browser will not try to parse it and mess it up.
 
         <script id="test_tpl" type="text/x-jsmart-tmpl">
 
