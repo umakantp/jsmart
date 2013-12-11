@@ -599,7 +599,7 @@
                         parse(content.slice(0,findElse.index),subTreeIf);
 
                         content = content.slice(findElse.index+findElse[0].length);
-                        var findElseIf = findElse[1].match(/^else[\s*]if(.*)/);
+                        var findElseIf = findElse[1].match(/^else\s*if(.*)/);
                         if (findElseIf)
                         {
                             buildInFunctions['if'].parse(parseParams(findElseIf[1]), subTreeElse, content.replace(/^\n/,''));
@@ -1020,7 +1020,7 @@
         if (parseText.parseEmbeddedVars)
         {
             var re = /([$][\w@]+)|`([^`]*)`/;
-            for (var found=text.match(re); found; found=text.match(re))
+            for (var found=re.exec(text); found; found=re.exec(text))
             {
                 tree.push({type: 'text', data: text.slice(0,found.index)});
                 tree.push( parseExpression(found[1] ? found[1] : found[2]).tree );
