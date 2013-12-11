@@ -599,7 +599,7 @@
                         parse(content.slice(0,findElse.index),subTreeIf);
 
                         content = content.slice(findElse.index+findElse[0].length);
-                        var findElseIf = findElse[1].match(/^elseif(.*)/);
+                        var findElseIf = findElse[1].match(/^else[\s*]if(.*)/);
                         if (findElseIf)
                         {
                             buildInFunctions['if'].parse(parseParams(findElseIf[1]), subTreeElse, content.replace(/^\n/,''));
@@ -1220,7 +1220,7 @@
                 }
             },
             {
-                re: /^\s*(===|==|!=|!==)\s*/,
+                re: /^\s*(===|!==|==|!=)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1, 'binary', 6, e.tree);
@@ -1700,7 +1700,7 @@
                 {
                     if (typeof val == 'undefined')
                     {
-                        return '';
+                        return val;
                     }
                     v[nm] = {};
                     v = v[nm];
