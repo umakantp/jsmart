@@ -7,17 +7,16 @@ jSmart is written entirely in JavaScript, does not have any DOM/DHTML/browser or
 
 jSmart supports plugin architecture, you can [extend it with custom plugins](https://github.com/umakantp/jsmart/wiki/Create-Plugin): functions, blocks and variable modifiers, [templates inclusion](https://github.com/umakantp/jsmart/wiki/Include-Templates), [templates inheritance](https://github.com/umakantp/jsmart/wiki/Template-Inheritance) and overriding, [caching](https://github.com/umakantp/jsmart/wiki/Caching), [escape HTML](https://github.com/umakantp/jsmart/wiki/escape_html).
 
-jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty_template_in_javascript), for both PHP and Javascript.
+jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty-template-in-javascript), for both PHP and Javascript.
 
 
-A Quick Introduction
-____________________
+### A Quick Introduction
 
 1. Include jSmart library Javascript file in your header (get the current release by cloning this repo)
 
         <html>
             <head>
-                <script language="javascript" src="smart-2.9.min.js"></script>
+                <script language="javascript" src="smart.js"></script>
             </head>
 
 2. Create template, use [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax). Put the template's text in _&lt;script&gt;_ with the _type="text/x-jsmart-tmpl"_ so a browser will not try to parse it and mess it up.
@@ -113,9 +112,8 @@ ____________________
         tpl.fetch( {greeting:'Hi', name:'Jane'} );    //returns: Hi, Jane!
 
 
+### NOTICE
 
-NOTICE
-____________________
 This project was originally hosted at [Google code](http://code.google.com/p/jsmart/) and was created by [miroshnikov](https://github.com/miroshnikov).
 Since author was not very active on project. I have forked and planned on pushing further improvements and features.
 
