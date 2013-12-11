@@ -1,8 +1,8 @@
-/**
- * @preserve jSmart Javascript template engine
- * http://code.google.com/p/jsmart/
+/*!
+ * jSmart Javascript template engine
+ * https://github.com/umakantp/jsmart
  *
- * Copyright 2011, Max Miroshnikov <miroshnikov at gmail dot com> 
+ * Copyright 2011-2013, Max Miroshnikov <miroshnikov at gmail dot com>
  * jSmart is licensed under the GNU Lesser General Public License
  * http://www.gnu.org/licenses/lgpl.html
  */
@@ -11,16 +11,16 @@
 (function() {
 
     /**
-       merges two or more objects into one 
+       merges two or more objects into one
        shallow copy for objects
     */
     function obMerge(ob1, ob2 /*, ...*/)
     {
         for (var i=1; i<arguments.length; ++i)
         {
-           for (var nm in arguments[i]) 
+           for (var nm in arguments[i])
            {
-              ob1[nm] = arguments[i][nm]; 
+              ob1[nm] = arguments[i][nm];
            }
         }
         return ob1;
@@ -32,11 +32,11 @@
     function countProperties(ob)
     {
         var count = 0;
-        for (var nm in ob) 
+        for (var nm in ob)
         {
             if (ob.hasOwnProperty(nm))
             {
-                count++; 
+                count++;
             }
         }
         return count;
@@ -50,11 +50,11 @@
         if (Array.prototype.indexOf) {
             return a.indexOf(v);
         }
-        for (var i=0; i < a.length; ++i) 
+        for (var i=0; i < a.length; ++i)
         {
-            if (a[i] === v) 
-            { 
-                return i; 
+            if (a[i] === v)
+            {
+                return i;
             }
         }
         return -1;
@@ -76,7 +76,7 @@
     /**
        finds first {tag} in string
        @param re string with regular expression or an empty string to find any tag
-       @return  null or s.match(re) result object where 
+       @return  null or s.match(re) result object where
        [0] - full tag matched with delimiters (and whitespaces at the begin and the end): { tag }
        [1] - found part from passed re
        [index] - position of tag starting { in s
@@ -141,7 +141,7 @@
         var openTag = null;
         var findIndex = 0;
 
-        do 
+        do
         {
             if (closeTag)
             {
@@ -155,7 +155,7 @@
             sInner += s.slice(0,closeTag.index);
             findIndex += closeTag.index;
             s = s.slice(closeTag.index+closeTag[0].length);
-            
+
             openTag = findTag(reOpen,sInner);
             if (openTag)
             {
@@ -217,17 +217,17 @@
 
     function assignVar(nm, val, data)
     {
-        if (nm.match(/\[\]$/))  //ar[] = 
+        if (nm.match(/\[\]$/))  //ar[] =
         {
-            data[ nm.replace(/\[\]$/,'') ].push(val); 
+            data[ nm.replace(/\[\]$/,'') ].push(val);
         }
         else
         {
-            data[nm] = val; 
+            data[nm] = val;
         }
     }
 
-    var buildInFunctions = 
+    var buildInFunctions =
         {
             expression:
             {
@@ -243,13 +243,13 @@
                     });
 
                     return e.tree;
-                    
+
                 },
                 process: function(node, data)
                 {
                     var params = getActualParamValues(node.params, data);
                     var res = process([node.expression],data);
-                    
+
                     if (findInArray(params, 'nofilter') < 0)
                     {
                         for (var i=0; i<default_modifiers.length; ++i)
@@ -265,7 +265,7 @@
                         res = applyFilters(varFilters,res);
 
                         if (tpl_modifiers.length) {
-                            __t = function(){ return res; }	
+                            __t = function(){ return res; }
                             res = process(tpl_modifiers,data);
                         }
                     }
@@ -291,7 +291,7 @@
                         else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/))
                         {
                             arg1 = getVarValue(node.params.__parsed[0], data);
-                            switch (node.op) 
+                            switch (node.op)
                             {
                             case '+=': arg1+=arg2; break;
                             case '-=': arg1-=arg2; break;
@@ -337,7 +337,7 @@
                     {
                         return !arg1;
                     }
-                    else 
+                    else
                     {
                         var isVar = node.params.__parsed[0].type == 'var';
                         if (isVar)
@@ -372,7 +372,7 @@
                 }
             },
 
-            section: 
+            section:
             {
                 type: 'block',
                 parse: function(params, tree, content)
@@ -396,7 +396,7 @@
                     else
                     {
                         parse(content, subTree);
-                    }            
+                    }
                 },
 
                 process: function(node, data)
@@ -438,7 +438,7 @@
                     var count = 0;
                     var loop = 0;
                     var i = from;
-                    for (; i>=0 && i<to && count<max; i+=step,++count) 
+                    for (; i>=0 && i<to && count<max; i+=step,++count)
                     {
                         loop = i;
                     }
@@ -449,7 +449,7 @@
                     var s = '';
                     for (i=from; i>=0 && i<to && count<max; i+=step,++count)
                     {
-                        if (data.smarty['break']) 
+                        if (data.smarty['break'])
                         {
                             break;
                         }
@@ -461,7 +461,7 @@
                         props.index_next = i+step;
                         props.iteration = props.rownum = count+1;
 
-                        s += process(node.subTree, data);  
+                        s += process(node.subTree, data);
                         data.smarty['continue'] = false;
                     }
                     data.smarty['break'] = false;
@@ -498,7 +498,7 @@
                     var s = process(node.subTree, data);
                     tpl_modifiers = [];
                     return s;
-                }                
+                }
             },
 
             'for':
@@ -535,7 +535,7 @@
                     else
                     {
                         parse(content, subTree);
-                    }            
+                    }
                 },
 
                 process: function(node, data)
@@ -560,7 +560,7 @@
 
                     for (var i=parseInt(params.from); count<total; i+=step,++count)
                     {
-                        if (data.smarty['break']) 
+                        if (data.smarty['break'])
                         {
                             break;
                         }
@@ -578,7 +578,7 @@
                 }
             },
 
-            'if': 
+            'if':
             {
                 type: 'block',
                 parse: function(params, tree, content)
@@ -628,7 +628,7 @@
                 }
             },
 
-            foreach: 
+            foreach:
             {
                 type: 'block',
                 parseParams: function(paramStr)
@@ -697,7 +697,7 @@
                             continue;
                         }
 
-                        if (data.smarty['break']) 
+                        if (data.smarty['break'])
                         {
                             break;
                         }
@@ -712,7 +712,7 @@
                         data[params.item+'__iteration'] = parseInt(i+1);
                         data[params.item+'__first'] = (i===0);
                         data[params.item+'__last'] = (i==total-1);
-                        
+
                         if ('name' in params)
                         {
                             data.smarty.foreach[params.name].index = parseInt(i);
@@ -741,13 +741,13 @@
                 }
             },
 
-            'function': 
+            'function':
             {
                 type: 'block',
                 parse: function(params, tree, content)
                 {
                     var subTree = [];
-                    plugins[trimQuotes(params.name?params.name:params[0])] = 
+                    plugins[trimQuotes(params.name?params.name:params[0])] =
                         {
                             type: 'function',
                             subTree: subTree,
@@ -794,7 +794,7 @@
                     params.hide = findInArray(params,'hide') >= 0;
                     params.hasChild = params.hasParent = false;
 
-                    onParseVar = function(nm) 
+                    onParseVar = function(nm)
                     {
                         if (nm.match(/^\s*[$]smarty.block.child\s*$/))
                         {
@@ -919,7 +919,7 @@
                     var s = '';
                     while (getActualParamValues(node.params,data)[0])
                     {
-                        if (data.smarty['break']) 
+                        if (data.smarty['break'])
                         {
                             break;
                         }
@@ -1008,7 +1008,7 @@
                 }
             }
         }
-        if (s) 
+        if (s)
         {
             parseText(s, tree);
         }
@@ -1123,7 +1123,7 @@
     function onParseVar(nm)  {}
 
 
-    var tokens = 
+    var tokens =
         [
             {
                 re: /^\$([\w@]+)/,   //var
@@ -1220,7 +1220,7 @@
                 }
             },
             {
-                re: /^\s*(==|!=|===|!==)\s*/,
+                re: /^\s*(===|==|!=|!==)\s*/,
                 parse: function(e, s)
                 {
                     parseOperator(RegExp.$1, 'binary', 6, e.tree);
@@ -1358,7 +1358,7 @@
                 {
                     var eVar = {token:'$smarty',tree:[]};
                     parseVar('.config.'+RegExp.$1, eVar, 'smarty');
-                    e.tree.push( eVar.tree[0] );                    
+                    e.tree.push( eVar.tree[0] );
                     parseModifiers(s, e);
                 }
             },
@@ -1380,6 +1380,7 @@
                 re: /^[\d.]+/, //number
                 parse: function(e, s)
                 {
+                    e.token = parseInt(e.token, 10);
                     parseText(e.token, e.tree);
                     parseModifiers(s, e);
                 }
@@ -1396,7 +1397,7 @@
 
     function parseModifiers(s, e)
     {
-        if (parseModifiers.stop) 
+        if (parseModifiers.stop)
         {
             return;
         }
@@ -1411,14 +1412,14 @@
 
         var fnm = modifier[1]=='default' ? 'defaultValue' : modifier[1];
         s = s.slice(modifier[0].length).replace(/^\s+/,'');
-        
+
         parseModifiers.stop = true;
         var params = [];
         for (var colon=s.match(/^\s*:\s*/); colon; colon=s.match(/^\s*:\s*/))
         {
             e.value += s.slice(0,colon[0].length);
             s = s.slice(colon[0].length);
-            
+
             var param = {value:'', tree:[]};
             if (lookUp(s, param))
             {
@@ -1432,10 +1433,10 @@
             }
         }
         parseModifiers.stop = false;
-        
+
         params.unshift(e.tree.pop());  //modifiers have the highest priority
         e.tree.push(parseFunc(fnm,{__parsed:params},[])[0]);
-        
+
         parseModifiers(s, e);  //modifiers can be combined
     }
 
@@ -1482,7 +1483,7 @@
                 op.params.__parsed = [tree[i-1],tree[i+1]];
                 tree.splice(i-1,3,op);
                 return true;
-            } 
+            }
             else if (op.optype == 'post-unary')
             {
                 op.params.__parsed = [tree[i-1]];
@@ -1506,7 +1507,7 @@
                 tree[i] = composeExpression(tree[i])
             }
         }
-        
+
         for (var precedence=1; precedence<14; ++precedence)
         {
             if (precedence==2 || precedence==10)
@@ -1576,11 +1577,11 @@
             {
                 break;
             }
-            
+
             if (nm)
             {
                 params[nm] = param.value;
-                params.__parsed[nm] = param.tree; 
+                params.__parsed[nm] = param.tree;
             }
             else
             {
@@ -1633,10 +1634,6 @@
             if (params.__parsed.hasOwnProperty(nm))
             {
                 var v = process([params.__parsed[nm]], data);
-                if (typeof(v) == 'string' && v.match(/^[1-9]\d{0,14}$/) && !isNaN(v))
-                {
-                    v = parseInt(v,10);
-                }
                 actualParams[nm] = v;
             }
         }
@@ -1679,7 +1676,7 @@
 
                 //section name
                 if (nm in data.smarty.section && part.type=='text' && process([node.parts[0]],data)!='smarty')
-                { 
+                {
                     nm = data.smarty.section[nm].index;
                 }
 
@@ -1743,9 +1740,9 @@
                     {
                         repeat.value = false;
                         s += plugin.process(
-                            getActualParamValues(node.params,data), 
-                            process(node.subTree, data), 
-                            data, 
+                            getActualParamValues(node.params,data),
+                            process(node.subTree, data),
+                            data,
                             repeat
                         );
                     }
@@ -1770,7 +1767,7 @@
                 return res;
             }
         }
-        return res;    
+        return res;
     }
 
     function getTemplate(name, tree, nocache)
@@ -1847,8 +1844,8 @@
             }
         };
         blocks = this.tree.blocks;
-        parse( 
-            applyFilters(jSmart.prototype.filters_global.pre, stripComments((new String(tpl?tpl:'')).replace(/\r\n/g,'\n'))), 
+        parse(
+            applyFilters(jSmart.prototype.filters_global.pre, stripComments((new String(tpl?tpl:'')).replace(/\r\n/g,'\n'))),
             this.tree
         );
     };
@@ -1953,8 +1950,8 @@
 
     /**
        add modifier to implicitly apply to every variable in a template
-       @param modifiers  single string (e.g. "replace:'from':'to'") 
-                         or array of strings (e.g. ['escape:"htmlall"', "replace:'from':'to'"]) 
+       @param modifiers  single string (e.g. "replace:'from':'to'")
+                         or array of strings (e.g. ['escape:"htmlall"', "replace:'from':'to'"])
      */
     jSmart.prototype.addDefaultModifier = function(modifiers)
     {
@@ -1995,7 +1992,7 @@
 
     /**
        override this function
-       @param name  value of 'file' parameter in {include_php} and {include_javascript} 
+       @param name  value of 'file' parameter in {include_php} and {include_javascript}
                      or value of 'script' parameter in {insert}
        @return Javascript script
     */
@@ -2016,7 +2013,7 @@
 
 
 
-    /**     
+    /**
        whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before
     */
     jSmart.prototype.auto_literal = true;
@@ -2069,8 +2066,8 @@
        register custom functions
     */
     jSmart.prototype.registerPlugin(
-        'function', 
-        '__array', 
+        'function',
+        '__array',
         function(params, data)
         {
             var a = [];
@@ -2086,8 +2083,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        '__func', 
+        'function',
+        '__func',
         function(params, data)
         {
             var paramNames = [];
@@ -2103,8 +2100,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        '__quoted', 
+        'function',
+        '__quoted',
         function(params, data)
         {
             return params.join('');
@@ -2112,8 +2109,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'append', 
+        'function',
+        'append',
         function(params, data)
         {
             var varName = params.__get('var',null,0);
@@ -2136,8 +2133,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'assign', 
+        'function',
+        'assign',
         function(params, data)
         {
             assignVar(params.__get('var',null,0), params.__get('value',null,1), data);
@@ -2146,8 +2143,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'break', 
+        'function',
+        'break',
         function(params, data)
         {
             data.smarty['break'] = true;
@@ -2156,8 +2153,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'call', 
+        'function',
+        'call',
         function(params, data)
         {
             var fname = params.__get('name',null,0);
@@ -2175,8 +2172,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'block', 
-        'capture', 
+        'block',
+        'capture',
         function(params, content, data, repeat)
         {
             if (content)
@@ -2210,8 +2207,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'continue', 
+        'function',
+        'continue',
         function(params, data)
         {
             data.smarty['continue'] = true;
@@ -2220,8 +2217,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'counter', 
+        'function',
+        'counter',
         function(params, data)
         {
             var name = params.__get('name','default');
@@ -2275,8 +2272,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'cycle', 
+        'function',
+        'cycle',
         function(params, data)
         {
             var name = params.__get('name','default');
@@ -2306,7 +2303,7 @@
                 {
                     arr = values.split(data.smarty.cycle[name].delimiter);
                 }
-                
+
                 if (arr.length != data.smarty.cycle[name].arr.length || arr[0] != data.smarty.cycle[name].arr[0])
                 {
                     data.smarty.cycle[name].arr = arr;
@@ -2357,8 +2354,8 @@
     }
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'debug', 
+        'function',
+        'debug',
         function(params, data)
         {
             if (typeof dbgWnd != 'undefined')
@@ -2394,8 +2391,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'eval', 
+        'function',
+        'eval',
         function(params, data)
         {
             var tree = [];
@@ -2411,8 +2408,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'fetch', 
+        'function',
+        'fetch',
         function(params, data)
         {
             var s = jSmart.prototype.getFile(params.__get('file',null,0));
@@ -2426,8 +2423,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'html_checkboxes', 
+        'function',
+        'html_checkboxes',
         function(params, data)
         {
             var type = params.__get('type','checkbox');
@@ -2480,8 +2477,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'html_image', 
+        'function',
+        'html_image',
         function(params, data)
         {
             var url = params.__get('file',null);
@@ -2500,7 +2497,7 @@
                 {
                     if (!(p in paramNames))
                     {
-                        s += ' ' + p + '="' + params[p] + '"'; 
+                        s += ' ' + p + '="' + params[p] + '"';
                     }
                 }
             }
@@ -2510,8 +2507,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'html_options', 
+        'function',
+        'html_options',
         function(params, data)
         {
             var values = params.__get('values',params.options);
@@ -2542,14 +2539,14 @@
                     s += '>' + output[useName ? p : i++] + '</option>';
                     res.push(s);
                 }
-            }            
+            }
             var name = params.__get('name',false);
             return (name ? ('<select name="' + name + '">\n' + res.join('\n') + '\n</select>') : res.join('\n')) + '\n';
         }
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
+        'function',
         'html_radios',
         function(params, data)
         {
@@ -2559,7 +2556,7 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
+        'function',
         'html_select_date',
         function(params, data)
         {
@@ -2586,8 +2583,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'html_table', 
+        'function',
+        'html_table',
         function(params, data)
         {
             var loop = [];
@@ -2632,7 +2629,7 @@
                 cols = colNames.length;
             }
             rows = rows ? rows : Math.ceil(loop.length/cols);
-            
+
             var inner = params.__get('inner','cols');
             var caption = params.__get('caption','');
             var table_attr = params.__get('table_attr','border="1"');
@@ -2662,7 +2659,7 @@
                 for (var col=0; col<cols; ++col)
                 {
                     var idx = (inner=='cols') ? ((vdir=='down'?row:rows-1-row) * cols + (hdir=='right'?col:cols-1-col)) : ((hdir=='right'?col:cols-1-col) * rows + (vdir=='down'?row:rows-1-row));
-                    
+
                     s += '<td' + (td_attr ? ' '+td_attr[col%td_attr.length] : '') + '>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n';
                 }
                 s += '</tr>\n';
@@ -2684,8 +2681,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'include', 
+        'function',
+        'include',
         function(params, data)
         {
             var file = params.__get('file',null,0);
@@ -2702,8 +2699,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'include_javascript', 
+        'function',
+        'include_javascript',
         function(params, data)
         {
             var file = params.__get('file',null,0);
@@ -2723,8 +2720,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'include_php', 
+        'function',
+        'include_php',
         function(params, data)
         {
             return plugins['include_javascript'].process(params,data);
@@ -2732,8 +2729,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'insert', 
+        'function',
+        'insert',
         function(params, data)
         {
             var fparams = {};
@@ -2750,7 +2747,7 @@
                 eval(jSmart.prototype.getJavascript(params.script));
                 prefix = 'smarty_insert_';
             }
-            var func = eval(prefix+params.__get('name',null,0));            
+            var func = eval(prefix+params.__get('name',null,0));
             var s = func(fparams, data);
             if ('assign' in params)
             {
@@ -2762,8 +2759,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'block', 
-        'javascript', 
+        'block',
+        'javascript',
         function(params, content, data, repeat)
         {
             data['$this'] = data;
@@ -2774,8 +2771,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'config_load', 
+        'function',
+        'config_load',
         function(params, data)
         {
             jSmart.prototype.configLoad(jSmart.prototype.getConfig(params.__get('file',null,0)), params.__get('section','',1), data);
@@ -2784,8 +2781,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'mailto', 
+        'function',
+        'mailto',
         function(params, data)
         {
             var address = params.__get('address',null);
@@ -2819,12 +2816,12 @@
             else if (encode == 'javascript_charcode')
             {
                 var codes = [];
-                for (var i=0; i<s.length; ++i) 
+                for (var i=0; i<s.length; ++i)
                 {
                     codes.push(jSmart.prototype.PHPJS('ord','mailto').ord(s.substr(i,1)));
-                } 
+                }
                 return '<script type="text/javascript" language="javascript">\n<!--\n{document.write(String.fromCharCode('
-                    + codes.join(',') + '))}\n//-->\n</script>\n';    
+                    + codes.join(',') + '))}\n//-->\n</script>\n';
             }
             else if (encode == 'hex')
             {
@@ -2856,8 +2853,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'function', 
-        'math', 
+        'function',
+        'math',
         function(params, data)
         {
             with (Math)
@@ -2883,8 +2880,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'block', 
-        'nocache', 
+        'block',
+        'nocache',
         function(params, content, data, repeat)
         {
             return content;
@@ -2892,8 +2889,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'block', 
-        'textformat', 
+        'block',
+        'textformat',
         function(params, content, data, repeat)
         {
             if (!content) {
@@ -2952,8 +2949,8 @@
        register modifiers
     */
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'capitalize', 
+        'modifier',
+        'capitalize',
         function(s, withDigits)
         {
             var re = new RegExp(withDigits ? '[\\W\\d]+' : '\\W+');
@@ -2982,8 +2979,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'cat', 
+        'modifier',
+        'cat',
         function(s, value)
         {
             value = value ? value : '';
@@ -2992,8 +2989,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'count', 
+        'modifier',
+        'count',
         function(v, recursive)
         {
             if (v === null || typeof v === 'undefined') {
@@ -3004,9 +3001,9 @@
 
             recursive = Boolean(recursive);
             var k, cnt = 0;
-            for (k in v) 
+            for (k in v)
             {
-                if (v.hasOwnProperty(k)) 
+                if (v.hasOwnProperty(k))
                 {
                     cnt++;
                     if (recursive && v[k] && (v[k].constructor === Array || v[k].constructor === Object)) {
@@ -3019,8 +3016,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'count_characters', 
+        'modifier',
+        'count_characters',
         function(s, includeWhitespaces)
         {
             return includeWhitespaces ? s.length : s.replace(/\s/g,'').length;
@@ -3028,8 +3025,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'count_paragraphs', 
+        'modifier',
+        'count_paragraphs',
         function(s)
         {
             var found = s.match(/\n+/g);
@@ -3042,8 +3039,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'count_sentences', 
+        'modifier',
+        'count_sentences',
         function(s)
         {
             var found = s.match(/[^\s]\.(?!\w)/g);
@@ -3056,8 +3053,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'count_words', 
+        'modifier',
+        'count_words',
         function(s)
         {
             var found = s.match(/\w+/g);
@@ -3070,8 +3067,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'date_format', 
+        'modifier',
+        'date_format',
         function(s, fmt, defaultDate)
         {
             return jSmart.prototype.PHPJS('strftime','date_format').strftime(fmt?fmt:'%b %e, %Y', jSmart.prototype.makeTimeStamp(s?s:defaultDate));
@@ -3079,7 +3076,7 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
+        'modifier',
         'defaultValue',
         function(s, value)
         {
@@ -3088,8 +3085,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'escape', 
+        'modifier',
+        'escape',
         function(s, esc_type, char_set, double_encode)
         {
             s = new String(s);
@@ -3097,7 +3094,7 @@
             char_set = char_set || 'UTF-8';
             double_encode = (typeof double_encode != 'undefined') ? Boolean(double_encode) : true;
 
-            switch (esc_type) 
+            switch (esc_type)
             {
             case 'html':
                 if (double_encode) {
@@ -3110,30 +3107,30 @@
                 return jSmart.prototype.PHPJS('rawurlencode','escape').rawurlencode(s);
             case 'urlpathinfo':
                 return jSmart.prototype.PHPJS('rawurlencode','escape').rawurlencode(s).replace(/%2F/g, '/');
-            case 'quotes': 
+            case 'quotes':
                 return s.replace(/(^|[^\\])'/g, "$1\\'");
             case 'hex':
                 var res = '';
-                for (var i=0; i<s.length; ++i) 
+                for (var i=0; i<s.length; ++i)
                 {
                     res += '%' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1));
-                } 
+                }
                 return res;
             case 'hexentity':
                 var res = '';
                 for (var i=0; i<s.length; ++i) {
                     res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)).toUpperCase() + ';';
-                } 
+                }
                 return res;
             case 'decentity':
                 var res = '';
                 for (var i=0; i<s.length; ++i) {
                     res += '&#' + jSmart.prototype.PHPJS('ord','escape').ord(s.substr(i,1)) + ';';
-                } 
+                }
                 return res;
-            case 'mail': 
+            case 'mail':
                 return s.replace(/@/g,' [AT] ').replace(/[.]/g,' [DOT] ');
-            case 'nonstd': 
+            case 'nonstd':
                 var res = '';
                 for (var i=0; i<s.length; ++i)
                 {
@@ -3142,11 +3139,11 @@
                         res += '&#' + _ord + ';';
                     } else {
                         res += s.substr(i, 1);
-                    } 
-                    
+                    }
+
                 }
                 return res;
-            case 'javascript': 
+            case 'javascript':
                 return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\r/g,'\\r').replace(/\n/g,'\\n').replace(/<\//g,'<\/');
             };
             return s;
@@ -3154,27 +3151,27 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
+        'modifier',
         'indent',
         function(s, repeat, indentWith)
         {
             repeat = repeat ? repeat : 4;
             indentWith = indentWith ? indentWith : ' ';
-            
+
             var indentStr = '';
             while (repeat--)
             {
                 indentStr += indentWith;
             }
-            
+
             var tail = s.match(/\n+$/);
             return indentStr + s.replace(/\n+$/,'').replace(/\n/g,'\n'+indentStr) + (tail ? tail[0] : '');
         }
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'lower', 
+        'modifier',
+        'lower',
         function(s)
         {
             return s.toLowerCase();
@@ -3182,20 +3179,20 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'nl2br', 
+        'modifier',
+        'nl2br',
         function(s)
         {
             return s.replace(/\n/g,'<br />\n');
         }
     );
 
-    /** 
-        only modifiers (flags) 'i' and 'm' are supported 
+    /**
+        only modifiers (flags) 'i' and 'm' are supported
         backslashes should be escaped e.g. \\s
     */
     jSmart.prototype.registerPlugin(
-        'modifier', 
+        'modifier',
         'regex_replace',
         function(s, re, replaceWith)
         {
@@ -3205,7 +3202,7 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
+        'modifier',
         'replace',
         function(s, search, replaceWith)
         {
@@ -3229,8 +3226,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'spacify', 
+        'modifier',
+        'spacify',
         function(s, space)
         {
             if (!space)
@@ -3242,8 +3239,8 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'string_format', 
+        'modifier',
+        'string_format',
         function(s, fmt)
         {
             return jSmart.prototype.PHPJS('sprintf','string_format').sprintf(fmt,s);
@@ -3251,7 +3248,7 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
+        'modifier',
         'strip',
         function(s, replaceWith)
         {
@@ -3261,7 +3258,7 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
+        'modifier',
         'strip_tags',
         function(s, addSpace)
         {
@@ -3271,13 +3268,13 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'truncate', 
+        'modifier',
+        'truncate',
         function(s, length, etc, breakWords, middle)
         {
             length = length ? length : 80;
             etc = (etc!=null) ? etc : '...';
-            
+
             if (s.length <= length)
             {
                 return s;
@@ -3286,7 +3283,7 @@
             length -= Math.min(length,etc.length);
             if (middle)
             {
-                //one of floor()'s should be replaced with ceil() but it so in Smarty 
+                //one of floor()'s should be replaced with ceil() but it so in Smarty
                 return s.slice(0,Math.floor(length/2)) + etc + s.slice(s.length-Math.floor(length/2));
             }
 
@@ -3294,14 +3291,14 @@
             {
                 s = s.slice(0,length+1).replace(/\s+?(\S+)?$/,'');
             }
-          
+
             return s.slice(0,length) + etc;
         }
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'upper', 
+        'modifier',
+        'upper',
         function(s)
         {
             return s.toUpperCase();
@@ -3309,13 +3306,13 @@
     );
 
     jSmart.prototype.registerPlugin(
-        'modifier', 
-        'wordwrap', 
+        'modifier',
+        'wordwrap',
         function(s, width, wrapWith, breakWords)
         {
 	         width = width || 80;
 	         wrapWith = wrapWith || '\n';
-	         
+
 	         var lines = s.split('\n');
 	         for (var i=0; i<lines.length; ++i)
 	         {
@@ -3344,7 +3341,7 @@
     );
 
 
-    String.prototype.fetch = function(data) 
+    String.prototype.fetch = function(data)
     {
         var tpl = new jSmart(this);
         return tpl.fetch(data);

@@ -2,19 +2,19 @@
 <html>
 <head>
 	<title>jSmart example</title>
-	<script type="text/javascript" src="smart.min.js"></script>
+	<script type="text/javascript" src="smart.js"></script>
 </head>
 <body>
 
-<script id="test_tpl" type="text/x-jsmart-tmpl"> 
+<script id="test_tpl" type="text/x-jsmart-tmpl">
    <h1>{$greeting}</h1>
 
    {foreach $books as $i => $book}
       <div style="background-color: {cycle values="cyan,yellow"};">
-         [{$i+1}] {$book.title|upper} by {$book.author} 
-            {if $book.price}                                
+         [{$i+1}] {$book.title|upper} by {$book.author}
+            {if $book.price}
                Price: <span style="color:red">${$book.price}</span>
-            {/if}                                           
+            {/if}
       </div>
    {foreachelse}
       No books
@@ -28,8 +28,8 @@
        greeting: 'Hi, there are some JScript books you may find interesting:',
 	   books: [
 		  {
-			 title  : 'JavaScript: The Definitive Guide',          
-			 author : 'David Flanagan',                            
+			 title  : 'JavaScript: The Definitive Guide',
+			 author : 'David Flanagan',
 			 price  : '31.18'
 		  },
 		  {
@@ -41,7 +41,7 @@
 			 author : 'Michael Morrison',
 			 price  : '29.54'
 		  }
-		]      
+		]
 	};
 
 	var tpl = new jSmart(document.getElementById('test_tpl').innerHTML);
