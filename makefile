@@ -5,4 +5,4 @@ default:
 test:
 	../node/bin/node test/test.js
 
-
+.PHONY: test
