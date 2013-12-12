@@ -1,4 +1,4 @@
-{extends "child1.tpl"} 
+{extends "child1.tpl"}
 ignored
 {block name='b3'}child2 3{/block}
 ignored
@@ -21,6 +21,6 @@ ignored
 
 {block 'inblock'}c2.inblock{/block}
 
-{block name='outblock'}	
+{block name='outblock'}
 =={$smarty.block.parent}==
 {/block}
