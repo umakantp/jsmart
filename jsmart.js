@@ -1840,7 +1840,7 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.9'
+                version: '2.12'
             }
         };
         blocks = this.tree.blocks;
