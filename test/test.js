@@ -9,7 +9,12 @@ var fs = require('fs');
 var exec = require('child_process').exec;
 
 function getTemplateData(fileName, hasExt) {
-    var fname =__dirname + '/templates/'+fileName;
+    var fname;
+    if (fileName.indexOf('/templates/') > -1) {
+        fname = fileName;
+    } else {
+        fname =__dirname + '/templates/'+fileName;
+    }
     if (!hasExt) {
         fname += '.tpl';
     }
@@ -51,9 +56,14 @@ function getData()
 	'aEmpty' : [],
 	'sEmpty' : '',
 	'nullVar': null,
-	'textWithHTML': '<span style="color:red;"><i><b>foo</b></i></span>'
+	'textWithHTML': '<span style="color:red;"><i><b>foo</b></i></span>',
+    'testPath': (__dirname + '/templates'),
     };
 }
+
+jSmart.prototype.getFile = function(tpl) {
+    return getTemplateData(tpl, true);
+};
 
 jSmart.prototype.getTemplate = function (tpl) {
     return getTemplateData(tpl, true);
@@ -63,7 +73,7 @@ jSmart.prototype.registerPlugin(
     'function',
     'isEmptyStr',
     function (params, data) {
-	return (params.s.length == 0);
+        return (params.s.length == 0);
     }
 );
 
@@ -71,19 +81,37 @@ jSmart.prototype.registerPlugin(
     'function',
     'sayHello',
     function (params, data) {
-	var s = 'Hello ';
-        s += params.to;
-	return s;
-    }	
+        var s = 'Hello ';
+            s += params.to;
+        return s;
+    }
+);
+
+jSmart.prototype.registerPlugin(
+    'function',
+    'strayFunc',
+    function (v1, v2) {
+        return v1+','+v2;
+    }
+);
+
+jSmart.prototype.registerPlugin(
+    'function',
+    'strayNoArgs',
+    function () {
+        return 'bar';
+    }
 );
 
 function test(fileName) {
     exec(__dirname+'/../../php/bin/php '+__dirname+'/test.php '+fileName, function(error, stdout, stderr) {
         if (error == null) {
-            checkAgainst_jSmart(fileName, stdout); 
+            checkAgainst_jSmart(fileName, stdout);
         } else {
             console.log('Error getting data from PHP');
             console.log(error);
+            console.log(stderr);
+            console.log(stdout);
             process.exit(1);
         }
     });
@@ -97,7 +125,7 @@ function checkAgainst_jSmart(fileName, phpOutput) {
     if (process.argv[2] == "php" && process.argv[3] == fileName) {
         console.log(phpOutput);
     } else if (process.argv[2] == "js" && process.argv[3] == fileName) {
-	console.log(res);
+        console.log(res);
     }
 
     if (res == phpOutput) {
@@ -120,4 +148,40 @@ test('counter');
 test('cycle');
 //test('default_modifiers.tpl');
 test('escape_html');
+//test('escape_parsing');
+test('eval');
+test('examples');
+test('fetch');
+//test('filtered');
+//test('filters');
+test('for');
+test('foreach');
+//test('function');
+test('html_checkboxes');
+test('html_image');
+test('html_options');
+test('html_radios');
+test('html_table');
 test('if');
+//test('include');
+//test('include_php'); @deprecated
+//test('included');
+//test('included2');
+//test('insert');
+//test('javascript');
+test('literal');
+//test('mailto');
+//test('main');
+//test('math');
+//test('modifiers');
+//test('parent');
+//test('php');
+//test('phpjs');
+//test('plugins');
+//test('rldelim');
+test('section');
+//test('setfilter');
+test('strip');
+//test('textformat');
+//test('var');
+test('while');

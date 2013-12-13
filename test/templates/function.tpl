@@ -134,7 +134,7 @@
 {testX x=strayFunc($foo|upper,"=$a=")}
 {testX x="$a|upper"}
 {testX x="$a + $b"}
-{testX x="$a {$b}"}	
+{testX x="$a {$b}"}
 {testX x="$a {$b|upper}"}
 {testX x="{counter} $a"}
 {testX x=" {for $j=1 to 3}$j{/for} "}
@@ -153,7 +153,7 @@
 {{counter name='invar'} + $x + 7 + '10'|replace:1:2}
 
 {testX x={call name='testX' x='x'}}
-{testX x={call name='testX' x="{$a|upper}"}}	
+{testX x={call name='testX' x="{$a|upper}"}}
 
 {testX x=abcd|upper}
 

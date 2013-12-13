@@ -25,13 +25,14 @@ $smarty->assign('aEmpty',array());
 $smarty->assign('sEmpty','');
 $smarty->assign('nullVar',null);
 $smarty->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
+$smarty->assign('testPath', __DIR__.'/templates');
 
 $smarty->assign(
 	'books',
 	array(
 		array(
-			'title'  => 'JavaScript: The Definitive Guide',          
-			'author' => 'David Flanagan',                            
+			'title'  => 'JavaScript: The Definitive Guide',
+			'author' => 'David Flanagan',
 			'price'  => '31.18'
 		),
 		array(
@@ -73,6 +74,33 @@ function isEmptyStr($params, $template)
 $smarty->registerPlugin('function', 'isEmptyStr', 'isEmptyStr');
 
 
-$smarty->display(($fileName.'.tpl'));
+function strayFunc($v1, $v2)
+{
+	return $v1.','.$v2;
+}
 
+function strayNoArgs()
+{
+	return 'bar';
+}
+
+$smarty->registerPlugin('function', 'strayNoArgs', 'strayNoArgs');
+$smarty->registerPlugin('function', 'strayFunc', 'strayFunc');
+
+class TestClassObj
+{
+	public $prop = 'TestClassObj.prop';
+	public $obData = array(
+		'ob1' => 'test1',
+		'ob2' => array( 'value' => 'test2' )
+	);
+	public function func()
+	{
+		return 'TestClassObj.func';
+	}
+};
+
+$smarty->assign('testClassObj', new TestClassObj);
+
+$smarty->display(($fileName.'.tpl'));
 
