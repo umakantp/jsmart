@@ -1,4 +1,4 @@
-jsmart
+jSmart
 ======
 
 jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functions, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
@@ -111,6 +111,23 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 
         tpl.fetch( {greeting:'Hi', name:'Jane'} );    //returns: Hi, Jane!
 
+
+### DOCUMENTATION
+
+[https://github.com/umakantp/jsmart/wiki](https://github.com/umakantp/jsmart/wiki)
+
+### TESTS
+
+* Install [Node.js](http://nodejs.org/) and [PHP](http://www.php.net) in any given folder.
+  e.g. You installed it in directory _/home/user/jsmart/node_ and _/home/user/jsmart/php_ respectively.
+
+* Clone jSmart repo in the same folder.
+  e.g. Clone at  _/home/user/jsmart_. So your jsmart repo is in _/home/user/jsmart/jsmart_ folder.
+
+* Go to jSmart and run _make test_.
+  e.g. Go to _/home/user/jsmart/jsmart_ and run _make test_.
+
+* You can modify _makefile_ and _test/test.js_ for changing path of node and php respectively as per your needs but please don't comment those changes in master repository.
 
 ### NOTICE
 
