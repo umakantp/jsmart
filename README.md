@@ -16,7 +16,7 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 
         <html>
             <head>
-                <script language="javascript" src="smart.js"></script>
+                <script language="javascript" src="jsmart.js"></script>
             </head>
 
 2. Create template, use [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax). Put the template's text in _&lt;script&gt;_ with the _type="text/x-jsmart-tmpl"_ so a browser will not try to parse it and mess it up.
