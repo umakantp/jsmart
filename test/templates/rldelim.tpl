@@ -4,6 +4,3 @@
 
 {$smarty.ldelim}$foo{$smarty.rdelim}
 
-
----------- escape parsing results --------------------
-[{$escapeParse}]

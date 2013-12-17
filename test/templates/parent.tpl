@@ -25,12 +25,7 @@
 -{block name='b5.3'}parent 5.3{/block}-
 
 {$someBool = true}
-{block name='outblock'}
-	[{block name='inblock'}
-		{if $someBool}
-			/{$smarty.block.child}/
-		{/if}
-	{/block}]
+{block name='outblock'} [{block name='inblock'} {if $someBool} /{$smarty.block.child}/ {/if}  {/block}]
 {/block}-
 <title>{block name="title4"}Parent Title{/block}</title>
 

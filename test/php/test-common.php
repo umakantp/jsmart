@@ -3,14 +3,14 @@
 ini_set('display_errors', 1);
 
 //To test date_format modifier.
-date_default_timezone_set('Europe/Moscow');
+date_default_timezone_set('Asia/Calcutta');
 
-require_once dirname(dirname(__DIR__)) . '/smarty/libs/Smarty.class.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/smarty/libs/Smarty.class.php';
 
 $fileName = $argv[1];
 
 $smarty = new Smarty();
-$smarty->setTemplateDir(__DIR__.'/templates')->setCompileDir(__DIR__.'/templates_c');
+$smarty->setTemplateDir(__DIR__.'/../templates')->setCompileDir(__DIR__.'/../templates_c');
 $smarty->debugging = false;
 
 $smarty->assign('foo', 'bar');
@@ -25,7 +25,7 @@ $smarty->assign('aEmpty',array());
 $smarty->assign('sEmpty','');
 $smarty->assign('nullVar',null);
 $smarty->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
-$smarty->assign('testPath', __DIR__.'/templates');
+$smarty->assign('testPath', dirname(__DIR__).'/templates');
 
 $smarty->assign(
 	'books',
@@ -101,6 +101,3 @@ class TestClassObj
 };
 
 $smarty->assign('testClassObj', new TestClassObj);
-
-$smarty->display(($fileName.'.tpl'));
-
