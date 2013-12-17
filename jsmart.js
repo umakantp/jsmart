@@ -2482,24 +2482,20 @@
     jSmart.prototype.registerPlugin(
         'function',
         'html_image',
-        function(params, data)
-        {
-            var url = params.__get('file',null);
-            var width = params.__get('width', false);
-            var height = params.__get('height', false);
-            var alt = params.__get('alt','');
-            var href = params.__get('href',false);
-            var path_prefix = params.__get('path_prefix','');
-            var paramNames = {file:1,width:1,height:1,alt:1,href:1,basedir:1,path_prefix:1};
+        function (params, data) {
+            var url = params.__get('file', null),
+                width = params.__get('width', false),
+                height = params.__get('height', false),
+                alt = params.__get('alt', ''),
+                href = params.__get('href', params.__get('link', false)),
+                path_prefix = params.__get('path_prefix', ''),
+                paramNames = {file:1, width:1, height:1, alt:1, href:1, basedir:1, path_prefix:1, link:1},
+                s = '<img src="' + path_prefix + url + '"' + ' alt="'+alt+'"' + (width ? ' width="'+width+'"':'') + (height ? ' height="'+height+'"':''),
+                p;
 
-            var s = '<img src="' + path_prefix + url + '"' + ' alt="'+alt+'"' + (width ? ' width="'+width+'"':'') + (height ? ' height="'+height+'"':'');
-            var p;
-            for (p in params)
-            {
-                if (params.hasOwnProperty(p) && typeof(params[p]) == 'string')
-                {
-                    if (!(p in paramNames))
-                    {
+            for (p in params) {
+                if (params.hasOwnProperty(p) && typeof(params[p]) == 'string') {
+                    if (!(p in paramNames)) {
                         s += ' ' + p + '="' + params[p] + '"';
                     }
                 }
