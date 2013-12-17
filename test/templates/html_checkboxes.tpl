@@ -10,6 +10,8 @@
 
 {html_checkboxes options=$options separator='-' labels=false}
 
+{html_checkboxes options=$options separator='-' label_ids=true}
+
 {html_checkboxes options=$options separator='|' assign='ckeckboxtags'}
 
 {foreach $ckeckboxtags as $tag}

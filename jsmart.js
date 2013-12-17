@@ -2425,40 +2425,44 @@
     jSmart.prototype.registerPlugin(
         'function',
         'html_checkboxes',
-        function(params, data)
-        {
-            var type = params.__get('type','checkbox');
-            var name = params.__get('name',type);
-            if (type == 'checkbox')
-            {
+        function (params, data) {
+            var type = params.__get('type','checkbox'),
+                name = params.__get('name',type),
+                realName = params.__get('name',type),
+                values = params.__get('values',params.options),
+                output = params.__get('options',[]),
+                useName = ('options' in params),
+                selected = params.__get('selected',false),
+                separator = params.__get('separator',''),
+                labels = Boolean(params.__get('labels',true)),
+                label_ids = Boolean(params.__get('label_ids',false)),
+                p,
+                res = [],
+                i = 0,
+                s = '',
+                value,
+                id;
+
+            if (type == 'checkbox') {
                 name += '[]';
             }
-            var values = params.__get('values',params.options);
-            var output = params.__get('options',[]);
-            var useName = ('options' in params);
-            var p;
-            if (!useName)
-            {
-                for (p in params.output)
-                {
+            if (!useName) {
+                for (p in params.output) {
                     output.push(params.output[p]);
                 }
             }
-            var selected = params.__get('selected',false);
-            var separator = params.__get('separator','');
-            var labels = Boolean(params.__get('labels',true));
 
-            var res = [];
-            var i = 0;
-            var s = '';
-            for (p in values)
-            {
-                if (values.hasOwnProperty(p))
-                {
-                    s = (labels ? '<label>' : '');
-                    s += '<input type="' + type + '" name="' + name + '" value="' + (useName ? p : values[p]) + '" ';
-                    if (selected == (useName ? p : values[p]))
-                    {
+            for (p in values) {
+                if (values.hasOwnProperty(p)) {
+                    value = (useName ? p : values[p]);
+                    id = realName + '_' + value;
+                    s = (labels ? ( label_ids ? '<label for="'+id+'">' : '<label>') : '');
+
+                    s += '<input type="' + type + '" name="' + name + '" value="' + value + '" ';
+                    if (label_ids) {
+                        s += 'id="'+id+'" ';
+                    }
+                    if (selected == (useName ? p : values[p])) {
                         s += 'checked="checked" ';
                     }
                     s += '/>' + output[useName?p:i++];
@@ -2467,8 +2471,7 @@
                     res.push(s);
                 }
             }
-            if ('assign' in params)
-            {
+            if ('assign' in params) {
                 assignVar(params.assign, res, data);
                 return '';
             }
