@@ -2910,30 +2910,24 @@
             var indentFirstStr = (new Array(indent_first+1)).join(indent_char);
 
             var style = params.__get('style','');
-            if (style == 'email')
-            {
+
+            if (style == 'email') {
                 wrap = 72;
             }
 
-            var paragraphs = content.split('\n');
-            for (var i=0; i<paragraphs.length; ++i)
-            {
+            var paragraphs = content.split(/[\r\n]{2}/);
+            for (var i=0; i<paragraphs.length; ++i) {
                 var p = paragraphs[i];
-                if (!p)
-                {
+                if (!p) {
                     continue;
                 }
                 p = p.replace(/^\s+|\s+$/,'').replace(/\s+/g,' ');
-                if (indent_first)
-                {
+                if (indent_first> 0 ) {
                     p = indentFirstStr + p;
                 }
-
                 p = modifiers.wordwrap(p, wrap-indent, wrap_char, wrap_cut);
-
-                if (indent)
-                {
-                    p = p.replace(/^/mg,indentStr);
+                if (indent > 0) {
+                    p = p.replace(/^/mg, indentStr);
                 }
                 paragraphs[i] = p;
             }

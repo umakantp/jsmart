@@ -48,6 +48,6 @@ process('modifiers');
 process('plugins');
 process('rldelim');
 process('setfilter');
-//process('textformat');
+process('textformat');
 process('var');
 
