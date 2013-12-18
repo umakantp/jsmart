@@ -39,7 +39,7 @@ process('parent');
 process('child1');
 process('function');
 process('include');
-//process('included');
+process('included');
 process('insert');
 //process('javascript');
 process('mailto');

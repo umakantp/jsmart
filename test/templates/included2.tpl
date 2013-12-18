@@ -1,3 +1,3 @@
-inluded2: [{$smarty.template}]
+inluded2:
 
 [{$varFromIncluded}]
