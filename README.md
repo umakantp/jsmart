@@ -127,7 +127,7 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 * Go to jSmart and run _make test_.
   e.g. Go to _/home/user/jsmart/jsmart_ and run _make test_.
 
-* You can modify _makefile_ and _test/js/test-common.js_ for changing path of node and php respectively as per your needs but please don't comment those changes in master repository.
+* You can modify _makefile_ and _test/js/test-common.js_ for changing path of node and php respectively as per your needs but please don't commit those changes in master repository.
 
 ### NOTICE
 
