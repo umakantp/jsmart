@@ -1,4 +1,3 @@
-{sayHello} -
 {sayHello to='Everybody'}-
 
 {replaceStr from=' ' to='_'}all whitespaces will be relaced{/replaceStr} -

@@ -87,6 +87,28 @@ function strayNoArgs()
 $smarty->registerPlugin('function', 'strayNoArgs', 'strayNoArgs');
 $smarty->registerPlugin('function', 'strayFunc', 'strayFunc');
 
+function testRepeat($params, $content, $template, &$repeat)
+{
+	if (!$content && array_key_exists('hide',$params) && $params['hide']==true) {
+		$repeat = false;
+		return '';
+	}
+	static $i = 0;
+	if ($content)
+	{
+		if (++$i<3)
+		{
+			$repeat = true;
+		}
+		else
+		{
+			$i = 0;
+		}
+		return '['.$content.']';
+	}
+}
+$smarty->registerPlugin('block', 'testRepeat', 'testRepeat');
+
 class TestClassObj
 {
 	public $prop = 'TestClassObj.prop';

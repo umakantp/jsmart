@@ -114,6 +114,41 @@ jSmart.prototype.registerPlugin(
     }
 );
 
+var i = 0;
+jSmart.prototype.registerPlugin(
+    'block',
+    'testRepeat',
+    function(params, content, data, repeat)
+    {
+        if (!content && 'hide' in params && params['hide'] == true)		//it's opening tag and if 'hide' than forbid further displaying
+        {
+            repeat.value = false;
+        }
+        if (content)		//closing tag
+        {
+            if (++i<3)
+            {
+                repeat.value = true;
+            }
+            else
+            {
+                i = 0;
+            }
+            return '[' + content + ']';
+        }
+    }
+);
+
+jSmart.prototype.registerPlugin(
+    'block',
+    'replaceStr',
+    function(params, content, data, repeat)
+    {
+        return content.replace(new RegExp(params['from'],'g'), params['to']);
+    }
+);
+
+
 jSmart.prototype.getJavascript = function(name) {
     if (name == '/test_insert.php')
     {
