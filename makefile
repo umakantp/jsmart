@@ -2,7 +2,7 @@ default:
 	@echo "A dream you dream alone is only a dream. A dream you dream together is reality."
 
 
-test: test-main test-defaultModifiers test-filtered test-escapeParsing
+test: test-main test-defaultModifiers test-filtered test-escapeParsing test-javascript
 
 
 test-main:
@@ -19,6 +19,9 @@ test-filtered:
 
 test-escapeParsing:
 	../node/bin/node test/js/test-escapeParsing.js
+
+test-javascript:
+	../node/bin/node test/js/test-javascript.js
 
 
 .PHONY: test
