@@ -1380,7 +1380,11 @@
                 re: /^[\d.]+/, //number
                 parse: function(e, s)
                 {
-                    e.token = parseInt(e.token, 10);
+                    if (e.token.indexOf('.') > -1) {
+                        e.token = parseFloat(e.token);
+                    } else {
+                        e.token = parseInt(e.token, 10);
+                    }
                     parseText(e.token, e.tree);
                     parseModifiers(s, e);
                 }
