@@ -70,9 +70,6 @@ function test(testFor, nodeOutput, phpFile) {
                 console.log('test '+testFor+':: okay');
             } else {
                 console.log('test '+testFor+':: FAILED');
-                console.log('------------');
-                console.log(phpOutput);
-                console.log(nodeOutput);
                 process.exit(1);
             }
         } else {
@@ -117,6 +114,16 @@ jSmart.prototype.registerPlugin(
     }
 );
 
+jSmart.prototype.getJavascript = function(name) {
+    if (name == '/test_insert.php')
+    {
+        return document.getElementById('test_insert').innerHTML;
+    }
+    //var code = "$this.$testVar = {'a':'abcd','b':'efgh'}; 'hello!'"; DOESN'T work in Smarty 3.1.2
+    var code = "'hello!'";
+    return code;
+}
+
 GLOBAL.strayFunc = function (v1, v2) {
     return v1+','+v2;
 };
@@ -135,6 +142,24 @@ GLOBAL.TestClassObj = function() {
 
 GLOBAL.TestClassObj.prototype.func = function() {
     return 'TestClassObj.func';
+}
+
+GLOBAL.insert_testInsert = function (params, data) {
+    var s = '';
+    for (nm in params) {
+        s += '[' + nm +': ' + params[nm] +'] ';
+    }
+    data['insertResult'] = s;
+    return s;
+}
+
+GLOBAL.smarty_insert_testInsertWithScript = function (params, data) {
+    var s = '';
+    for (nm in params) {
+        s += '[' + nm +': ' + params[nm] +'] ';
+    }
+    data['insertWithScriptResult'] = s;
+    return s;
 }
 
 module.exports = {

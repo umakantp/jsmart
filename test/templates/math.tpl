@@ -3,14 +3,14 @@
 
 {math equation="x + y" x=$height y=$width}
 
-{math 
+{math
    equation="height * width / division"
    height=10
    width=20
    division=10
    assign='mathRes'
    format='|%d|'}
-   
+
 [{$mathRes}]
 
 {$x = -1}

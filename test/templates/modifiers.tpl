@@ -104,7 +104,6 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {'&"\'<>'|escape}
 {'<b>"te&xt"</b>'|escape:html:''}
 {'<b>"double&encode"</b>'|escape:html:'':true}
-{"<b>'no double&encode'</b>"|escape:html:'':0}
 
 
 

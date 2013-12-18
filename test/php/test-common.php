@@ -100,4 +100,15 @@ class TestClassObj
 	}
 };
 
+function insert_testInsert($params, $smarty)
+{
+	$s = '';
+	foreach ($params as $nm => $v)
+	{
+		$s .= "[$nm: $v] ";
+	}
+	$smarty->assign('insertResult',$s);
+	return $s;
+}
+
 $smarty->assign('testClassObj', new TestClassObj);
