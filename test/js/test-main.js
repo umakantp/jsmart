@@ -41,7 +41,6 @@ process('function');
 process('include');
 process('included');
 process('insert');
-//process('javascript');
 process('mailto');
 process('math');
 process('modifiers');
