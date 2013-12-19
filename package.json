@@ -20,7 +20,7 @@
     "scripts": {
         "test": "make test",
         "doc": "https://github.com/umakantp/jsmart/wiki"
-    }
+    },
     "main" : "jsmart.js",
     "version" : "2.13",
     "license" : "GNU GPL",
