@@ -22,7 +22,7 @@
         "doc": "https://github.com/umakantp/jsmart/wiki"
     },
     "main" : "jsmart.js",
-    "version" : "2.13",
+    "version" : "2.13.0",
     "license" : "GNU GPL",
     "repository": {
         "type": "git",
