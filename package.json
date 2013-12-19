@@ -1,5 +1,5 @@
 {
-    "name" : "jSmart",
+    "name" : "jsmart",
     "description" : "jSmart is a port of the Smarty Template Engine to Javascript.",
     "url" : "https://github.com/umakantp/jsmart/",
     "keywords" : ["jsmart", "smarty", "template", "templates"],
