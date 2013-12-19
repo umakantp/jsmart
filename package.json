@@ -1,0 +1,31 @@
+{
+    "name" : "jSmart",
+    "description" : "jSmart is a port of the Smarty Template Engine to Javascript.",
+    "url" : "https://github.com/umakantp/jsmart/",
+    "keywords" : ["jsmart", "smarty", "template", "templates"],
+    "author" : "Max Miroshnikov <miroshnikov@gmail.com>",
+    "contributors" : [
+        {
+            "name": "Umakant Patil",
+            "email": "me@umakantpatil.com"
+        }
+    ],
+    "dependencies": [],
+    "devDependencies": {
+        "php": ">=5.5.3",
+        "node": ">=0.10.18",
+        "make": ">=3.81",
+        "smarty": ">=3.1.15"
+    },
+    "scripts": {
+        "test": "make test",
+        "doc": "https://github.com/umakantp/jsmart/wiki"
+    }
+    "main" : "jsmart.js",
+    "version" : "2.13",
+    "license" : "GNU GPL",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/umakantp/jsmart.git"
+    }
+}
