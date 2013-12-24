@@ -1,0 +1,11 @@
+{
+    "name" : "jsmart",
+    "version" : "2.13.1",
+    "description" : "jSmart is a port of the Smarty Template Engine to Javascript.",
+    "keywords" : ["jsmart", "smarty", "template", "templates"],
+    "repo": "umakantp/jsmart",
+    "dependencies": [],
+    "main" : "jsmart.js",
+    "scripts": ["jsmart.js"],
+    "license" : "LGPL-3.0"
+}
