@@ -1,7 +1,7 @@
 jSmart
 ======
 
-jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functions, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
+jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functioens, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
 
 jSmart is written entirely in JavaScript, does not have any DOM/DHTML/browser or third-party JavaScript library dependencies and can be run in a web browser as well as a standalone JavaScript interpreter or [CommonJS](http://www.commonjs.org/) environments like [node.js](http://nodejs.org/).
 
@@ -9,10 +9,46 @@ jSmart supports plugin architecture, you can [extend it with custom plugins](htt
 
 jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty-template-in-javascript), for both PHP and Javascript.
 
+### How to use jSmart in Node.js
 
-### A Quick Introduction
+1. Install jSmart from NPM Registry
 
-1. Include jSmart library Javascript file in your header (get the current release by cloning this repo)
+        $ npm install jsmart
+
+
+2. Create template, use [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax).  Say demo.tpl
+
+        Hello {$name}
+
+
+3. Now lets read the template and compile it. _jSmart_ object compiles the template.
+
+        var fs = require(fs);
+        require('jsmart');
+        var tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'});
+        var compiledTpl = jSmart(tpl);
+
+4. Assign data to the template passing Javascript object to the _fetch_ function. Variable _compiledTpl_ has the compiled template. You can call _fetch_ function as many times with different data. 
+
+        var fs = require(fs);
+        require('jsmart');
+        var tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'});
+        var compiledTpl = jSmart(tpl);
+        var output = compiledTpl.fetch({name: 'World'});
+        console.log(output);
+
+5. Execute the file.
+
+        $ node demo.js
+    
+6. Result would be.
+
+        Hello World
+
+    
+### How to use jSmart in browser
+
+1. Include jSmart library Javascript file in your header.
 
         <html>
             <head>
