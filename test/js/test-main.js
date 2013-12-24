@@ -50,4 +50,4 @@ process('rldelim');
 process('setfilter');
 process('textformat');
 process('var');
-
+process('noprint');

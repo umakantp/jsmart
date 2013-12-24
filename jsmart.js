@@ -1844,7 +1844,7 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.13'
+                version: '2.13.1'
             }
         };
         blocks = this.tree.blocks;
@@ -3083,6 +3083,29 @@
 
     jSmart.prototype.registerPlugin(
         'modifier',
+        'unescape',
+        function(s, esc_type, char_set)
+        {
+            s = new String(s);
+            esc_type = esc_type || 'html';
+            char_set = char_set || 'UTF-8';
+
+            switch (esc_type)
+            {
+            case 'html':
+                return s.replace(/&lt;/g, '<').replace(/&gt;/g,'>').replace(/&#039;/g,"'").replace(/&quot;/g,'"');
+            case 'entity':
+            case 'htmlall':
+                return jSmart.prototype.PHPJS('html_entity_decode','unescape').html_entity_decode(s, char_set);
+            case 'url':
+                return jSmart.prototype.PHPJS('rawurldecode','unescape').rawurldecode(s);
+            };
+            return s;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier',
         'escape',
         function(s, esc_type, char_set, double_encode)
         {
@@ -3232,6 +3255,15 @@
                 space = ' ';
             }
             return s.replace(/(\n|.)(?!$)/g,'$1'+space);
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier',
+        'noprint',
+        function(s)
+        {
+            return '';
         }
     );
 

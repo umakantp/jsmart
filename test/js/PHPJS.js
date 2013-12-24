@@ -499,6 +499,37 @@ function PHP_JS(fnm, modifier) {
                 // we could also throw an error as it is not a complete character, but someone may want to know
             }
             return code;
+        },
+        rawurldecode : function (str) {
+            return decodeURIComponent((str + '').replace(/%(?![\da-f]{2})/gi, function () {
+                // PHP tolerates poorly formed escape sequences
+                return '%25';
+            }));
+        },
+        html_entity_decode: function (string, quote_style) {
+            var hash_map = {},
+                symbol = '',
+                tmp_str = '',
+                entity = '';
+
+            tmp_str = string.toString();
+
+            if (false === (hash_map = this.get_html_translation_table('HTML_ENTITIES', quote_style))) {
+                return false;
+            }
+
+            // fix &amp; problem
+            // http://phpjs.org/functions/get_html_translation_table:416#comment_97660
+            delete(hash_map['&']);
+            hash_map['&'] = '&amp;';
+
+            for (symbol in hash_map) {
+                entity = hash_map[symbol];
+                tmp_str = tmp_str.split(entity).join(symbol);
+            }
+            tmp_str = tmp_str.split('&#039;').join("'");
+
+            return tmp_str;
         }
     }
 }
