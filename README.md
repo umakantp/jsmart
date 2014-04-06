@@ -26,14 +26,14 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
         var fs = require(fs);
         require('jsmart');
         var tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'});
-        var compiledTpl = jSmart(tpl);
+        var compiledTpl = new jSmart(tpl);
 
 4. Assign data to the template passing Javascript object to the _fetch_ function. Variable _compiledTpl_ has the compiled template. You can call _fetch_ function as many times with different data. 
 
         var fs = require(fs);
         require('jsmart');
         var tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'});
-        var compiledTpl = jSmart(tpl);
+        var compiledTpl = new jSmart(tpl);
         var output = compiledTpl.fetch({name: 'World'});
         console.log(output);
 
