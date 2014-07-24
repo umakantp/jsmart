@@ -3376,4 +3376,4 @@
         return tpl.fetch(data);
     };
 
-})()
+})();
