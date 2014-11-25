@@ -9,6 +9,12 @@ jSmart supports plugin architecture, you can [extend it with custom plugins](htt
 
 jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty-template-in-javascript), for both PHP and Javascript.
 
+### How to use jSmart with Grunt
+
+There is a small Grunt-Plugin which even supports Template Inheritance: 
+
+https://github.com/hereandnow/grunt-jsmart
+
 ### How to use jSmart in Node.js
 
 1. Install jSmart from NPM Registry
