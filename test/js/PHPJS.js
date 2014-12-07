@@ -250,7 +250,7 @@ function PHP_JS(fnm, modifier) {
                 entities['34'] = '&quot;';
             }
             if (useQuoteStyle === 'ENT_QUOTES') {
-                entities['39'] = '&#39;';
+                entities['39'] = '&#039;';
             }
             entities['60'] = '&lt;';
             entities['62'] = '&gt;';
