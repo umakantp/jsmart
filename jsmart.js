@@ -4,7 +4,7 @@
  *
  * Copyright 2011-2013, Max Miroshnikov <miroshnikov at gmail dot com>
  * jSmart is licensed under the GNU Lesser General Public License
- * http://www.gnu.org/licenses/lgpl.html
+ * http://opensource.org/licenses/LGPL-3.0
  */
 
 
