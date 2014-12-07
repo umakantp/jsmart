@@ -44,7 +44,7 @@ process('insert');
 process('mailto');
 process('math');
 process('modifiers');
-//process('phpjs');
+process('phpjs');
 process('plugins');
 process('rldelim');
 process('setfilter');

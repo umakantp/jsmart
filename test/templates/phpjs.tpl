@@ -8,7 +8,9 @@
 
 
 {'&\'<>'|escape:htmlall}
+
 {'<b>text_to_replace</b>'|replace:'text_to_replace':'replaced'|escape:htmlall}
+
 
 {'url&#$_ -+='|escape:url}
 
@@ -28,7 +30,7 @@
 {"<a\"b'c/>"|escape:javascript}
 
 {'billgates@microsoft.com, stevejobs@apple.com'|escape:mail}
-
+{*
 {$time = 1314697269}
 {$time|date_format}
 {$time|date_format:"%D"}
@@ -39,7 +41,7 @@
 {"6/3/1976"|date_format:'%A, %B %e, %Y'}
 {"6/3/1976 13:13:13"|date_format:'%H:%M %A, %B %e, %Y'}
 {"19760603131313"|date_format:'%H:%M %A, %B %e, %Y'}	//mysql timestamp format of YYYYMMDDHHMMSS
-
-
+*}
 ---------- escape HTML --------------------
 [{$escapeHtml}]
+

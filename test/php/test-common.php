@@ -27,6 +27,7 @@ $smarty->assign('nullVar',null);
 $smarty->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
 $smarty->assign('textWithHTMLEntities', 'Germans use &quot;mlauts&quot; and pay in &euro;uro');
 $smarty->assign('testPath', dirname(__DIR__).'/templates');
+$smarty->assign('escapeHtml', '<span style="color:red;"><i><b>foo</b></i></span>');
 
 $smarty->assign(
 	'books',

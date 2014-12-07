@@ -60,6 +60,7 @@ function getData(){
         'textWithHTMLEntities': 'Germans use &quot;mlauts&quot; and pay in &euro;uro',
         'testPath': path.normalize(__dirname + '/../templates'),
         'testClassObj': new TestClassObj,
+        'escapeHtml': '<span style="color:red;"><i><b>foo</b></i></span>',
     };
 }
 
