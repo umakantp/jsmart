@@ -3139,7 +3139,7 @@
             case 'hexentity':
                 var res = '';
                 for (var i=0; i<s.length; ++i) {
-                    res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)).toUpperCase() + ';';
+                    res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)).toLowerCase() + ';';
                 }
                 return res;
             case 'decentity':
