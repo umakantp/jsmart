@@ -1,7 +1,23 @@
 {
     "name" : "jsmart",
     "version" : "2.13.1",
-    "dependencies": [],
     "main" : "jsmart.js",
-    "ignore" : ["test", "examples", "makefile"]
+    "license": "LGPL-3.0",
+    "keywords": [
+        "jsmart",
+        "smarty",
+        "javascript",
+        "template",
+        "templates"
+    ],
+    "ignore" : [
+        "test",
+        "examples",
+        "makefile",
+        "README.md",
+        "Gruntfile.json",
+        "package.json"
+    ],
+    "devDependencies": [],
+    "dependencies": []
 }
