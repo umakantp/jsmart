@@ -57,7 +57,7 @@ function getData(){
         'sEmpty' : '',
         'nullVar': null,
         'textWithHTML': '<span style="color:red;"><i><b>foo</b></i></span>',
-        'textWithHTMLEntities': 'Germans use &quot;&Uuml;mlauts&quot; and pay in euro',
+        'textWithHTMLEntities': 'Germans use &quot;mlauts&quot; and pay in &euro;uro',
         'testPath': path.normalize(__dirname + '/../templates'),
         'testClassObj': new TestClassObj,
     };
