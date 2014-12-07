@@ -3096,7 +3096,7 @@
                 return s.replace(/&lt;/g, '<').replace(/&gt;/g,'>').replace(/&#039;/g,"'").replace(/&quot;/g,'"');
             case 'entity':
             case 'htmlall':
-                return jSmart.prototype.PHPJS('html_entity_decode','unescape').html_entity_decode(s, char_set);
+                return jSmart.prototype.PHPJS('html_entity_decode','unescape').html_entity_decode(s, 0);
             case 'url':
                 return jSmart.prototype.PHPJS('rawurldecode','unescape').rawurldecode(s);
             };
