@@ -632,14 +632,14 @@
                     }
                 },
 
-                process: function(node, data)
-                {
-                    if (getActualParamValues(node.params,data)[0])
-                    {
+                process: function(node, data) {
+                    var value = getActualParamValues(node.params,data)[0];
+                    // Zero length arrays or empty associative arrays are false in PHP.
+                    if (value && !((value instanceof Array && value.length == 0)
+                        || (typeof value == 'object' && isEmptyObject(value)))
+                    ) {
                         return process(node.subTreeIf, data);
-                    }
-                    else
-                    {
+                    } else {
                         return process(node.subTreeElse, data);
                     }
                 }
@@ -1676,6 +1676,22 @@
             return defVal;
         };
         return actualParams;
+    }
+
+    /**
+     * Returns boolean true if object is empty otherwise false.
+     *
+     * @param object hash Object you are testing against.
+     *
+     * @return boolean
+     */
+    function isEmptyObject(hash) {
+        for (var i in hash) {
+            if (hash.hasOwnProperty(i)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function getVarValue(node, data, val)

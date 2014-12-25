@@ -205,3 +205,11 @@ f:[{$a != 'aaa'}]		  		//empty string
 {else}
 	err
 {/if}
+
+{if $aEmpty}
+    It is empty array
+{/if}
+
+{if $sEmpty}
+    It is empty string
+{/if}
