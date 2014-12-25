@@ -32,6 +32,8 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 
 {"next x-men film, x3, delayed last7"|capitalize}
 {"next x-men film, x3, delayed last7"|capitalize:true}
+{"next x-MeN film, x3, delaYED last7"|capitalize:true:true}
+{"next x-MeN film, x3, delaYED last7"|capitalize:true}
 
 {"1st num8er 3x 3zz 3numbers1n1word"|capitalize:true}	{*"3numbers1n1word"|capitalize  - Smarty renders this capitalized, bug?*}
 

@@ -2988,11 +2988,13 @@
     jSmart.prototype.registerPlugin(
         'modifier',
         'capitalize',
-        function(s, withDigits)
-        {
-            var re = new RegExp(withDigits ? '[\\W\\d]+' : '\\W+');
+        function(s, upDigits, lcRest) {
+            var re = new RegExp(upDigits ? '[^a-zA-Z_\u00E0-\u00FC]+' : '[^a-zA-Z0-9_\u00E0-\u00FC]');
             var found = null;
             var res = '';
+            if (lcRest) {
+                s = s.toLowerCase();
+            }
             for (found=s.match(re); found; found=s.match(re))
             {
 	             var word = s.slice(0,found.index);
