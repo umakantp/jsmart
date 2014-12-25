@@ -215,6 +215,23 @@
         return code;
     }
 
+    /**
+     * Execute function when we have a object.
+     *
+     * @param object obj  Object of the function to be called.
+     * @param array  args Arguments to pass to a function.
+     *
+     * @return
+     * @throws Error If function obj does not exists.
+     */
+    function executeByFuncObject(obj, args) {
+        try {
+            return obj.apply(this, args);
+        } catch (e) {
+            throw new Error(e.message + ' in \n' + code);
+        }
+    }
+
     function assignVar(nm, val, data)
     {
         if (nm.match(/\[\]$/))  //ar[] =
@@ -2089,17 +2106,24 @@
     jSmart.prototype.registerPlugin(
         'function',
         '__func',
-        function(params, data)
-        {
-            var paramNames = [];
-            var paramValues = {};
-            for(var i=0; i<params.length; ++i)
-            {
+        function(params, data) {
+            var paramNames = [], paramValues = {}, paramData = [];
+            for (var i=0; i<params.length; ++i) {
                 paramNames.push(params.name+'__p'+i);
+                paramData.push(params[i]);
                 paramValues[params.name+'__p'+i] = params[i];
             }
-            var fname = ('__owner' in data && params.name in data.__owner) ? ('__owner.'+params.name) : params.name;
-            return execute(fname + '(' + paramNames.join(',') + ')', obMerge({},data,paramValues));
+            var fname, mergedParams = obMerge({}, data, paramValues);
+            if (('__owner' in data && params.name in data.__owner)) {
+                fname = '__owner.'+params.name;
+                return execute(fname + '(' + paramNames.join(',') + ')', mergedParams);
+            } else if (modifiers.hasOwnProperty(params.name)) {
+                fname = modifiers[params.name]
+                return executeByFuncObject(fname, paramData, mergedParams);
+            } else {
+                fname = params.name;
+                return execute(fname + '(' + paramNames.join(',') + ')', mergedParams);
+            }
         }
     );
 
