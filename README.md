@@ -154,19 +154,19 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 
 ### TESTS
 
-* Install [Node.js](http://nodejs.org/) and [PHP](http://www.php.net) in any given folder.
-  e.g. You installed it in directory _/home/user/jsmart/node_ and _/home/user/jsmart/php_ respectively.
+* Install [Node.js](http://nodejs.org/) and [PHP](http://www.php.net) in a folder.
+  e.g. Install them in directories _/home/user/jsmart/node_ and _/home/user/jsmart/php_ respectively.
 
 * Clone jSmart repo in the same folder.
-  e.g. Clone at  _/home/user/jsmart_. So your jsmart repo is in _/home/user/jsmart/jsmart_ folder.
+  e.g. Clone at  _/home/user/jsmart_. So jsmart repo is in _/home/user/jsmart/jsmart_ folder.
 
 * Go to jSmart and run _make test_.
   e.g. Go to _/home/user/jsmart/jsmart_ and run _make test_.
 
-* You can modify _makefile_ and _test/js/test-common.js_ for changing path of node and php respectively as per your needs but please don't commit those changes in master repository.
+* You can modify _makefile_ and _test/js/test-common.js_ for changing path of node and php respectively as per your needs but never commit those changes in master repository.
 
 ### NOTICE
 
-This project was originally hosted at [Google code](http://code.google.com/p/jsmart/) and was created by [miroshnikov](https://github.com/miroshnikov).
-Since author was not very active on project. I have forked and planned on pushing further improvements and features.
+This project was originally hosted at [Google code](http://code.google.com/p/jsmart/) and was started by [miroshnikov](https://github.com/miroshnikov).
+Since author was not active on project. I have forked and planned on pushing further improvements and features.
 
