@@ -2,7 +2,8 @@
  * jSmart Javascript template engine
  * https://github.com/umakantp/jsmart
  *
- * Copyright 2011-2013, Max Miroshnikov <miroshnikov at gmail dot com>
+ * Copyright 2011-2014, Max Miroshnikov <miroshnikov at gmail dot com>
+ *                      Umakant Patil <me at umakantpatil dot.com>
  * jSmart is licensed under the GNU Lesser General Public License
  * http://opensource.org/licenses/LGPL-3.0
  */

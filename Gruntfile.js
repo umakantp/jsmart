@@ -6,13 +6,14 @@ module.exports = function(grunt) {
                 options: {
                     preserveComments: false,
                     report: "min",
-                    banner: "/*!" +
-                        " * jSmart Javascript template engine (v<%= pkg.version %>)" +
-                        " *" +
-                        " * Copyright 2011-2013, Max Miroshnikov <miroshnikov at gmail dot com>" +
-                        " * https://github.com/umakantp/jsmart" +
-                        " * http://opensource.org/licenses/LGPL-3.0" +
-                        " */"
+                    banner: "/*!\n" +
+                        " * jSmart Javascript template engine (v<%= pkg.version %>)\n" +
+                        " * https://github.com/umakantp/jsmart\n" +
+                        " * http://opensource.org/licenses/LGPL-3.0\n" +
+                        " *\n" +
+                        " * Copyright 2011-2014, Max Miroshnikov <miroshnikov at gmail dot com>\n" +
+                        " *                      Umakant Patil <me @ umakantpatil dot com>\n" +
+                        " */\n"
                 },
                 files: {
                     '<%= pkg.name %>.min.js': ['<%= pkg.name %>.js']
