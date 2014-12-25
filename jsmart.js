@@ -228,7 +228,7 @@
         try {
             return obj.apply(this, args);
         } catch (e) {
-            throw new Error(e.message + ' in \n' + code);
+            throw new Error(e.message);
         }
     }
 
