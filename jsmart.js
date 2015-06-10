@@ -9,7 +9,7 @@
  */
 
 
-(function() {
+(function(global) {
 
     /**
        merges two or more objects into one
@@ -1854,7 +1854,7 @@
     }
 
 
-    jSmart = function(tpl)
+    var jSmart = function(tpl)
     {
         this.tree = [];
         this.tree.blocks = {};
@@ -3419,4 +3419,19 @@
         return tpl.fetch(data);
     };
 
-})();
+    // AMD
+    if ( typeof define === 'function' && define.amd ) {
+        define([], function () {
+            return jSmart;
+        });
+    }
+    // CommonJs
+    else if( typeof module !== 'undefined' && module.exports) {
+        module.exports = jSmart;
+    }
+    // Web / global var
+    else {
+        global.jSmart = jSmart;
+    }
+
+})(typeof global == 'undefined' ? this : global);
