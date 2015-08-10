@@ -3419,4 +3419,13 @@
         return tpl.fetch(data);
     };
 
+    if (typeof module === "object" && module && typeof module.exports === "object") {
+        module.exports = jSmart;
+    } else {
+        global.jSmart = jSmart;
+
+        if (typeof define === "function" && define.amd) {
+            define("jSmart", [], function () { return jSmart; });
+        }
+    }
 })();
