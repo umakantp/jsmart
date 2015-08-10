@@ -11,7 +11,7 @@ module.exports = function(grunt) {
                         " * https://github.com/umakantp/jsmart\n" +
                         " * http://opensource.org/licenses/LGPL-3.0\n" +
                         " *\n" +
-                        " * Copyright 2011-2014, Max Miroshnikov <miroshnikov at gmail dot com>\n" +
+                        " * Copyright 2011-2015, Max Miroshnikov <miroshnikov at gmail dot com>\n" +
                         " *                      Umakant Patil <me @ umakantpatil dot com>\n" +
                         " */\n"
                 },
