@@ -23,7 +23,7 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 
 3. Now lets read the template and compile it. _jSmart_ object compiles the template.
 
-        var fs = require(fs);
+        var fs = require('fs');
         require('jsmart');
         var tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'});
         var compiledTpl = new jSmart(tpl);
