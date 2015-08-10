@@ -336,11 +336,11 @@
                         {
                         case '==': return arg1==arg2;
                         case '!=': return arg1!=arg2;
-                        case '+':  return parseInt(arg1, 10)+parseInt(arg2, 10);
-                        case '-':  return parseInt(arg1, 10)-parseInt(arg2, 10);
-                        case '*':  return parseInt(arg1, 10)*parseInt(arg2, 10);
-                        case '/':  return parseInt(arg1, 10)/parseInt(arg2, 10);
-                        case '%':  return parseInt(arg1, 10)%parseInt(arg2, 10);
+                        case '+':  return Number(arg1)+Number(arg2);
+                        case '-':  return Number(arg1)-Number(arg2);
+                        case '*':  return Number(arg1)*Number(arg2);
+                        case '/':  return Number(arg1)/Number(arg2);
+                        case '%':  return Number(arg1)%Number(arg2);
                         case '&&': return arg1&&arg2;
                         case '||': return arg1||arg2;
                         case '<':  return arg1<arg2;

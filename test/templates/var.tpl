@@ -122,6 +122,7 @@ $ob['with | symbol:']
 
 
 {$y + "12"|replace:2:5}
+{$z + "12.52"}
 
 {strayFunc('a','b')|upper}
 
