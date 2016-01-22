@@ -2888,11 +2888,13 @@
                         aEncoded += address.substr(i,1);
                     }
                 }
+                aEncoded = aEncoded.toLowerCase();
                 var tEncoded = '';
                 for (var i=0; i<text.length; ++i)
                 {
                     tEncoded += '&#x' + jSmart.prototype.PHPJS('bin2hex','mailto').bin2hex(text.substr(i,1)) + ';';
                 }
+                tEncoded = tEncoded.toLowerCase();
                 return '<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;' + aEncoded + '" ' + extra + '>' + tEncoded + '</a>';
             }
             return s;
