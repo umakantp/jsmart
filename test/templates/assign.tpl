@@ -80,7 +80,10 @@ assign var='num'  value=999
 {assign var="testOb" value=$ob}
 [{$testOb.prop1}]
 
-{assign var="testOb" value="$ob"}
+{* below line gives error
+Notice: Array to string conversion in /home/prod/my/smarty/libs/sysplugins/smarty_internal_templatebase.php(171) : eval()'d code on line 168
+*}
+{*{assign var="testOb" value="$ob"}*}
 {*[{$testOb.prop1}]*}    {* TODO *}
 
 {assign var="testOb" value='$ob'}
