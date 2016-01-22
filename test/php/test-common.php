@@ -7,7 +7,10 @@ date_default_timezone_set('Asia/Calcutta');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/smarty/libs/Smarty.class.php';
 
-$fileName = $argv[1];
+$fileName = '';
+if (isset($argv[1])) {
+    $fileName = $argv[1];
+}
 
 $smarty = new Smarty();
 $smarty->setTemplateDir(__DIR__.'/../templates')->setCompileDir(__DIR__.'/../templates_c');
@@ -28,6 +31,7 @@ $smarty->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span
 $smarty->assign('textWithHTMLEntities', 'Germans use &quot;mlauts&quot; and pay in &euro;uro');
 $smarty->assign('testPath', dirname(__DIR__).'/templates');
 $smarty->assign('escapeHtml', '<span style="color:red;"><i><b>foo</b></i></span>');
+$smarty->assign('setNull', null);
 
 $smarty->assign(
 	'books',

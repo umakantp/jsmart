@@ -3179,13 +3179,13 @@
                 var res = '';
                 for (var i=0; i<s.length; ++i)
                 {
-                    res += '%' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1));
+                    res += '%' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)).toLowerCase();
                 }
                 return res;
             case 'hexentity':
                 var res = '';
                 for (var i=0; i<s.length; ++i) {
-                    res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)).toLowerCase() + ';';
+                    res += '&#x' + jSmart.prototype.PHPJS('bin2hex','escape').bin2hex(s.substr(i,1)) + ';';
                 }
                 return res;
             case 'decentity':

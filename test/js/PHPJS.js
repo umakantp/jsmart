@@ -312,7 +312,7 @@ function PHP_JS(fnm, modifier) {
                 o += n.length < 2 ? "0" + n : n;
               }
 
-              return o;
+              return o.toUpperCase();
 
         },
         sprintf: function () {
