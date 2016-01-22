@@ -1,3 +1,4 @@
 test/smarty
 test/templates_c/*
 node_modules
+cache
