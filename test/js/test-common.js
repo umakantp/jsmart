@@ -61,6 +61,7 @@ function getData(){
         'testPath': path.normalize(__dirname + '/../templates'),
         'testClassObj': new TestClassObj,
         'escapeHtml': '<span style="color:red;"><i><b>foo</b></i></span>',
+        'setNull': null
     };
 }
 
