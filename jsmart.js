@@ -1794,6 +1794,9 @@
             {
                 s = s ? '1' : '';
             }
+            if (s == null) {
+                s = '';
+            }
             if (tree.length == 1)
             {
                 return s;
