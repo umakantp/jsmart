@@ -10,21 +10,32 @@
 
 {strayFunc("this should be in \"upper\" case"|upper,$foo|lower)} -
 
+{$onlyNumbers=123456789}
+{$onlyNumbers|upper}
+
 Long text contains [{$long_text|count_paragraphs}] paragraphs
+{$onlyNumbers} has {$onlyNumbers|count_paragraphs} paragraphs
 
 Long text contains [{$long_text|count_sentences}] sentences
+{$onlyNumbers} has {$onlyNumbers|count_sentences} sentences
 
+single word has {'one'|count_words} words
 Long text words [{$long_text|count_words}] words
+{$onlyNumbers} has [{$onlyNumbers|count_words}] words
 
 Long text words [{$long_text|count_characters}] characters
+{$onlyNumbers} has [{$onlyNumbers|count_characters}] characters
 
 Long text words [{$long_text|count_characters:true}] characters with whitespaces
 
 Long text with line breaks converted to BRs [{$long_text|nl2br}]
 
+{$onlyNumbers|nl2br} {'123456789'|nl2br}
+
 {"should remain lower"|upper|lower}
 
 {"MUST REMAIN UPPER"|upper|lower|upper|lower|upper}
+{$onlyNumbers|lower}
 
 [{'spacifyme'|spacify}]
 [{'spacifyme'|spacify:"^^"}]
@@ -40,7 +51,13 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {strayFunc($long_text|capitalize:false|spacify:"_",'word with num8ers so! try@ ot#er s%mbols aa^bb cc&dd eee*f (parentheses)'|capitalize:false)} -
 {strayFunc($long_text|capitalize:false|spacify:"_",'word with num8ers so! try@ ot#er s%mbols aa^bb cc&dd eee*f (parentheses)'|capitalize:true)} -
 
+{$onlyNumbers|spacify:'|'}
+
+{$onlyNumbers|capitalize}
+
 {$foo|cat:' yesterday.'|cat:"add another"|cat}
+{$onlyNumbers|cat:'-digits'|cat:'777'} {7|cat:'- is a lucky number'}
+{'123'|cat:456}
 
 {$foo|default:'no value'}
 {$nullVar|default:'this variable is null'}
@@ -49,10 +66,11 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {"abc"|default:"def"}
 {$noSuchVal|default:'no such value'}
 {$ob.prop7|default:'no such property'}
-
+{$onlyNumbers|default:'no'}
 
 {$long_text|indent:4:'-'}
 {$foo|indent:2:'-'}
+{$onlyNumbers|indent:2:'-'}
 
 {$foo|regex_replace:'/b/':'z'}
 {'Abcdef abcdefabcAbc'|regex_replace:'/abc/i':'ZZZ'}
@@ -83,6 +101,7 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {$long_text|truncate:14:"...":true:true}
 {'aaaa'|truncate:3:".....":true}
 {$long_text|truncate:10}
+{$onlyNumbers|truncate:3}
 
 {'Two Sisters Reunite after Eighteen Years at Checkout Counter.'|wordwrap:10:"|\n"}
 {$long_text|wordwrap:20}
@@ -97,6 +116,7 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {$vlword = 'A very long woooooooooooord.'}
 [{$vlword|wordwrap:8:"\n":false}]
 [{$vlword|wordwrap:8:"\n":true}]
+{$onlyNumbers|wordwrap}
 
 {strayFunc('b','ar')|replace:'b,ar':'bar'|replace:'bar':'zar'}
 {strayNoArgs()|replace:'bar':'zar'}
