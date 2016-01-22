@@ -32,6 +32,8 @@ function getData(){
             'prop1': 'prop1',
             'prop2': { 'txt':'txt', 'num':777, 'bool_true': 1 }
         },
+        'round': 2,
+        'rounda': 2.1324,
         'code' : '[{$ob.prop2.txt}]',
         'num': 7,
 
@@ -161,6 +163,16 @@ jSmart.prototype.getJavascript = function(name) {
     var code = "'hello!'";
     return code;
 }
+
+jSmart.prototype.registerPlugin(
+    'modifier', 
+    'round', 
+    function(num, digits)
+    {
+        var multiplier = Math.pow(10, digits);
+        return Math.round(num * multiplier) / multiplier;
+    }
+);
 
 GLOBAL.strayFunc = function (v1, v2) {
     return v1+','+v2;

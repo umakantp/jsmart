@@ -115,3 +115,4 @@ Long text with line breaks converted to BRs [{$long_text|nl2br}]
 {$pers = ['name'=>['first'=>'John','last'=>'Doe'],'age'=>36]}
 {$pers|count}
 {$pers|count:1}
+{$round} {$num|round:2}

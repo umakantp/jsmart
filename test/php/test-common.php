@@ -21,6 +21,8 @@ $smarty->assign('a', array('0','1','2','3','4','5','6','7','8','9'));
 $smarty->assign('a2',array('0',array('baz'=>'baz')));
 $smarty->assign('o',array('0'=>'0','1'=>'1','2'=>'2','3'=>'3','4'=>'4','5'=>'5','6'=>'6','7'=>'7','8'=>'8','9'=>'9'));
 $smarty->assign('ob', array('prop1'=>'prop1', 'prop2'=> array('txt'=>'txt', 'num'=>777, 'bool_true'=>true)));
+$smarty->assign('round', 2);
+$smarty->assign('rounda', 2.1324);
 $smarty->assign('code','[{$ob.prop2.txt}]');
 $smarty->assign('num',7);
 $smarty->assign('long_text', "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n");
@@ -90,8 +92,15 @@ function strayNoArgs()
 	return 'bar';
 }
 
+function round2($num, $digits) {
+    $m = pow(10, $digits);
+    return (round($num * $m)/$m);
+}
+
 $smarty->registerPlugin('function', 'strayNoArgs', 'strayNoArgs');
 $smarty->registerPlugin('function', 'strayFunc', 'strayFunc');
+$smarty->registerPlugin('modifier', 'round', 'round2');
+
 
 function testRepeat($params, $content, $template, &$repeat)
 {
