@@ -56,6 +56,7 @@ function getData(){
         ],
         'long_text': "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n",
         'aEmpty' : [],
+        'oEmpty': {},
         'sEmpty' : '',
         'nullVar': null,
         'textWithHTML': '<span style="color:red;"><i><b>foo</b></i></span>',

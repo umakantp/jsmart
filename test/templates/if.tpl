@@ -210,6 +210,10 @@ f:[{$a != 'aaa'}]		  		//empty string
     It is empty array
 {/if}
 
+{if $oEmpty}
+    It is empty array
+{/if}
+
 {if $sEmpty}
     It is empty string
 {/if}

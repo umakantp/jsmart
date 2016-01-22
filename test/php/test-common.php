@@ -27,6 +27,7 @@ $smarty->assign('code','[{$ob.prop2.txt}]');
 $smarty->assign('num',7);
 $smarty->assign('long_text', "\nfirst paragraph. Second sentence. \nNext paragraph. AAAAA.    Third sentence \n\n\n Third paragraph\n");
 $smarty->assign('aEmpty',array());
+$smarty->assign('oEmpty',array());
 $smarty->assign('sEmpty','');
 $smarty->assign('nullVar',null);
 $smarty->assign('textWithHTML','<span style="color:red;"><i><b>foo</b></i></span>');
