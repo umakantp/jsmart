@@ -692,7 +692,11 @@
                 {
                     var params = getActualParamValues(node.params, data);
                     var a = params.from;
-                    if (!(a instanceof Object))
+                    if (typeof a == 'undefined')
+                    {
+                        a = [];
+                    }
+                    if (typeof a != 'object')
                     {
                         a = [a];
                     }
@@ -1801,7 +1805,7 @@
             {
                 return s;
             }
-            res += s;
+            res += s!==null ? s : '';
 
             if (data.smarty['continue'] || data.smarty['break'])
             {
