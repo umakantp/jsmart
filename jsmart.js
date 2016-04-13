@@ -797,7 +797,7 @@
                 parse: function(params, tree)
                 {
                     tree.splice(0,tree.length);
-                    getTemplate(trimQuotes(params.file?params.file:params[0]),tree);
+                    getTemplate(trimQuotes(params.file?params.file:params[0]),tree,true);
                 }
             },
 
