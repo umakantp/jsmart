@@ -9,7 +9,7 @@
  */
 
 
-(function() {
+(function(global) {
 
     /**
        merges two or more objects into one
@@ -1861,7 +1861,7 @@
     }
 
 
-    jSmart = function(tpl)
+    var jSmart = function(tpl)
     {
         this.tree = [];
         this.tree.blocks = {};
@@ -1948,36 +1948,36 @@
         var currSect = '';
         for (var f=s.match(re); f; f=s.match(re))
         {
-	         s = s.slice(f.index+f[0].length);
-	         if (f[1])
-	         {
-		          currSect = f[1];
-	         }
-	         else if ((!currSect || currSect == section) && currSect.substr(0,1) != '.')
-	         {
-		          if (f[3] == '"""')
-		          {
-			           var triple = s.match(/"""/);
-			           if (triple)
-			           {
-				            data.smarty.config[f[2]] = s.slice(0,triple.index);
-				            s = s.slice(triple.index + triple[0].length);
-			           }
-		          }
-		          else
-		          {
-			           data.smarty.config[f[2]] = trimQuotes(f[3]);
-		          }
-	         }
-	         var newln = s.match(/\n+/);
-	         if (newln)
-	         {
-		          s = s.slice(newln.index + newln[0].length);
-	         }
-	         else
-	         {
-		          break;
-	         }
+             s = s.slice(f.index+f[0].length);
+             if (f[1])
+             {
+                  currSect = f[1];
+             }
+             else if ((!currSect || currSect == section) && currSect.substr(0,1) != '.')
+             {
+                  if (f[3] == '"""')
+                  {
+                       var triple = s.match(/"""/);
+                       if (triple)
+                       {
+                            data.smarty.config[f[2]] = s.slice(0,triple.index);
+                            s = s.slice(triple.index + triple[0].length);
+                       }
+                  }
+                  else
+                  {
+                       data.smarty.config[f[2]] = trimQuotes(f[3]);
+                  }
+             }
+             var newln = s.match(/\n+/);
+             if (newln)
+             {
+                  s = s.slice(newln.index + newln[0].length);
+             }
+             else
+             {
+                  break;
+             }
         }
     }
 
@@ -2248,10 +2248,10 @@
                             data[append].push(content);
                         }
                     }
-				        else
-				        {
-					         data[append] = [content];
-				        }
+                        else
+                        {
+                             data[append] = [content];
+                        }
                 }
             }
             return '';
@@ -2424,7 +2424,7 @@
             dbgWnd.document.write(" \
                <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en'> \
                <head> \
-		            <title>jSmart Debug Console</title> \
+                    <title>jSmart Debug Console</title> \
                   <style type='text/css'> \
                      table {width: 100%;} \
                      td {vertical-align:top;width: 50%;} \
@@ -3012,17 +3012,17 @@
             }
             for (found=s.match(re); found; found=s.match(re))
             {
-	             var word = s.slice(0,found.index);
+                 var word = s.slice(0,found.index);
                 if (word.match(/\d/))
                 {
                     res += word;
                 }
                 else
                 {
-	                 res += word.charAt(0).toUpperCase() + word.slice(1);
+                     res += word.charAt(0).toUpperCase() + word.slice(1);
                 }
                 res += s.slice(found.index, found.index+found[0].length);
-	             s = s.slice(found.index+found[0].length);
+                 s = s.slice(found.index+found[0].length);
             }
             if (s.match(/\d/))
             {
@@ -3087,7 +3087,7 @@
             var found = (new String(s)).match(/\n+/g);
             if (found)
             {
-	             return found.length+1;
+                 return found.length+1;
             }
             return 1;
         }
@@ -3103,7 +3103,7 @@
                 var found = s.match(/[^\s]\.(?!\w)/g);
                 if (found)
                 {
-	                 return found.length;
+                     return found.length;
                 }
             }
             return 0;
@@ -3120,7 +3120,7 @@
                 var found = s.match(/\w+/g);
                 if (found)
                 {
-	                 return found.length;
+                     return found.length;
                 }
             }
             return 0;
@@ -3182,8 +3182,8 @@
             {
             case 'html':
                 if (double_encode) {
-			           s = s.replace(/&/g, '&amp;');
-		          }
+                       s = s.replace(/&/g, '&amp;');
+                  }
                 return s.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#039;').replace(/"/g,'&quot;');
             case 'htmlall':
                 return jSmart.prototype.PHPJS('htmlentities','escape').htmlentities(s, 3, char_set);
@@ -3405,16 +3405,16 @@
         'wordwrap',
         function(s, width, wrapWith, breakWords)
         {
-	        width = width || 80;
-	        wrapWith = wrapWith || '\n';
+            width = width || 80;
+            wrapWith = wrapWith || '\n';
 
-	        var lines = (new String(s)).split('\n');
-	        for (var i=0; i<lines.length; ++i)
-	        {
-		        var line = lines[i];
+            var lines = (new String(s)).split('\n');
+            for (var i=0; i<lines.length; ++i)
+            {
+                var line = lines[i];
                 var parts = ''
-		        while (line.length > width)
-		        {
+                while (line.length > width)
+                {
                     var pos = 0;
                     var found = line.slice(pos).match(/\s+/);
                     for (;found && (pos+found.index)<=width; found=line.slice(pos).match(/\s+/))
@@ -3429,28 +3429,32 @@
                     }
                     line = line.slice(pos);
                 }
-		        lines[i] = parts + line;
-	        }
-	        return lines.join('\n');
+                lines[i] = parts + line;
+            }
+            return lines.join('\n');
         }
     );
 
 
-    String.prototype.fetch = function(data)
+    function fetch(data)
     {
         var tpl = new jSmart(this);
         return tpl.fetch(data);
     };
 
-    if (typeof module === "object" && module && typeof module.exports === "object") {
-        module.exports = jSmart;
-    } else {
-        if (typeof global !== "undefined") {
-            global.jSmart = jSmart;
-        }
-
-        if (typeof define === "function" && define.amd) {
-            define("jSmart", [], function () { return jSmart; });
-        }
+    // AMD
+    if ( typeof define === 'function' && define.amd ) {
+        define([], function () {
+            return { jSmart: jSmart, fetch: fetch };
+        });
     }
-})();
+    // CommonJs
+    else if( typeof module !== 'undefined' && module.exports) {
+        module.exports = { jSmart: jSmart, fetch: fetch };
+    }
+    // Web / global var
+    else {
+        global.jSmart = { jSmart: jSmart, fetch: fetch };
+    }
+
+})(typeof global == 'undefined' ? this : global);
