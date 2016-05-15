@@ -3439,7 +3439,7 @@
     function fetch(data)
     {
         var tpl = new jSmart(this);
-        return tpl.fetch(data);
+        return tpl.fetch(Object.create(data));
     };
 
     // AMD
