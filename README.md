@@ -2,7 +2,7 @@
 
 ## Notice
 
-This is a fork from [umakantp/jsmart](https://github.com/umakantp/jsmart), which is also a port from [miroshnikov/jsmart](https://github.com/miroshnikov/jsmart).
+This is a fork from [umakantp/jsmart](https://github.com/umakantp/jsmart), which is also a fork from [miroshnikov/jsmart](https://github.com/miroshnikov/jsmart).
 
 I originally forked from [umakantp/jsmart](https://github.com/umakantp/jsmart) and added the following modifications:
 
