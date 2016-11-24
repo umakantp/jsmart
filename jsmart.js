@@ -3434,6 +3434,14 @@
 	        return lines.join('\n');
         }
     );
+    
+    jSmart.prototype.registerPlugin(
+        'modifier',
+	'trim',
+	function(s) {
+	    return s.trim();
+	}
+    );
 
 
     String.prototype.fetch = function(data)
