@@ -3402,6 +3402,15 @@
 
     jSmart.prototype.registerPlugin(
         'modifier',
+        'in_array',
+        function()
+        {
+            return arguments[1].indexOf(arguments[0]) !== -1;
+        }
+    );
+
+    jSmart.prototype.registerPlugin(
+        'modifier',
         'wordwrap',
         function(s, width, wrapWith, breakWords)
         {
