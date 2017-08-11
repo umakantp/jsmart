@@ -6,22 +6,22 @@ test: test-main test-defaultModifiers test-filtered test-escapeParsing test-java
 
 
 test-main:
-	../node/bin/node test/js/test-main.js
+	node test/js/test-main.js
 
 
 test-defaultModifiers:
-	../node/bin/node test/js/test-defaultModifiers.js
+	node test/js/test-defaultModifiers.js
 
 
 test-filtered:
-	../node/bin/node test/js/test-filtered.js
+	node test/js/test-filtered.js
 
 
 test-escapeParsing:
-	../node/bin/node test/js/test-escapeParsing.js
+	node test/js/test-escapeParsing.js
 
 test-javascript:
-	../node/bin/node test/js/test-javascript.js
+	node test/js/test-javascript.js
 
 
 .PHONY: test

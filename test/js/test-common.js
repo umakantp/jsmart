@@ -70,7 +70,7 @@ function getData(){
 
 function test(testFor, nodeOutput, phpFile) {
     var exec = require('child_process').exec;
-    exec(path.normalize(__dirname+'/../../../php/bin/php')+' '+phpFile, function(error, phpOutput, stderr) {
+    exec('php '+phpFile, function(error, phpOutput, stderr) {
         if (error == null) {
             if (phpOutput == nodeOutput) {
                 console.log('test '+testFor+':: okay');
@@ -166,8 +166,8 @@ jSmart.prototype.getJavascript = function(name) {
 }
 
 jSmart.prototype.registerPlugin(
-    'modifier', 
-    'round', 
+    'modifier',
+    'round',
     function(num, digits)
     {
         var multiplier = Math.pow(10, digits);
