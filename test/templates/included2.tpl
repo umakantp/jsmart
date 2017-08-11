@@ -1,3 +1,0 @@
-inluded2:
-
-[{$varFromIncluded}]
