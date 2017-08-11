@@ -1,7 +1,7 @@
 jSmart
 ======
 
-jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functioens, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
+jSmart is a fork of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functioens, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
 
 jSmart is written entirely in JavaScript, does not have any DOM/DHTML/browser or third-party JavaScript library dependencies and can be run in a web browser as well as a standalone JavaScript interpreter or [CommonJS](http://www.commonjs.org/) environments like [node.js](http://nodejs.org/).
 
