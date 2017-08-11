@@ -1814,24 +1814,6 @@
         }
         return res;
     }
-	
-	function MergeRecursive(obj1, obj2) {
-        for (var p in obj2) {
-            try {
-                // Property in destination object set; update its value.
-                if ( obj2[p].constructor==Object ) {
-                    obj1[p] = MergeRecursive(obj1[p], obj2[p]);
-
-                } else {
-                    obj1[p] = obj2[p];
-                }
-            } catch(e) {
-                // Property in destination object not set; create it and set its value.
-                obj1[p] = obj2[p];
-            }
-        }
-        return obj1;
-	}
 
     function getTemplate(name, tree, nocache)
     {
@@ -1847,7 +1829,7 @@
         }
         else
         {
-            MergeRecursive(tree, files[name]);
+            obMerge(tree, files[name]);
             //tree = files[name];
         }
         return tree;
@@ -1855,12 +1837,14 @@
 
     function stripComments(s)
     {
-        var sRes = '';
-        for (var openTag=s.match(/{\*/); openTag; openTag=s.match(/{\*/))
+        var sRes = '',
+            lDelim = new RegExp(jSmart.prototype.left_delimiter+'\\*'),
+            rDelim = new RegExp('\\*'+jSmart.prototype.right_delimiter);
+        for (var openTag=s.match(lDelim); openTag; openTag=s.match(lDelim))
         {
             sRes += s.slice(0,openTag.index);
             s = s.slice(openTag.index+openTag[0].length);
-            var closeTag = s.match(/\*}/);
+            var closeTag = s.match(rDelim);
             if (!closeTag)
             {
                 throw new Error('Unclosed {*');
