@@ -1,12 +1,12 @@
 sudo: required
 
-language: node_js
+language: php
 
 node_js:
-  - "7.0"
+  - "5.4"
 
 before_install:
-  - php install "5.4"
+  -nvm install 7.0
 
 script:
   - make test
