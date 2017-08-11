@@ -3357,10 +3357,33 @@
     jSmart.prototype.registerPlugin(
         'modifier',
         'strip_tags',
-        function(s, addSpace)
+        function(s, addSpaceOrTagsToExclude, tagsToExclude)
         {
-            addSpace = (addSpace==null) ? true : addSpace;
-            return (new String(s)).replace(/<[^>]*?>/g, addSpace ? ' ' : '');
+            if (addSpaceOrTagsToExclude == null) {
+                addSpaceOrTagsToExclude = true;
+            }
+            if (!tagsToExclude) {
+                if (addSpaceOrTagsToExclude != 1 && addSpaceOrTagsToExclude != 0 && ((addSpaceOrTagsToExclude+'').length > 0)) {
+                    tagsToExclude = addSpaceOrTagsToExclude;
+                    addSpaceOrTagsToExclude = true;
+                }
+            }
+            if (tagsToExclude) {
+                var filters = tagsToExclude.split('>');
+                filters.splice(-1,1);
+                s = (new String(s)).replace(/<[^>]*?>/g, function(match, offset, contents) {
+                    var tagName = match.match(/\w+/);
+                    for (var i=0;i<filters.length;i++) {
+                        var tagName2 = (filters[i]+'>').match(/\w+/);
+                        if (tagName[0] == tagName2[0]) {
+                            return match;
+                        }
+                    }
+                    return addSpaceOrTagsToExclude ? ' ' : '';
+                });
+                return s;
+            }
+            return (new String(s)).replace(/<[^>]*?>/g, addSpaceOrTagsToExclude ? ' ' : '');
         }
     );
 
