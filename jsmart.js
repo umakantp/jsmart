@@ -1904,7 +1904,7 @@
                 template: '',
                 ldelim: jSmart.prototype.left_delimiter,
                 rdelim: jSmart.prototype.right_delimiter,
-                version: '2.15.0'
+                version: '2.15.1'
             }
         };
         blocks = this.tree.blocks;
