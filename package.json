@@ -27,18 +27,19 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-contrib-uglify": "^0.5.1",
-    "make": ">=3.81",
-    "node": ">=0.10.18",
-    "php": ">=5.5.3",
-    "smarty": ">=3.1.15"
+    "grunt": "^1.0.1",
+    "grunt-contrib-uglify": "^3.0.1",
+    "grunt-karma": "^2.0.0",
+    "jasmine-core": "^2.7.0",
+    "karma": "^0.13.13",
+    "karma-jasmine": "^1.1.0",
+    "karma-phantomjs-launcher": "^1.0.4"
   },
   "bugs": {
     "url": "https://github.com/umakantp/jsmart/issues"
   },
   "scripts": {
-    "test": "make test",
+    "test": "grunt karma",
     "doc": "https://github.com/umakantp/jsmart/wiki"
   },
   "repository": {

@@ -1,6 +1,11 @@
 module.exports = function(grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
+        karma: {
+            unit: {
+                configFile: 'karma.conf.js'
+            }
+        },
         uglify: {
             all : {
                 options: {
@@ -22,7 +27,8 @@ module.exports = function(grunt) {
         },
     });
 
+    grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-contrib-uglify');
 
-    grunt.registerTask('default', ['uglify']);
+    grunt.registerTask('default', ['karma', 'uglify']);
 };
