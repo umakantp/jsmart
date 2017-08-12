@@ -1,4 +1,4 @@
-jSmart
+jSmart [![Build Status](https://travis-ci.org/umakantp/jsmart.png?branch=master)](https://travis-ci.org/umakantp/jsmart)
 ======
 
 jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functioens, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
