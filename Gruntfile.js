@@ -25,10 +25,29 @@ module.exports = function(grunt) {
                 }
             }
         },
+        copy: {
+          main: {
+			files: [
+				{
+					src: 'dist/<%= pkg.name %>.min.js',
+					dest: 'examples/simple/<%= pkg.name %>.min.js'
+				},
+				{
+					src: 'dist/<%= pkg.name %>.min.js',
+					dest: 'examples/requirejs/js/<%= pkg.name %>.min.js'
+				},
+				{
+					src: 'dist/<%= pkg.name %>.min.js',
+					dest: 'examples/node/<%= pkg.name %>.min.js'
+				},
+			],
+            
+          }
+        }
     });
 
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-contrib-uglify');
-
-    grunt.registerTask('default', ['karma', 'uglify']);
+    grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.registerTask('default', ['karma', 'uglify', 'copy']);
 };

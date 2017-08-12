@@ -19,15 +19,11 @@
       "email": "me@umakantpatil.com"
     }
   ],
-  "licenses": [
-    {
-      "type": "LGPL-3.0",
-      "url": "http://opensource.org/licenses/LGPL-3.0"
-    }
-  ],
+  "license": "LGPL-3.0",
   "dependencies": {},
   "devDependencies": {
     "grunt": "^1.0.1",
+    "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^3.0.1",
     "grunt-karma": "^2.0.0",
     "jasmine-core": "^2.7.0",
