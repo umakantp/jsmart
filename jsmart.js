@@ -1316,7 +1316,7 @@
                 re: /^\s+(lt|lte|le|gt|gte|ge)\s+/i,
                 parse: function(e, s)
                 {
-                    var op = RegExp.$1.replace(/lt/,'<').replace(/l(t)?e/,'<=').replace(/gt/,'>').replace(/g(t)?e/,'>=');
+                    var op = RegExp.$1.replace(/l(t)?e/,'<').replace(/lt/,'<=').replace(/g(t)?e/,'>').replace(/gt/,'>=');
                     parseOperator(op, 'binary', 5, e.tree);
                 }
             },
