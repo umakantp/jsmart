@@ -1,6 +1,6 @@
 describe("Test Objects and Arrays", function() {
 
-  it("test create array", function() {
+  it("test array", function() {
     var tpl = "{$person = [name=>[first=>'Pallavi'],age=>36]}";
     tpl += "{$person.name.last = 'Patil'}";
     tpl += "{$person['favorite gadget'] = 'iPad'}";
@@ -16,4 +16,21 @@ describe("Test Objects and Arrays", function() {
     expect(t.fetch()).toBe(output);
   });
 
+  it("test object", function() {
+    var Person = function() {
+        this.name = {
+            first: 'Umakant',
+            last: 'Patil'
+        };
+        this.age = 31;
+    };
+
+    Person.prototype.getName = function(nameType) {
+      return nameType=='last' ? this.name.last : this.name.first;
+    }
+
+    expect((new jSmart("{$human->getName('first')} {$human->getName('last')} of age {$human->age}")).fetch({
+        human: new Person()
+    })).toBe('Umakant Patil of age 31');
+  });
 });
