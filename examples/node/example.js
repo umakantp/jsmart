@@ -5,7 +5,7 @@
 var fs = require('fs'),
     path = require('path');
 
-require(path.normalize(__dirname+'/../../jsmart.js'));
+require(path.normalize(__dirname+'/../../jsmart.min.js'));
 
 var tpl = fs.readFileSync(path.normalize(__dirname+'/hello.tpl'), {encoding: 'utf-8'});
 
