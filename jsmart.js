@@ -1592,9 +1592,16 @@
                 var foundName = s.match(reName);
                 if (foundName)
                 {
-                    nm = trimQuotes(foundName[1]);
-                    paramsStr += s.slice(0,foundName[0].length);
-                    s = s.slice(foundName[0].length);
+                    var firstChar = foundName[1].charAt(0).match(/^\d+/),
+                        skip = (firstChar ? true : false);
+                    if (foundName[1] == 'true' || foundName[1] == 'false' || foundName[1] == 'null') {
+                      skip = true;
+                    }
+                    if (!skip) {
+                      nm = trimQuotes(foundName[1]);
+                      paramsStr += s.slice(0,foundName[0].length);
+                      s = s.slice(foundName[0].length);
+                    }
                 }
             }
 
