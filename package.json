@@ -30,7 +30,10 @@
     "karma": "^0.13.13",
     "karma-jasmine": "^1.1.0",
     "karma-phantomjs-launcher": "^1.0.4",
-    "karma-spec-reporter": "0.0.31"
+    "karma-requirejs": "^1.1.0",
+    "karma-spec-reporter": "0.0.31",
+    "requirejs": "^2.3.4",
+    "requirejs-text": "^2.0.15"
   },
   "bugs": {
     "url": "https://github.com/umakantp/jsmart/issues"

@@ -1,5 +1,5 @@
 // Karma configuration
-// Generated on Fri Aug 11 2017 20:53:42 GMT+0530 (India Standard Time)
+// Generated on Sat Aug 12 2017 12:43:17 GMT+0530 (India Standard Time)
 
 module.exports = function(config) {
   config.set({
@@ -10,13 +10,17 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['jasmine'],
+    frameworks: ['jasmine', 'requirejs'],
 
 
     // list of files / patterns to load in the browser
     files: [
-      'src/*.js',
-      'test/*.js'
+      'test/test-main.js',
+      {pattern: 'node_modules/requirejs-text/*.js', included: false},
+      {pattern: 'test/templates/*.tpl', included: false},
+      {pattern: 'test/output/*.tpl', included: false},
+      {pattern: 'src/*.js', included: true},
+      {pattern: 'test/*spec.js', included: false}
     ],
 
 
@@ -35,8 +39,8 @@ module.exports = function(config) {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
+    //reporters: ['progress'],
     reporters: ['spec'],
-
 
     // web server port
     port: 9876,
@@ -59,16 +63,13 @@ module.exports = function(config) {
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: ['PhantomJS'],
 
+
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
     singleRun: true,
 
     // Concurrency level
     // how many browser should be started simultaneous
-    concurrency: Infinity,
-
-    client: {
-      captureConsole: true
-    }
-  });
-};
+    concurrency: Infinity
+  })
+}
