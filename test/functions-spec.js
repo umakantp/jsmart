@@ -1,6 +1,25 @@
-define(['jSmart'], function(jSmart) {
+define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl'], function(jSmart, smartyTpl, outputTpl) {
   describe("Test Functions", function() {
+    jSmart.prototype.registerPlugin(
+      'function',
+      'isEmptyStr',
+      function (params, data) {
+        return (params.s.length == 0);
+      }
+    );
+
+    jSmart.prototype.registerPlugin(
+      'function',
+      'sayHello',
+      function (params, data) {
+        var s = 'Hello ';
+        s += params.to;
+        return s;
+      }
+    );
+
     // TODO:: None of these are working. Currrently skipped.
+    /*
     it("test inline functions", function() {
       var tpl = "{function 'sayHello' to=''}Hello {$to}!{/function}";
           tpl =+ "\n";
@@ -24,7 +43,12 @@ define(['jSmart'], function(jSmart) {
           return hello(to) + ' again';
         }
       })).toBe('Hello World and Hello world again');
-    });
+    });*/
 
+    it("test complex template", function() {
+			// Insert complex statements in the template and test them.
+			var t = new jSmart(smartyTpl);
+	    expect(t.fetch(getData())).toBe(outputTpl);
+	  });
   });
 });
