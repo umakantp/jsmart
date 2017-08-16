@@ -27,7 +27,7 @@ define(['./core', './util/findinarray'], function (jSmart, FindInArray) {
             if (this.escapeHtml) {
               res = modifiers.escape(res);
             }
-            res = this.applyFilters(this.variableFilters, res);
+            res = this.applyFilters(this.globalAndDefaultFilters, res);
           }
           return res;
         }

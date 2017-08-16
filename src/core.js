@@ -1,4 +1,4 @@
-define(['util/trimallquotes'], function (TrimAllQuotes) {
+define(['util/trimallquotes', 'util/objectmerge'], function (TrimAllQuotes, ObjectMerge) {
   var
       version = '@VERSION',
 
@@ -18,13 +18,20 @@ define(['util/trimallquotes'], function (TrimAllQuotes) {
     // Current javascript files loaded via include_javascript.
     scripts: {},
 
+    // List of all modifiers present in the app.
     modifiers: [],
 
     // All the modifiers to apply by default to all variables.
     defaultModifiers: [],
 
+    // Global modifiers which which can be used in all instances.
+    defaultModifiersGlobal: [];
+
+    // Cache for global and default modifiers merged version to apply.
+    globalAndDefaultModifiers: [],
+
     // Filters which are applied to all variables are in 'variable'.
-    // Filters which are applied after processing whole templeate are in 'post'.
+    // Filters which are applied after processing whole template are in 'post'.
     filters: {
       'variable': [],
       'post': []
@@ -37,8 +44,9 @@ define(['util/trimallquotes'], function (TrimAllQuotes) {
       'post': []
     },
 
-    // Cached value for variable filters.
-    variableFilters: [],
+    // Cached value for all default and global variable filters.
+    // Only for variable.
+    globalAndDefaultFilters: [],
 
     // Build in functions of the smarty.
     buildInFunctions: {},
@@ -127,7 +135,7 @@ define(['util/trimallquotes'], function (TrimAllQuotes) {
       template = new String(template ? template : '');
       template = this.removeComments(template);
       template = template.replace(/\r\n/g,'\n');
-      template = this.applyFilters(this.filtersGlobal.pre, template);
+      template = this.applyFilters(jSmart.prototype.filtersGlobal.pre, template);
 
       // Generate the tree.
       this.tree = this.parse(template);
@@ -612,6 +620,10 @@ define(['util/trimallquotes'], function (TrimAllQuotes) {
       }
     },
 
+    registerFilter: function(type, callback) {
+        (this.tree ? this.filters : jSmart.prototype.filtersGlobal)[((type == 'output') ? 'post' : type)].push(callback);
+    },
+
     process: function (tree, data) {
       var res = '',
           i,
@@ -651,9 +663,11 @@ define(['util/trimallquotes'], function (TrimAllQuotes) {
 
     // Process template.
     fetch: function (data) {
-      this.variableFilters = this.filtersGlobal.variable.concat(this.filters.variable);
+      this.globalAndDefaultModifiers = jSmart.prototype.defaultModifiersGlobal.concat(this.defaultModifiers);
+      ObjectMerge((typeof data == 'object') ? data : {}, this.smarty);
+      this.globalAndDefaultFilters = jSmart.prototype.filtersGlobal.variable.concat(this.filters.variable);
       var res = this.process(this.tree, data);
-      return res;
+      return this.applyFilters(jSmart.prototype.filtersGlobal.post.concat(this.filters.post), res);
     }
   };
 
