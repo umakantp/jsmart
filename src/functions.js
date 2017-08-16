@@ -1,29 +1,17 @@
 define(['./core', './util/findinarray'], function (jSmart, FindInArray) {
 
   jSmart.prototype.add({
-    getActualParamValues: function (params, data) {
-      var actualParams = [];
-      for (var name in params.__parsed) {
-        if (params.__parsed.hasOwnProperty(name)) {
-          var v = this.process([params.__parsed[nm]], data);
-          actualParams[name] = v;
-        }
-      }
-      return actualParams;
-    },
-
     buildInFunctions: {
       expression: {
         parse: function(s) {
-          var tree = this.parseExpression(s);
+          var data = this.parseExpression(s);
 
           return {
             type: 'build-in',
             name: 'expression',
             // Expression expanded inside this sub tree.
-            expression: tree,
-            // TODO:: Derive parameters.
-            params: [],
+            expression: data.tree,
+            params: this.parseParams(s.slice(data.value.length).replace(/^\s+|\s+$/g,'')),
           };
         },
         process: function(node, data) {

@@ -6,10 +6,11 @@ define(['./core'], function (jSmart) {
         // Token for variable.
         'regex': /^\$([\w@]+)/,
         parse: function(s) {
-          var data = this.parseVar.call(this, s, RegExp.$1);
-          data[0]; // It has some modifiers
-          // Return tree.
-          return data[1];
+          var dataVar = this.parseVar.call(this, s, RegExp.$1);
+          var dataMod = this.parseModifiers.call(this, dataVar.s, dataVar.tree);
+
+          dataVar.value = dataMod.value;
+          return dataMod.tree;
         }
       }
     ]

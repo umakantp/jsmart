@@ -1,4 +1,4 @@
-define([], function () {
+define(['util/trimallquotes'], function (TrimAllQuotes) {
   var
       version = '@VERSION',
 
@@ -17,6 +17,8 @@ define([], function () {
 
     // Current javascript files loaded via include_javascript.
     scripts: {},
+
+    modifiers: [],
 
     // All the modifiers to apply by default to all variables.
     defaultModifiers: [],
@@ -285,71 +287,227 @@ define([], function () {
     parseVar: function (s, name) {
       var expression = /^(?:\.|\s*->\s*|\[\s*)/,
           op,
-          tree,
+          data,
+          lookUpData,
           parts = [{type: 'text', data: name}];
 
       for (op = s.match(expression); op; op = s.match(expression)) {
         s = s.slice(op[0].length);
         if (op[0].match(/\[/)) {
-          tree = this.parseExpression(s);
-          if (tree) {
-            parts.push(tree);
-            s = s.slice(eProp.value.length);
+          data = this.parseExpression(s);
+          if (data.tree) {
+            parts.push(data.tree);
+            s = s.slice(data.value.length);
           }
           var closeOp = s.match(/\s*\]/);
           if (closeOp) {
             s = s.slice(closeOp[0].length);
           }
+        } else {
+          var parseMod = this.parseModifiersStop;
+          this.parseModifiersStop = true;
+          lookUpData = this.lookUp(s, data.value);
+
+          if (lookUpData) {
+            data.tree = data.tree.concat(lookUpData.tree);
+            data.value = lookUpData.value;
+
+            if (lookUpData.ret) {
+              var part = data.tree[0];
+              if (part.type == 'plugin' && part.name == '__func') {
+                  part.hasOwner = true;
+              }
+              parts.push(part);
+              s = s.slice(data.value.length);
+            } else {
+              data = false;
+            }
+          }
+          this.parseModifiersStop = parseMod;
         }
-        if (!tree) {
+        if (!data) {
           parts.push({type:'text', data:''});
         }
       }
-      return [s, {type: 'var', parts: parts}];
+
+      return {s: s, tree: [{type: 'var', parts: parts}]};
+    },
+
+    parseFunc: function(name, params, tree) {
+      params.__parsed.name = this.parseText(name, [])[0];
+      tree.push({
+          type: 'plugin',
+          name: '__func',
+          params: params
+      });
+      return tree;
+    },
+
+    parseModifiers: function (s, tree) {
+      var modifier = s.match(/^\|(\w+)/),
+          value = '',
+          funcName;
+      if (this.parseModifiersStop) {
+        return;
+      }
+      if (!modifier) {
+        return;
+      }
+      value += modifier[0];
+
+      funcName = ((modifier[1] == 'default') ? 'defaultValue' : modifier[1]);
+      s = s.slice(modifier[0].length).replace(/^\s+/,'');
+
+      this.parseModifiersStop = true;
+      var params = [];
+      for (var colon = s.match(/^\s*:\s*/); colon; colon = s.match(/^\s*:\s*/)) {
+        value += s.slice(0, colon[0].length);
+        s = s.slice(colon[0].length);
+        var lookUpData = this.lookUp(s, '');
+        if (lookUpData.ret) {
+          value += lookUpData.value;
+          params.push(lookUpData.tree[0]);
+          s = s.slice(lookUpData.value.length);
+        } else {
+          params.push(this.parseText(''));
+        }
+      }
+      this.parseModifiersStop = false;
+
+      // Modifiers have the highest priority.
+      params.unshift(tree.pop());
+      var funcData = this.parseFunc(funcName, {__parsed: params}, []);
+      tree.push(funcData[0]);
+
+      // Modifiers can be combined.
+      var selfData = this.parseModifiers(s, tree);
+      // If data is returned merge the current tree and tree we got.
+      if (selfData) {
+        tree = tree.concat(selfData.tree);
+      }
+      return {value: value, tree: tree};
+    },
+
+    parseParams: function(paramsStr, regexDelim, regexName) {
+      var s = paramsStr.replace(/\n/g, ' ').replace(/^\s+|\s+$/g, ''),
+          params = [],
+          paramsStr = '';
+
+      params.__parsed = [];
+
+      if (!s) {
+        return params;
+      }
+
+      if (!regexDelim) {
+        regexDelim = /^\s+/;
+        regexName = /^(\w+)\s*=\s*/;
+      }
+
+      while (s) {
+        var name = null;
+        if (regexName) {
+          var foundName = s.match(regexName);
+          if (foundName) {
+            var firstChar = foundName[1].charAt(0).match(/^\d+/),
+                skip = (firstChar ? true : false);
+            if (foundName[1] == 'true' || foundName[1] == 'false' || foundName[1] == 'null') {
+              skip = true;
+            }
+            if (!skip) {
+              name = TrimAllQuotes(foundName[1]);
+              paramsStr += s.slice(0, foundName[0].length);
+              s = s.slice(foundName[0].length);
+            }
+          }
+        }
+
+        var param = this.parseExpression(s);
+        if (!param) {
+          break;
+        }
+
+        if (name) {
+          params[name] = param.value;
+          params.__parsed[name] = param.tree;
+        } else {
+          params.push(param.value);
+          params.__parsed.push(param.tree);
+        }
+
+        paramsStr += s.slice(0, param.value.length);
+        s = s.slice(param.value.length);
+
+        var foundDelim = s.match(regexDelim);
+        if (foundDelim) {
+          paramsStr += s.slice(0,foundDelim[0].length);
+          s = s.slice(foundDelim[0].length);
+        } else {
+            break;
+        }
+      }
+      params.toString = function() {
+        return paramsStr;
+      };
+      return params;
+    },
+
+    lookUp: function (s, value) {
+      var tree = [];
+      if (!s) {
+        return false;
+      }
+
+      if (s.substr(0, this.smarty.ldelim) == this.smarty.ldelim) {
+        // TODO :: Explore more where it is used.
+        tag = this.findTag('', s);
+        value += tag[0];
+        if (tag) {
+          tree.push(this.parse(tag[0]));
+          var modData = this.parseModifiers(s.slice(value.length), tree);
+          return {ret: true, tree: modData.tree, value: value};
+        }
+      }
+      anyMatchingToken = this.getMatchingToken(s);
+      if (anyMatchingToken !== false) {
+        value += RegExp.lastMatch;
+        tree.push(this.tokens[anyMatchingToken].parse.call(this, s.slice(RegExp.lastMatch.length)));
+        return {ret: true, tree: tree, value: value};
+      }
+      return {ret: false, tree: tree, value: value};
     },
 
     // Parse expression.
     parseExpression: function (s) {
       var tree = [],
           value = '',
-          newS,
+          data,
           tag,
           treeFromToken;
 
       while(true) {
-        newS = s.slice(value.length);
-        if (!newS) {
+        data = this.lookUp(s.slice(value.length), value);
+        if (data) {
+          tree = tree.concat(data.tree);
+          value += data.value;
+          if (!data.ret) {
+            break;
+          }
+        } else {
           break;
         }
-
-        if (newS.substr(0, this.smarty.ldelim) == this.smarty.ldelim) {
-          // TODO :: Explore more where it is used.
-          tag = this.findTag('', newS);
-          value += tag[0];
-          if (tag) {
-            tree.push(this.parse(tag[0]));
-            continue;
-          }
-        }
-        anyMatchingToken = this.getMatchingToken(newS);
-        if (anyMatchingToken !== false) {
-          value += RegExp.lastMatch;
-          tree.push(this.tokens[anyMatchingToken].parse.call(this, newS.slice(RegExp.lastMatch.length)));
-          continue;
-        }
-        break;
       }
       if (!tree.length) {
         return false;
       }
       tree = this.composeExpression(tree);
-      return tree;
+      return {tree: tree, value: value};
     },
 
     // Parse text.
     parseText: function (text) {
       // TODO ?? Add option to parse text inside double quotes.
-      return {type: 'text', data: text};
+      return [{type: 'text', data: text}];
     },
 
     // Parse the template and generate tree.
@@ -359,7 +517,7 @@ define([], function () {
           tag;
       for (openTag = this.findTag('', tpl); openTag; openTag = this.findTag('', tpl))  {
         if (openTag.index) {
-          tree.push(this.parseText(tpl.slice(0, openTag.index)));
+          tree = tree.concat(this.parseText(tpl.slice(0, openTag.index)));
         }
         tpl = tpl.slice((openTag.index + openTag[0].length));
         tag = openTag[1].match(/^\s*(\w+)(.*)$/);
@@ -376,7 +534,7 @@ define([], function () {
         }
       }
       if (tpl) {
-        tree.push(this.parseText(tpl));
+        tree = tree.concat(this.parseText(tpl));
       }
       console.log(tree)
       return tree;
@@ -401,6 +559,17 @@ define([], function () {
       return newTpl + tpl;
     },
 
+    getActualParamValues: function (params, data) {
+      var actualParams = [];
+      for (var name in params.__parsed) {
+        if (params.__parsed.hasOwnProperty(name)) {
+          var v = this.process([params.__parsed[name]], data);
+          actualParams[name] = v;
+        }
+      }
+      return actualParams;
+    },
+
     getVarValue: function (node, data, value) {
       var v = data,
           name = '',
@@ -409,24 +578,38 @@ define([], function () {
 
       for (i = 0; i < node.parts.length; ++i) {
         part = node.parts[i];
-        name = this.process([part], data);
-
-        // Set new value.
-        if (value != undefined && i == (node.parts.length - 1)) {
-            v[name] = value;
-        }
-
-        if (typeof v == 'object' && v !== null && name in v) {
-            v = v[name];
+        if (part.type == 'plugin' && part.name == '__func' && part.hasOwner) {
+            data.__owner = v;
+            v = this.process([node.parts[i]], data);
+            delete data.__owner;
         } else {
-          if (value == undefined) {
-            return value;
+          name = this.process([part], data);
+
+          // Set new value.
+          if (value != undefined && i == (node.parts.length - 1)) {
+              v[name] = value;
           }
-          v[name] = {};
-          v = v[name];
+
+          if (typeof v == 'object' && v !== null && name in v) {
+              v = v[name];
+          } else {
+            if (value == undefined) {
+              return value;
+            }
+            v[name] = {};
+            v = v[name];
+          }
         }
       }
       return v;
+    },
+
+    registerPlugin: function (type, name, callback) {
+      if (type == 'modifier') {
+        this.modifiers[name] = callback;
+      } else {
+        this.plugins[name] = {'type': type, 'process': callback};
+      }
     },
 
     process: function (tree, data) {
@@ -444,8 +627,17 @@ define([], function () {
           s = this.getVarValue(node, data);
         } else if (node.type == 'build-in') {
           s = this.buildInFunctions[node.name].process.call(this, node, data);
-        }
+        } else if (node.type == 'plugin') {
+          var plugin = this.plugins[node.name];
+          if (plugin.type == 'block') {
 
+          } else if (plugin.type == 'function') {
+            s = plugin.process(this.getActualParamValues(node.params, data), data);
+          }
+        }
+        if (typeof s == 'boolean') {
+            s = s ? '1' : '';
+        }
         if (s == null) {
             s = '';
         }
