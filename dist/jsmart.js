@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-08-16T03:59Z
+ * Date: 2017-08-16T07:47Z
  */
 (function(factory) {
   "use strict";
@@ -29,6 +29,11 @@
 })(function() {
   "use strict";
 
+  // @CODE
+  // tasks/build.js inserts compiled jQuery here
+
+  return jSmart;
+});
 var
       version = '2.15.1',
 
@@ -65,6 +70,9 @@ var
       'post': []
     },
 
+    // Cached value for variable filters.
+    variableFilters: [],
+
     // Build in functions of the smarty.
     buildInFunctions: {},
 
@@ -73,6 +81,9 @@ var
 
     // Whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before.
     autoLiteral: true,
+
+    // Escape html??
+    escapeHtml: false,
 
     // Currently disabled, will decide in future, what TODO.
     debugging: false,
@@ -250,17 +261,123 @@ var
       return closeTag;
     },
 
-    // Parse expression.
-    parseExpression: function () {
-      var tree = [];
-      /*
-      while (jSmart.lookUp(s.slice(e.value.length))) {
+    bundleOp: function (i, tree, precedence) {
+      var op = tree[i];
+      if (op.name == 'operator' && op.precedence == precedence && !op.params.__parsed) {
+        if (op.optype == 'binary') {
+            op.params.__parsed = [tree[(i - 1)],tree[(i + 1)]];
+            tree.splice((i - 1), 3, op);
+            return [true, tree];
+        } else if (op.optype == 'post-unary') {
+            op.params.__parsed = [tree[(i - 1)]];
+            tree.splice((i - 1), 2, op);
+            return [true, tree];
+        }
 
+        op.params.__parsed = [tree[(i + 1)]];
+        tree.splice(i, 2, op);
+      }
+      return [false, tree];
+    },
+
+    composeExpression: function(tree) {
+      var i = 0,
+          data;
+      for (i = 0; i < tree.length; ++i) {
+        if (tree[i] instanceof Array) {
+          tree[i] = this.composeExpression(tree[i]);
+        }
+      }
+
+      for (var precedence = 1; precedence < 14; ++precedence) {
+        if (precedence == 2 || precedence == 10) {
+          for (i = tree.length; i > 0; --i) {
+              data = this.bundleOp(i-1, tree, precedence);
+              i -= data[0];
+              tree = data[1];
+          }
+        } else {
+          for (i=0; i<tree.length; ++i) {
+            data = this.bundleOp(i, tree, precedence);
+            i -= data[0];
+            tree = data[1];
+          }
+        }
+      }
+      // Only one node should be left.
+      return tree[0];
+    },
+
+    getMatchingToken: function (s) {
+      for (var i = 0; i < this.tokens.length; ++i) {
+        if (s.match(this.tokens[i].regex)) {
+          return i;
+        }
+      }
+      return false;
+    },
+
+    parseVar: function (s, name) {
+      var expression = /^(?:\.|\s*->\s*|\[\s*)/,
+          op,
+          tree,
+          parts = [{type: 'text', data: name}];
+
+      for (op = s.match(expression); op; op = s.match(expression)) {
+        s = s.slice(op[0].length);
+        if (op[0].match(/\[/)) {
+          tree = this.parseExpression(s);
+          if (tree) {
+            parts.push(tree);
+            s = s.slice(eProp.value.length);
+          }
+          var closeOp = s.match(/\s*\]/);
+          if (closeOp) {
+            s = s.slice(closeOp[0].length);
+          }
+        }
+        if (!tree) {
+          parts.push({type:'text', data:''});
+        }
+      }
+      return [s, {type: 'var', parts: parts}];
+    },
+
+    // Parse expression.
+    parseExpression: function (s) {
+      var tree = [],
+          value = '',
+          newS,
+          tag,
+          treeFromToken;
+
+      while(true) {
+        newS = s.slice(value.length);
+        if (!newS) {
+          break;
+        }
+
+        if (newS.substr(0, this.smarty.ldelim) == this.smarty.ldelim) {
+          // TODO :: Explore more where it is used.
+          tag = this.findTag('', newS);
+          value += tag[0];
+          if (tag) {
+            tree.push(this.parse(tag[0]));
+            continue;
+          }
+        }
+        anyMatchingToken = this.getMatchingToken(newS);
+        if (anyMatchingToken !== false) {
+          value += RegExp.lastMatch;
+          tree.push(this.tokens[anyMatchingToken].parse.call(this, newS.slice(RegExp.lastMatch.length)));
+          continue;
+        }
+        break;
       }
       if (!tree.length) {
         return false;
       }
-      tree = jSmart.composeExpression(e.tree);*/
+      tree = this.composeExpression(tree);
       return tree;
     },
 
@@ -286,10 +403,11 @@ var
 
         } else {
           // Variable.
-          this.buildInFunctions.expression.parse.call(this, openTag[1]);
+          node = this.buildInFunctions.expression.parse.call(this, openTag[1]);
           if (node.type=='build-in' && node.name=='operator' && node.op == '=') {
-              tpl = tpl.replace(/^\n/,'');
+            tpl = tpl.replace(/^\n/, '');
           }
+          tree.push(node);
         }
       }
       if (tpl) {
@@ -316,28 +434,141 @@ var
         tpl = tpl.slice(closeTag.index+closeTag[0].length);
       }
       return newTpl + tpl;
-    }
+    },
 
+    getVarValue: function (node, data, value) {
+      var v = data,
+          name = '',
+          i,
+          part;
+
+      for (i = 0; i < node.parts.length; ++i) {
+        part = node.parts[i];
+        name = this.process([part], data);
+
+        // Set new value.
+        if (value != undefined && i == (node.parts.length - 1)) {
+            v[name] = value;
+        }
+
+        if (typeof v == 'object' && v !== null && name in v) {
+            v = v[name];
+        } else {
+          if (value == undefined) {
+            return value;
+          }
+          v[name] = {};
+          v = v[name];
+        }
+      }
+      return v;
+    },
+
+    process: function (tree, data) {
+      var res = '',
+          i,
+          s,
+          node;
+
+      for (i = 0; i < tree.length; ++i) {
+        s = '';
+        node = tree[i];
+        if (node.type == 'text') {
+          s = node.data;
+        } else if (node.type == 'var') {
+          s = this.getVarValue(node, data);
+        } else if (node.type == 'build-in') {
+          s = this.buildInFunctions[node.name].process.call(this, node, data);
+        }
+
+        if (s == null) {
+            s = '';
+        }
+        if (tree.length == 1) {
+            return s;
+        }
+        res += s!==null ? s : '';
+      }
+      return res;
+    },
+
+    // Process template.
+    fetch: function (data) {
+      this.variableFilters = this.filtersGlobal.variable.concat(this.filters.variable);
+      var res = this.process(this.tree, data);
+      return res;
+    }
   };
-console.log('yo');
-  jSmart.prototype.add({
+// Find in array.
+  function FindInArray(arr, val) {
+    if (Array.prototype.indexOf) {
+      return arr.indexOf(val);
+    }
+    for (var i = 0; i < arr.length; ++i) {
+      if (arr[i] === val) {
+        return i;
+      }
+    }
+    return -1;
+  }
+jSmart.prototype.add({
+    getActualParamValues: function (params, data) {
+      var actualParams = [];
+      for (var name in params.__parsed) {
+        if (params.__parsed.hasOwnProperty(name)) {
+          var v = this.process([params.__parsed[nm]], data);
+          actualParams[name] = v;
+        }
+      }
+      return actualParams;
+    },
+
     buildInFunctions: {
       expression: {
         parse: function(s) {
-          console.log(this);
-            var e = this.parseExpression(s);
+          var tree = this.parseExpression(s);
 
-            return {
-                type: 'build-in',
-                name: 'expression',
-                expression: e.tree,
-                params: this.parseParams(s.slice(e.value.length).replace(/^\s+|\s+$/g,''))
-            };
+          return {
+            type: 'build-in',
+            name: 'expression',
+            // Expression expanded inside this sub tree.
+            expression: tree,
+            // TODO:: Derive parameters.
+            params: [],
+          };
+        },
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data),
+              res = this.process([node.expression], data);
+
+          if (FindInArray(params, 'nofilter') < 0) {
+            for (var i=0; i < this.defaultModifiers.length; ++i) {
+              var m = this.defaultModifiers[i];
+              m.params.__parsed[0] = {type: 'text', data: res};
+              res = this.process([m],data);
+            }
+            if (this.escapeHtml) {
+              res = modifiers.escape(res);
+            }
+            res = this.applyFilters(this.variableFilters, res);
+          }
+          return res;
         }
       }
     }
   });
+jSmart.prototype.add({
+    tokens: [
+      {
+        // Token for variable.
+        'regex': /^\$([\w@]+)/,
+        parse: function(s) {
+          var data = this.parseVar.call(this, s, RegExp.$1);
+          data[0]; // It has some modifiers
+          // Return tree.
+          return data[1];
+        }
+      }
+    ]
+  });
 
-
-  return jSmart;
-});
