@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-08-15T19:44Z
+ * Date: 2017-08-16T03:59Z
  */
 (function(factory) {
   "use strict";
@@ -29,31 +29,6 @@
 })(function() {
   "use strict";
 
-// Taaken from jQuery.
-  function isPlainObject(obj ) {
-    var proto, Ctor;
-
-		// Detect obvious negatives
-		// Use toString instead of jQuery.type to catch host objects
-		if ( !obj || {}.toString.call( obj ) !== "[object Object]" ) {
-			return false;
-		}
-
-		proto = Object.getPrototypeOf(obj);
-
-		// Objects with no prototype (e.g., `Object.create( null )`) are plain
-		if ( !proto ) {
-			return true;
-		}
-
-		// Objects with prototype are plain iff they were constructed by a global Object function
-		Ctor = {}.hasOwnProperty.call( proto, "constructor" ) && proto.constructor;
-		return typeof Ctor === "function" && {}.hasOwnProperty.toString.call( Ctor ) === fnToString.call(Object);
-  }
-// Check if function is call.
-  function isFunction(obj) {
-    return typeof obj === "function" && typeof obj.nodeType !== "number";
-  }
 var
       version = '2.15.1',
 
@@ -64,6 +39,8 @@ var
 
   // Add more properties to jSmart core.
   jSmart.prototype = {
+
+    constructor: jSmart,
 
     // Current tree structure.
     tree: [],
@@ -191,6 +168,14 @@ var
       return s;
     },
 
+    add: function(thingsToAdd) {
+      for (var i in thingsToAdd) {
+        if (thingsToAdd.hasOwnProperty(i)) {
+          jSmart.prototype[i] = thingsToAdd[i];
+        }
+      }
+    },
+
     // Find a first {tag} in the string.
     findTag: function(expression, s) {
       var openCount = 0,
@@ -265,6 +250,20 @@ var
       return closeTag;
     },
 
+    // Parse expression.
+    parseExpression: function () {
+      var tree = [];
+      /*
+      while (jSmart.lookUp(s.slice(e.value.length))) {
+
+      }
+      if (!tree.length) {
+        return false;
+      }
+      tree = jSmart.composeExpression(e.tree);*/
+      return tree;
+    },
+
     // Parse text.
     parseText: function (text) {
       // TODO ?? Add option to parse text inside double quotes.
@@ -283,10 +282,14 @@ var
         tpl = tpl.slice((openTag.index + openTag[0].length));
         tag = openTag[1].match(/^\s*(\w+)(.*)$/);
 
-        console.log(openTag);
         if (tag) {
-          console.log(tag);
-          break;
+
+        } else {
+          // Variable.
+          this.buildInFunctions.expression.parse.call(this, openTag[1]);
+          if (node.type=='build-in' && node.name=='operator' && node.op == '=') {
+              tpl = tpl.replace(/^\n/,'');
+          }
         }
       }
       if (tpl) {
@@ -316,6 +319,24 @@ var
     }
 
   };
+console.log('yo');
+  jSmart.prototype.add({
+    buildInFunctions: {
+      expression: {
+        parse: function(s) {
+          console.log(this);
+            var e = this.parseExpression(s);
+
+            return {
+                type: 'build-in',
+                name: 'expression',
+                expression: e.tree,
+                params: this.parseParams(s.slice(e.value.length).replace(/^\s+|\s+$/g,''))
+            };
+        }
+      }
+    }
+  });
 
 
   return jSmart;

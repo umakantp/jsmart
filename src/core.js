@@ -10,6 +10,8 @@ define([], function () {
   // Add more properties to jSmart core.
   jSmart.prototype = {
 
+    constructor: jSmart,
+
     // Current tree structure.
     tree: [],
 
@@ -136,6 +138,14 @@ define([], function () {
       return s;
     },
 
+    add: function(thingsToAdd) {
+      for (var i in thingsToAdd) {
+        if (thingsToAdd.hasOwnProperty(i)) {
+          jSmart.prototype[i] = thingsToAdd[i];
+        }
+      }
+    },
+
     // Find a first {tag} in the string.
     findTag: function(expression, s) {
       var openCount = 0,
@@ -210,6 +220,20 @@ define([], function () {
       return closeTag;
     },
 
+    // Parse expression.
+    parseExpression: function () {
+      var tree = [];
+      /*
+      while (jSmart.lookUp(s.slice(e.value.length))) {
+
+      }
+      if (!tree.length) {
+        return false;
+      }
+      tree = jSmart.composeExpression(e.tree);*/
+      return tree;
+    },
+
     // Parse text.
     parseText: function (text) {
       // TODO ?? Add option to parse text inside double quotes.
@@ -232,7 +256,7 @@ define([], function () {
 
         } else {
           // Variable.
-          this.buildInFunctions.expression.parse(openTag[1]);
+          this.buildInFunctions.expression.parse.call(this, openTag[1]);
           if (node.type=='build-in' && node.name=='operator' && node.op == '=') {
               tpl = tpl.replace(/^\n/,'');
           }
