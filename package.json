@@ -2,7 +2,7 @@
   "name": "jsmart",
   "title": "jSmart",
   "description": "jSmart is a port of the Smarty Template Engine to Javascript.",
-  "main": "jsmart.js",
+  "main": "dist/jsmart.js",
   "version": "2.15.1",
   "url": "https://github.com/umakantp/jsmart/",
   "keywords": [
@@ -12,14 +12,18 @@
     "template",
     "templates"
   ],
-  "author": "Max Miroshnikov <miroshnikov@gmail.com>",
+  "author": "Umakant Patil <me@umakantpatil.com>",
   "contributors": [
     {
       "name": "Umakant Patil",
       "email": "me@umakantpatil.com"
+    },
+    {
+      "name": "Max Miroshnikov",
+      "email": "miroshnikov@gmail.com"
     }
   ],
-  "license": "LGPL-3.0",
+  "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "grunt": "^1.0.1",
@@ -32,6 +36,7 @@
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-requirejs": "^1.1.0",
     "karma-spec-reporter": "0.0.31",
+    "load-grunt-tasks": "^3.5.2",
     "requirejs": "^2.3.4",
     "requirejs-text": "^2.0.15"
   },
@@ -39,7 +44,9 @@
     "url": "https://github.com/umakantp/jsmart/issues"
   },
   "scripts": {
-    "test": "grunt karma",
+    "build": "npm install && grunt",
+    "test": "grunt && grunt karma",
+    "precommit": "grunt lint",
     "doc": "https://github.com/umakantp/jsmart/wiki"
   },
   "repository": {
