@@ -1,4 +1,4 @@
-define(["./core", "./functions", "./tokens", "./plugins", "./modifiers"], function(jSmart) {
+define(["./core", "./plugins", "./inbuiltModifiers"], function(jSmart) {
   "use strict";
 
   return jSmart;

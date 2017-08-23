@@ -24,10 +24,11 @@ module.exports = function(grunt) {
 
       // Catch `// @CODE` and subsequent comment lines event if they don't start
       // in the first column.
-      wrapper = read( "wrapper.js" ).split( /[\x20\t]*\/\/ @CODE\n(?:[\x20\t]*\/\/[^\n]+\n)*/ ),
+      wrapper = read( "wrapper.js" ).split( /\/\/ @CODE/ ),
 
       config = {
         baseUrl: "src",
+        
         name: "jsmart",
 
         // Allow strict mode

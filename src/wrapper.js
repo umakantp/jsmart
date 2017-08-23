@@ -27,10 +27,9 @@
   }
 // Pass this if window is not defined yet
 })(function() {
-  "use strict";
+"use strict";
 
-  // @CODE
-  // tasks/build.js inserts compiled jQuery here
+ // @CODE
 
   return jSmart;
 });

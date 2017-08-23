@@ -1,7 +1,7 @@
-define(['util/evalstring'], function (EvalString) {
+define(function () {
 
   function EvalString(s) {
-    s.replace(/\\t/,'\t').replace(/\\n/,'\n').replace(/\\(['"\\])/g,'$1');
+    return s.replace(/\\t/,'\t').replace(/\\n/,'\n').replace(/\\(['"\\])/g,'$1');
   }
 
   return EvalString;

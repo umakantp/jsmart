@@ -1,15 +1,27 @@
 define(['./core', 'util/objectmerge', 'util/executebyobject'], function (jSmart, ObjectMerge, ExecuteByFuncObject) {
 
-  jSmart.prototype.addDefaultModifier = function(modifiers) {
-    if (!(modifiers instanceof Array)) {
-      modifiers = [modifiers];
+  jSmart.prototype.registerPlugin(
+    'function',
+    '__quoted',
+    function(params, data) {
+      return params.join('');
     }
+  );
 
-    for (var i=0; i<modifiers.length; ++i) {
-      var data = this.parseModifiers('|'+modifiers[i], [0]);
-      (this.tree ? this.defaultModifiers : this.defaultModifiersGlobal).push(data.tree[0]);
+  // Register __array which gets called for all arrays.
+  jSmart.prototype.registerPlugin(
+    'function',
+    '__array',
+    function(params, data) {
+      var a = [];
+      for (var name in params) {
+        if (params.hasOwnProperty(name) && params[name] && typeof params[name] != 'function') {
+          a[name] = params[name];
+        }
+      }
+      return a;
     }
-  };
+  );
 
   // Register __func which gets called for all modifiers and function calls.
   jSmart.prototype.registerPlugin(
