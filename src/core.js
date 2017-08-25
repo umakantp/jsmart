@@ -27,7 +27,7 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
     scripts: {},
 
     // List of all modifiers present in the app.
-    modifiers: [],
+    modifiers: {},
 
     // All the modifiers to apply by default to all variables.
     defaultModifiers: [],
@@ -70,6 +70,10 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
 
     // Currently disabled, will decide in future, what TODO.
     debugging: false,
+
+    // Store current runtime plugins. Generally used for
+    // {function} tags.
+    runTimePlugins: {},
 
     // Smarty object which has version, delimiters, config, current directory
     // and all blocks like PHP Smarty.
@@ -135,48 +139,47 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
         // If delimiters are passed locally take them.
         this.smarty.rdelim = options.rdelim;
       } else if (jSmart.prototype.right_delimiter) {
-        // If no delimiters are passed locally, take global if present.
+        // Backward compatible. Old way to set via prototype.
         this.smarty.rdelim = jSmart.prototype.right_delimiter;
       }
       if (options.ldelim) {
         // If delimiters are passed locally take them.
         this.smarty.ldelim = options.ldelim;
       } else if (jSmart.prototype.left_delimiter) {
-        // If no delimiters are passed locally, take global if present.
+        // Backward compatible. Old way to set via prototype.
         this.smarty.ldelim = jSmart.prototype.left_delimiter;
       }
       if (options.autoLiteral !== undefined) {
         // If autoLiteral is passed locally, take it.
         this.autoLiteral = options.autoLiteral;
       } else if (jSmart.prototype.auto_literal !== undefined) {
-        // If no autoLiteral is passed locally, take global if present.
+        // Backward compatible. Old way to set via prototype.
         this.autoLiteral = jSmart.prototype.auto_literal;
       }
 
       if (options.debugging !== undefined) {
         // If debugging is passed locally, take it.
         this.debugging = options.debugging;
-      } else if (jSmart.prototype.debugging !== undefined) {
-        // If no debugging is passed locally, take global if present.
-        this.debugging = jSmart.prototype.debugging;
+      }
+
+      if (options.escapeHtml !== undefined) {
+        // If escapeHtml is passed locally, take it.
+        this.escapeHtml = options.escapeHtml;
+      } else if (jSmart.prototype.escape_html !== undefined) {
+        // Backward compatible. Old way to set via prototype.
+        this.escapeHtml = jSmart.prototype.escape_html;
       }
 
       // Is template string or at least defined?!
       template = new String(template ? template : '');
-      // Remove comments, we never want them.
-      template = this.removeComments(template);
-      // Make use of linux new comments. It will be consistent across all templates.
-      template = template.replace(/\r\n/g,'\n');
-      // Apply global pre filters to the template. These are global filters,
-      // so we take it from global object, rather than taking it as args to
-      // "new jSmart()" object.
-      template = this.applyFilters(jSmart.prototype.filtersGlobal.pre, template);
 
       // Generate the tree. We pass "this", so Parser can read jSmart.*
       // config values. Please note that, jSmart.* are not supposed to be
       // modified in parsers. We get them here and then update jSmart object.
 
-      this.tree = jSmartParser.getParsed(template, this);
+      var parsedTemplate = jSmartParser.getParsed(template, this);
+      this.tree = parsedTemplate.tree;
+      this.runTimePlugins = parsedTemplate.runTimePlugins;
     },
 
     // Process the generated tree.
@@ -216,25 +219,6 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
       return tpl;
     },
 
-    // Remove comments. We do not want to parse them anyway.
-    removeComments: function (tpl) {
-      var ldelim = new RegExp(this.smarty.ldelim+'\\*'),
-          rdelim = new RegExp('\\*'+this.smarty.rdelim),
-          newTpl = '';
-
-      for (var openTag=tpl.match(ldelim); openTag; openTag=tpl.match(rdelim)) {
-        newTpl += tpl.slice(0,openTag.index);
-        s = tpl.slice(openTag.index+openTag[0].length);
-        var closeTag = tpl.match(rDelim);
-        if (!closeTag)
-        {
-          throw new Error('Unclosed '+this.smarty.ldelim+'*');
-        }
-        tpl = tpl.slice(closeTag.index+closeTag[0].length);
-      }
-      return newTpl + tpl;
-    },
-
     // Register a plugin.
     registerPlugin: function (type, name, callback) {
       if (type == 'modifier') {
@@ -249,14 +233,6 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
         (this.tree ? this.filters : jSmart.prototype.filtersGlobal)[((type == 'output') ? 'post' : type)].push(callback);
     },
 
-    add: function(thingsToAdd) {
-      for (var i in thingsToAdd) {
-        if (thingsToAdd.hasOwnProperty(i)) {
-          jSmart.prototype[i] = thingsToAdd[i];
-        }
-      }
-    },
-
     addDefaultModifier: function(modifiers) {
       if (!(modifiers instanceof Array)) {
         modifiers = [modifiers];
@@ -266,6 +242,22 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
         var data = jSmartParser.parseModifiers('|'+modifiers[i], [0]);
         (this.tree ? this.defaultModifiers : this.defaultModifiersGlobal).push(data.tree[0]);
       }
+    },
+
+    getTemplate: function(name) {
+      throw new Error('No template for ' + name);
+    },
+
+    getFile: function (name) {
+      throw new Error('No file for ' + name);
+    },
+
+    getJavascript: function (name) {
+      throw new Error('No Javascript for ' + name);
+    },
+
+    getConfig: function (name) {
+      throw new Error('No config for ' + name);
     }
   };
 

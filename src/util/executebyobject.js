@@ -10,7 +10,10 @@ define(function () {
    */
   function ExecuteByFuncObject(obj, args) {
     try {
-      return obj.apply(this, args);
+      if (args) {
+        return obj.apply(this, args);
+      }
+      return obj.apply(this);
     } catch (e) {
       throw new Error(e.message);
     }

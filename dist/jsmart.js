@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v2.15.1)
+ * jSmart JavaScript template engine (v3.0.0)
  * https://github.com/umakantp/jsmart
  *
  * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-08-23T12:50Z
+ * Date: 2017-08-25T18:43Z
  */
 (function(factory) {
   "use strict";
@@ -45,6 +45,18 @@ function EvalString(s) {
   function TrimAllQuotes(s) {
     return EvalString(s.replace(/^['"](.*)['"]$/,'$1')).replace(/^\s+|\s+$/g,'');
   }
+// Find in array.
+  function FindInArray(arr, val) {
+    if (Array.prototype.indexOf) {
+      return arr.indexOf(val);
+    }
+    for (var i = 0; i < arr.length; ++i) {
+      if (arr[i] === val) {
+        return i;
+      }
+    }
+    return -1;
+  }
 // Parser object. Plain object which just does parsing.
   var jSmartParser = {
 
@@ -54,23 +66,39 @@ function EvalString(s) {
     // Object which is copy of jSmart.smarty for local modification.
     smarty: {},
 
+    // Cached templates.
+    files: {},
+
+    // Store runtime generated runtime plugins.
+    runTimePlugins: {},
+
     // Parse the template and return the data.
     getParsed: function (template, that) {
-      var tree, smarty;
+      var tree, smarty, runTimePlugins;
       // Copy the jSmart object, so we could use it while parsing.
       this.jSmart = that;
       // Create a copy of smarty object, as we modify that data and
       // we want to keep a copy rather than modifying original jSmart object.
       ObjectMerge(this.smarty, that.smarty);
 
+      // Remove comments, we never want them.
+      template = this.removeComments(template);
+      // Make use of linux new comments. It will be consistent across all templates.
+      template = template.replace(/\r\n/g,'\n');
+      // Apply global pre filters to the template. These are global filters,
+      // so we take it from global object, rather than taking it as args to
+      // "new jSmart()" object.
+      template = this.applyFilters(this.jSmart.filtersGlobal.pre, template);
+
       // Parse the template and get the output.
       tree = this.parse(template),
       smarty = this.smarty;
+      runTimePlugins = this.runTimePlugins;
       // Empty parser objects. Clean up.
       // We do not want old data held up here.
       this.jSmart = {};
       this.smarty = {};
-      return tree;
+      return {tree: tree, runTimePlugins: runTimePlugins };
     },
 
     // Parse the template and generate tree.
@@ -88,29 +116,45 @@ function EvalString(s) {
         }
         tpl = tpl.slice((openTag.index + openTag[0].length));
         tag = openTag[1].match(/^\s*(\w+)(.*)$/);
-
         if (tag) {
           // Function?!
           name = tag[1];
           paramStr = (tag.length > 2) ? tag[2].replace(/^\s+|\s+$/g, '') : '';
           if (name in this.buildInFunctions) {
             var buildIn = this.buildInFunctions[name];
-            var params = ('parseParams' in buildIn ? buildIn.parseParams : this.parseParams.bind(this))(paramStr);
+            var params = ('parseParams' in buildIn ? buildIn.parseParams.bind(this) : this.parseParams.bind(this))(paramStr);
             if (buildIn.type == 'block') {
-              // TODO:: Design block plugins later.
               // Remove new line after block open tag (like in Smarty)
               tpl = tpl.replace(/^\n/, '');
               var closeTag = this.findCloseTag('\/'+name, name+' +[^}]*', tpl);
-              tree = tree.concat(buildIn.parse.call(this, params, tpl.slice(0, closeTag.index)));
+              var functionTree = buildIn.parse.call(this, params, tpl.slice(0, closeTag.index));
+              if (functionTree) {
+                // Some functions return false like {php} and {function}
+                tree = tree.concat(functionTree);
+              }
               tpl = tpl.slice(closeTag.index+closeTag[0].length);
             } else {
+              if (name == 'extends') {
+                // Anything before {extends} should be stripped.
+                tree.splice(0, tree.length);
+              }
               tree = tree.concat(buildIn.parse.call(this, params));
               if (name == 'extends') {
                 // TODO:: How to implement this?
-                //tree = []; //throw away further parsing except for {block}
+                // tree = []; //throw away further parsing except for {block}
               }
             }
             tpl = tpl.replace(/^\n/,'');
+          } else if (name in this.runTimePlugins) {
+            // Possible it is function name. give it a priority before plugin.
+            var plugin = this.runTimePlugins[name];
+            tree.push((this.parsePluginFunc(name, this.parseParams(paramStr))[0]));
+          } else if (name in this.jSmart.plugins) {
+
+          } else {
+            // Variable.
+            node = this.buildInFunctions.expression.parse.call(this, openTag[1]);
+            tree.push(node);
           }
         } else {
           // Variable.
@@ -303,14 +347,13 @@ function EvalString(s) {
           var parseMod = this.parseModifiersStop;
           this.parseModifiersStop = true;
           lookUpData = this.lookUp(s, data.value);
-
           if (lookUpData) {
             data.tree = data.tree.concat(lookUpData.tree);
             data.value = lookUpData.value;
             token += lookUpData.value;
 
             if (lookUpData.ret) {
-              var part = data.tree[0];
+              var part = data.tree[(data.tree.length-1)];
               if (part.type == 'plugin' && part.name == '__func') {
                   part.hasOwner = true;
               }
@@ -440,7 +483,6 @@ function EvalString(s) {
         }
 
         var param = this.parseExpression(s);
-        console.log(param);
         if (!param) {
           break;
         }
@@ -491,7 +533,18 @@ function EvalString(s) {
       if (anyMatchingToken !== false) {
         value += RegExp.lastMatch;
         var newTree = this.tokens[anyMatchingToken].parse.call(this, s.slice(RegExp.lastMatch.length), { tree: tree, token: RegExp.lastMatch });
-        if ((!!newTree) && (newTree.constructor === Object)) {
+        if (typeof newTree == 'string') {
+          if (newTree == 'parenStart') {
+            var blankTree = [];
+            tree.push(blankTree);
+            blankTree.parent = tree;
+            tree = blankTree;
+          } else if (newTree == 'parenEnd') {
+            if (tree.parent) {
+              tree = tree.parent;
+            }
+          }
+        } else if ((!!newTree) && (newTree.constructor === Object)) {
           // TODO :: figure out, how we would we get this done by
           // only getting tree (no value should be needed.)
           value += newTree.value;
@@ -511,11 +564,14 @@ function EvalString(s) {
           tag,
           treeFromToken;
 
+      // TODO Refactor, to get this removed.
+      this.lastTreeInExpression = tree;
       while(true) {
         data = this.lookUp(s.slice(value.length), value);
         if (data) {
           tree = tree.concat(data.tree);
           value = data.value;
+          this.lastTreeInExpression = tree;
           if (!data.ret) {
             break;
           }
@@ -551,6 +607,52 @@ function EvalString(s) {
       return tree;
     },
 
+    getTemplate: function(name, nocache) {
+      var tree = [];
+      if (nocache || !(name in this.files)) {
+        var tpl = this.jSmart.getTemplate(name);
+        if (typeof(tpl) != 'string') {
+            throw new Error('No template for '+ name);
+        }
+        // TODO:: Duplicate code like getParsed. Refactor.
+        tpl = this.removeComments(tpl.replace(/\r\n/g, '\n'));
+        tpl = this.applyFilters(this.jSmart.filtersGlobal.pre, tpl);
+        tree = this.parse(tpl);
+        this.files[name] = tree;
+      } else {
+        tree = this.files[name];
+      }
+      return tree;
+    },
+
+    // Remove comments. We do not want to parse them anyway.
+    removeComments: function (tpl) {
+      var ldelim = new RegExp(this.smarty.ldelim+'\\*'),
+          rdelim = new RegExp('\\*'+this.smarty.rdelim),
+          newTpl = '';
+
+      for (var openTag=tpl.match(ldelim); openTag; openTag=tpl.match(rdelim)) {
+        newTpl += tpl.slice(0,openTag.index);
+        s = tpl.slice(openTag.index+openTag[0].length);
+        var closeTag = tpl.match(rDelim);
+        if (!closeTag)
+        {
+          throw new Error('Unclosed '+this.smarty.ldelim+'*');
+        }
+        tpl = tpl.slice(closeTag.index+closeTag[0].length);
+      }
+      return newTpl + tpl;
+    },
+
+    // TODO:: Remove this duplicate function.
+    // Apply the filters to template.
+    applyFilters: function(filters, tpl) {
+      for (var i=0; i<filters.length; ++i) {
+        tpl = filters[i](tpl);
+      }
+      return tpl;
+    },
+
     // Tokens to indentify data inside template.
     tokens: [
       {
@@ -579,12 +681,12 @@ function EvalString(s) {
     	  parse: function(s, data) {
     		  // Data inside single quote is like string, we do not parse it.
     		  var regexStr = EvalString(RegExp.$1);
-    		  var dataVar = this.parseText(s, regexStr);
-    		  var dataMod = this.parseModifiers(dataVar.s, dataVar.tree);
+    		  var textTree = this.parseText(regexStr);
+    		  var dataMod = this.parseModifiers(s, textTree);
           if (dataMod) {
     		      return dataMod.tree;
           }
-          return dataVar.tree;
+          return textTree;
   	    }
   	  },
       {
@@ -609,14 +711,49 @@ function EvalString(s) {
           });
           this.parseEmbeddedVars = false;
           var modData = this.parseModifiers(s, tree);
-          return modData.tree;
+          if (modData) {
+            return modData.tree;
+          }
+          return tree;
+        }
+      },
+      {
+        // Token for func().
+        'regex': /^(\w+)\s*[(]([)]?)/,
+        parse: function(s, data) {
+          var funcName = RegExp.$1;
+          var noArgs = RegExp.$2;
+          var params = this.parseParams(((noArgs) ? '' : s), /^\s*,\s*/);
+          var tree = this.parseFunc(funcName, params, []);
+          // var value += params.toString();
+          var dataMod = this.parseModifiers(s.slice(params.toString().length), tree);
+          if (dataMod) {
+            return dataMod.tree;
+          }
+          return tree;
+        }
+      },
+      {
+        // Token for expression in parentheses.
+        'regex': /^\s*\(\s*/,
+        parse: function(s, data) {
+          // We do not know way of manupilating the tree here.
+          return 'parenStart';
+        }
+      },
+      {
+        // Token for end of func() or (expr).
+        'regex': /^\s*\)\s*/,
+        parse: function(s, data) {
+          // We do not know way of manupilating the tree here.
+          return 'parenEnd';
         }
       },
       {
         // Token for increment operator.
         'regex': /^\s*(\+\+|--)\s*/,
         parse: function(s, data) {
-          if (data.tree.length && data.tree[data.tree.length-1].type == 'var') {
+          if (this.lastTreeInExpression.length && this.lastTreeInExpression[this.lastTreeInExpression.length-1].type == 'var') {
             return this.parseOperator(RegExp.$1, 'post-unary', 1);
           } else {
             return this.parseOperator(RegExp.$1, 'pre-unary', 1);
@@ -677,7 +814,7 @@ function EvalString(s) {
         // Regex for +/- operator.
         'regex': /^\s*(\+|-)\s*/,
         parse: function(s, data) {
-          if (!data.tree.length || data.tree[data.tree.length-1].name == 'operator') {
+          if (!this.lastTreeInExpression.length || this.lastTreeInExpression[this.lastTreeInExpression.length-1].name == 'operator') {
             return this.parseOperator(RegExp.$1, 'pre-unary', 4);
           } else {
             return this.parseOperator(RegExp.$1, 'binary', 4);
@@ -841,50 +978,272 @@ function EvalString(s) {
             subTree: subTree,
             subTreeElse: subTreeElse
           };
+        }
+      },
+      setfilter: {
+        type: 'block',
+        parseParams: function(paramStr) {
+          return [this.parseExpression('__t()|' + paramStr).tree];
         },
-        'if': {
-          type: 'block',
-          parse: function(params, content) {
-            var subTreeIf = [],
-                subTreeElse = [];
 
-            var findElse = this.findElseTag('if\\s+[^}]+', '\/if', 'else[^}]*', content);
-            if (findElse) {
-              subTreeIf = this.parse(content.slice(0, findElse.index));
-              content = content.slice(findElse.index+findElse[0].length);
-              var findElseIf = findElse[1].match(/^else\s*if(.*)/);
-              if (findElseIf) {
-                subTreeElse = this.buildInFunctions['if'].parse(this.parseParams(findElseIf[1]), content.replace(/^\n/,''));
-              } else {
-                subTreeElse = this.parse(content.replace(/^\n/,''));
-              }
-            } else {
-              subTreeIf = this.parse(content);
-            }
-            return [{
-              type: 'build-in',
-              name: 'if',
-              params: params,
-              subTreeIf: subTreeIf,
-              subTreeElse: subTreeElse
-            }];
+        parse: function(params, content) {
+          return {
+            type: 'build-in',
+            name: 'setfilter',
+            params: params,
+            subTree: this.parse(content)
+          };
+        }
+      },
+
+      append: {
+        'type': 'function',
+        parse: function (params) {
+          return {
+            type: 'build-in-data',
+            name: 'append',
+            params: params
+          };
+        },
+      },
+
+      assign: {
+        'type': 'function',
+        parse: function (params) {
+          return {
+            type: 'build-in-data',
+            name: 'assign',
+            params: params
+          };
+        },
+      },
+
+      'call': {
+        'type': 'function',
+        parse: function(params) {
+          var type;
+          if (params.assign) {
+            type = 'build-in-data';
+          } else {
+            type = 'build-in';
           }
+          return {
+            type: type,
+            name: 'call',
+            params: params
+          };
+        },
+      },
+
+      capture: {
+        'type': 'block',
+        parse: function(params, content) {
+          var tree = this.parse(content);
+          return {
+            type: 'build-in-data',
+            name: 'capture',
+            params: params,
+            subTree: tree
+          };
+        }
+      },
+
+      include: {
+        'type': 'function',
+        parse: function(params) {
+          var file = TrimAllQuotes(params.file?params.file:params[0]);
+          var nocache = (FindInArray(params, 'nocache') >= 0);
+          var tree = this.getTemplate(file, nocache);
+          var type = 'build-in';
+          if ('assign' in params) {
+            type = 'build-in-data';
+          }
+          return {
+            type: type,
+            name: 'include',
+            params: params,
+            subTree: tree
+          };
+        }
+      },
+
+      'for': {
+        type: 'block',
+        parseParams: function(paramStr) {
+          var res = paramStr.match(/^\s*\$(\w+)\s*=\s*([^\s]+)\s*to\s*([^\s]+)\s*(?:step\s*([^\s]+))?\s*(.*)$/);
+          if (!res) {
+            throw new Error('Invalid {for} parameters: '+paramStr);
+          }
+          return this.parseParams("varName='"+res[1]+"' from="+res[2]+" to="+res[3]+" step="+(res[4]?res[4]:'1')+" "+res[5]);
+        },
+        parse: function(params, content) {
+          var subTree = [];
+          var subTreeElse = [];
+
+          var findElse = this.findElseTag('for\\s[^}]+', '\/for', 'forelse', content);
+          if (findElse) {
+            subTree = this.parse(content.slice(0, findElse.index));
+            subTreeElse = this.parse(content.slice(findElse.index+findElse[0].length));
+          } else {
+            subTree = this.parse(content);
+          }
+          return {
+              type: 'build-in',
+              name: 'for',
+              params: params,
+              subTree: subTree,
+              subTreeElse: subTreeElse
+          };
+        }
+      },
+
+      'if': {
+        type: 'block',
+        parse: function(params, content) {
+          var subTreeIf = [],
+              subTreeElse = [];
+
+          var findElse = this.findElseTag('if\\s+[^}]+', '\/if', 'else[^}]*', content);
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index));
+            content = content.slice(findElse.index+findElse[0].length);
+            var findElseIf = findElse[1].match(/^else\s*if(.*)/);
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['if'].parse(this.parseParams(findElseIf[1]), content.replace(/^\n/,''));
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/,''));
+            }
+          } else {
+            subTreeIf = this.parse(content);
+          }
+          return [{
+            type: 'build-in',
+            name: 'if',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }];
+        }
+      },
+      'foreach': {
+        type: 'block',
+        parseParams: function(paramStr) {
+          var params = {};
+          var res = paramStr.match(/^\s*([$].+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i);
+          //Smarty 3.x syntax => Smarty 2.x syntax
+          if (res) {
+            paramStr = 'from='+res[1] + ' item='+(res[4]||res[2]);
+            if (res[4]) {
+              paramStr += ' key='+res[2];
+            }
+          }
+          return this.parseParams(paramStr);
+        },
+
+        parse: function(params, content) {
+          var subTree = [];
+          var subTreeElse = [];
+
+          var findElse = this.findElseTag('foreach\\s[^}]+', '\/foreach', 'foreachelse', content);
+          if (findElse) {
+            subTree = this.parse(content.slice(0,findElse.index));
+            subTreeElse = this.parse(content.slice(findElse.index+findElse[0].length).replace(/^[\r\n]/,''));
+          } else {
+            subTree = this.parse(content);
+          }
+          return {
+            type: 'build-in',
+            name: 'foreach',
+            params: params,
+            subTree: subTree,
+            subTreeElse: subTreeElse
+          };
+        }
+      },
+
+      'function': {
+        type: 'block',
+        parse: function(params, content) {
+          /* It is the case where we generate tree and keep it aside
+           to be used when called.
+           Keep it as runtime plugin is a better choice.
+          */
+          // Right now, just add a name of plugin in run time, so when we parse
+          // the content inside function and it uses name of same other run time
+          // plugin. it has to be found. Value for it a true, just to make sure it exists.
+          this.runTimePlugins[TrimAllQuotes(params.name?params.name:params[0])] = true;
+
+          var tree = this.parse(content);
+          // We have a tree, now we need to add it to runtime plugins list.
+          // we do not modify this.jSmart object here. It is just
+          // for read purposes. Let us store it as local plugin and end of parsing
+          // we pass it to original jSmart object.
+          this.runTimePlugins[TrimAllQuotes(params.name?params.name:params[0])] = {
+            tree: tree,
+            defaultParams: params
+          };
+          // Do not take this in tree. Skip it.
+          return false;
+        }
+      },
+      // If someone has used {php} tags, we ignore that tag.
+      // Do not want to post errors.
+      php: {
+        type: 'block',
+        parse: function(params, content) {
+          // Do not take this in tree. Skip it.
+          return false;
+        }
+      },
+
+      'extends': {
+        type: 'function',
+        parse: function(params) {
+          return this.getTemplate(TrimAllQuotes(((params.file)?params.file:params[0])));
+        }
+      },
+
+      strip: {
+        type: 'block',
+        parse: function(params, content) {
+          return this.parse(content.replace(/[ \t]*[\r\n]+[ \t]*/g, ''));
+        }
+      },
+
+      literal: {
+        type: 'block',
+        parse: function(params, content) {
+          return this.parseText(content);
+        }
+      },
+
+      ldelim: {
+        type: 'function',
+        parse: function(params, tree) {
+          return this.parseText(this.smarty.ldelim);
+        }
+      },
+
+      rdelim: {
+        type: 'function',
+        parse: function(params, tree) {
+          return this.parseText(this.smarty.rdelim);
+        }
+      },
+
+      'while': {
+        type: 'block',
+        parse: function(params, content) {
+          return {
+            type: 'build-in',
+            name: 'while',
+            params: params,
+            subTree: this.parse(content)
+          };
         }
       }
     }
   };
-// Find in array.
-  function FindInArray(arr, val) {
-    if (Array.prototype.indexOf) {
-      return arr.indexOf(val);
-    }
-    for (var i = 0; i < arr.length; ++i) {
-      if (arr[i] === val) {
-        return i;
-      }
-    }
-    return -1;
-  }
 /**
    * Returns boolean true if object is empty otherwise false.
    *
@@ -918,6 +1277,12 @@ function CountProperties(ob) {
     // Object which is copy of jSmart.smarty for local modification.
     smarty: {},
 
+    // Variable set temporary for processing.
+    tplModifiers: [],
+
+    // Store run time plugins.
+    runTimePlugins: {},
+
     // Process the tree and return the data.
     getProcessed: function (tree, data, that) {
       // Copy the jSmart object, so we could use it while processing.
@@ -925,6 +1290,8 @@ function CountProperties(ob) {
       // Create a copy of smarty object, as we modify that data and
       // we want to keep a copy rather than modifying original jSmart object.
       ObjectMerge(this.smarty, that.smarty);
+      // Copy the runtime plugins.
+      this.runTimePlugins = that.runTimePlugins;
 
       // Process the tree and get the output.
       var output = this.process(tree, data),
@@ -933,6 +1300,7 @@ function CountProperties(ob) {
       // We do not want old data held up here.
       this.jSmart = {};
       this.smarty = {};
+      this.runTimePlugins = {};
       return {
         output: output,
         smarty: smarty
@@ -955,14 +1323,22 @@ function CountProperties(ob) {
           s = this.getVarValue(node, data);
 		    } else if (node.type == 'boolean') {
           s = node.data ? '1' : '';
+        } else if (node.type == 'build-in-data') {
+          data = this.buildInFunctionsData[node.name].process.call(this, node, data);
+          data.smarty = ObjectMerge(data.smarty, this.smarty);
         } else if (node.type == 'build-in') {
           s = this.buildInFunctions[node.name].process.call(this, node, data);
         } else if (node.type == 'plugin') {
-          var plugin = this.plugins[node.name];
-          if (plugin.type == 'block') {
-
-          } else if (plugin.type == 'function') {
-            s = plugin.process(this.getActualParamValues(node.params, data), data);
+          if (this.runTimePlugins[node.name]) {
+            // Thats call for {function}.
+            s = this.buildInFunctions['function'].process.call(this, node, data);
+          } else {
+            var plugin = this.jSmart.plugins[node.name];
+            if (plugin.type == 'block') {
+              // TODO
+            } else if (plugin.type == 'function') {
+              s = plugin.process(this.getActualParamValues(node.params, data), data);
+            }
           }
         }
         if (typeof s == 'boolean') {
@@ -971,6 +1347,8 @@ function CountProperties(ob) {
         if (s == null) {
             s = '';
         }
+
+        data.smarty = ObjectMerge(data.smarty, this.smarty);
         if (tree.length == 1) {
             return s;
         }
@@ -1055,6 +1433,87 @@ function CountProperties(ob) {
       return tpl;
     },
 
+    assignVar: function (name, value, data) {
+      if (name.match(/\[\]$/)) {
+        //ar[] =
+        data[ name.replace(/\[\]$/,'') ].push(value);
+      } else {
+        data[name] = value;
+      }
+      return data;
+    },
+
+    buildInFunctionsData: {
+      append: {
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          var varName = params.__get('var', null, 0);
+          if (!(varName in data) || !(data[varName] instanceof Array)) {
+            data[varName] = [];
+          }
+          var index = params.__get('index', false);
+          var val = params.__get('value', null, 1);
+          if (index === false) {
+            data[varName].push(val);
+          } else {
+            data[varName][index] = val;
+          }
+          return data;
+        }
+      },
+
+      assign: {
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          return this.assignVar(params.__get('var', null, 0), params.__get('value', null, 1), data);
+        }
+      },
+
+      'call': {
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          node.name = node.params.name;
+          var s = this.buildInFunctions['function'].process.call(this, node, data);
+          var assignTo = params.__get('assign', false);
+          return this.assignVar(assignTo, s, data);
+        }
+      },
+
+      capture: {
+        process: function (node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          node.name = ('cap-' + node.params.name);
+          var content = this.process(node.subTree, data);
+          this.smarty.capture[params.__get('name', 'default', 0)] = content;
+          if ('assign' in params) {
+            data = this.assignVar(params.assign, content, data);
+          }
+          var append = params.__get('append', false);
+          if (append) {
+            if (append in data) {
+              if (data[append] instanceof Array) {
+                data[append].push(content);
+              }
+            } else {
+		         data[append] = [content];
+	          }
+          }
+          return data;
+        }
+      },
+
+      include: {
+        process: function (node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          var file = params.__get('file', null, 0);
+          var incData = ObjectMerge({}, data, params);
+          incData.smarty.template = file;
+          var content = this.process(node.subTree, incData);
+          return this.assignVar(params.assign, content, data);
+        }
+      }
+    },
+
     buildInFunctions: {
       expression: {
         process: function(node, data) {
@@ -1068,9 +1527,15 @@ function CountProperties(ob) {
               res = this.process([m],data);
             }
             if (this.jSmart.escapeHtml) {
-              res = modifiers.escape(res);
+              res = this.jSmart.modifiers.escape(res);
             }
             res = this.applyFilters(this.jSmart.globalAndDefaultFilters, res);
+            if (this.tplModifiers.length) {
+              // Write in global scope __t() function is called, it works.
+              // TODO:: Refactor this code.
+              window.__t = function(){ return res; }
+              res = this.process(this.tplModifiers, data);
+            }
           }
           return res;
         }
@@ -1177,10 +1642,10 @@ function CountProperties(ob) {
             return this.process(node.subTreeElse, data);
           }
 
-          var from = parseInt(params.__get('start', 0));
+          var from = parseInt(params.__get('start', 0), 10);
           var to = (params.loop instanceof Object) ? CountProperties(params.loop) : isNaN(params.loop) ? 0 : parseInt(params.loop);
-          var step = parseInt(params.__get('step', 1));
-          var max = parseInt(params.__get('max'));
+          var step = parseInt(params.__get('step', 1), 10);
+          var max = parseInt(params.__get('max'), 10);
           if (isNaN(max)) {
             max = Number.MAX_VALUE;
           }
@@ -1229,6 +1694,50 @@ function CountProperties(ob) {
         }
       },
 
+      setfilter: {
+        process: function(node, data) {
+          this.tplModifiers = node.params;
+          var s = this.process(node.subTree, data);
+          this.tplModifiers = [];
+          return s;
+        }
+      },
+
+      'for': {
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          var from = parseInt(params.__get('from'), 10);
+          var to = parseInt(params.__get('to'), 10);
+          var step = parseInt(params.__get('step'), 10);
+          if (isNaN(step)) {
+            step = 1;
+          }
+          var max = parseInt(params.__get('max'), 10);
+          if (isNaN(max)) {
+            max = Number.MAX_VALUE;
+          }
+
+          var count = 0;
+          var s = '';
+          var total = Math.min( Math.ceil( ((step > 0 ? to-from : from-to)+1) / Math.abs(step)  ), max);
+
+          for (var i=parseInt(params.from, 10); count<total; i+=step,++count) {
+            if (this.smarty['break']) {
+              break;
+            }
+            data[params.varName] = i;
+            s += this.process(node.subTree, data);
+            this.smarty['continue'] = false;
+          }
+          this.smarty['break'] = false;
+
+          if (!count) {
+            s = this.process(node.subTreeElse, data);
+          }
+          return s;
+        }
+      },
+
       'if': {
         process: function(node, data) {
           var value = this.getActualParamValues(node.params, data)[0];
@@ -1241,11 +1750,120 @@ function CountProperties(ob) {
             return this.process(node.subTreeElse, data);
           }
         }
+      },
+
+      'foreach': {
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          var a = params.from;
+          if (typeof a == 'undefined') {
+            a = [];
+          }
+          if (typeof a != 'object') {
+            a = [a];
+          }
+
+          var total = CountProperties(a);
+
+          data[params.item+'__total'] = total;
+          if ('name' in params) {
+            this.smarty.foreach[params.name] = {};
+            this.smarty.foreach[params.name].total = total;
+          }
+
+          var s = '';
+          var i=0;
+          for (var key in a) {
+            if (!a.hasOwnProperty(key)) {
+              continue;
+            }
+
+            if (this.smarty['break']) {
+              break;
+            }
+
+            data[params.item+'__key'] = isNaN(key) ? key : parseInt(key, 10);
+            if ('key' in params) {
+              data[params.key] = data[params.item+'__key'];
+            }
+            data[params.item] = a[key];
+            data[params.item+'__index'] = parseInt(i, 10);
+            data[params.item+'__iteration'] = parseInt(i+1, 10);
+            data[params.item+'__first'] = (i===0);
+            data[params.item+'__last'] = (i==total-1);
+
+            if ('name' in params) {
+              this.smarty.foreach[params.name].index = parseInt(i, 10);
+              this.smarty.foreach[params.name].iteration = parseInt(i+1, 10);
+              this.smarty.foreach[params.name].first = (i===0) ? 1 : '';
+              this.smarty.foreach[params.name].last = (i==total-1) ? 1 : '';
+            }
+
+            ++i;
+
+            s += this.process(node.subTree, data);
+            this.smarty['continue'] = false;
+          }
+          this.smarty['break'] = false;
+
+          data[params.item+'__show'] = (i>0);
+          if (params.name) {
+            this.smarty.foreach[params.name].show = (i>0) ? 1 : '';
+          }
+          if (i > 0) {
+            return s;
+          }
+          return this.process(node.subTreeElse, data);
+        }
+      },
+
+      'call': {
+        process: function (node, data) {
+          node.name = node.params.name;
+          var t = this.buildInFunctions['function'].process.call(this, node, data);
+          return t;
+        }
+      },
+
+      include: {
+        process: function (node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          var file = params.__get('file', null, 0);
+          var incData = ObjectMerge({}, data, params);
+          incData.smarty.template = file;
+          return this.process(node.subTree, incData);
+        }
+      },
+
+      'function': {
+        process: function (node, data) {
+          var funcData = this.runTimePlugins[node.name];
+          var defaults = this.getActualParamValues(funcData.defaultParams, data);
+          delete defaults.name;
+          // We need to get param values for node.params too.
+          node.params = this.getActualParamValues(node.params, data);
+          return this.process(funcData.tree, ObjectMerge({}, data, defaults, node.params));
+        }
+      },
+
+      'while': {
+        process: function(node, data) {
+          var s = '';
+          while (this.getActualParamValues(node.params, data)[0]) {
+            if (this.smarty['break']) {
+                break;
+            }
+            s += this.process(node.subTree, data);
+            this.smarty['continue'] = false;
+          }
+          this.smarty['break'] = false;
+          return s;
+        }
       }
     }
   };
 var
-      version = '2.15.1',
+      version = '3.0.0',
 
       /*
        Define jsmart constructor. jSmart object just stores,
@@ -1272,7 +1890,7 @@ var
     scripts: {},
 
     // List of all modifiers present in the app.
-    modifiers: [],
+    modifiers: {},
 
     // All the modifiers to apply by default to all variables.
     defaultModifiers: [],
@@ -1315,6 +1933,10 @@ var
 
     // Currently disabled, will decide in future, what TODO.
     debugging: false,
+
+    // Store current runtime plugins. Generally used for
+    // {function} tags.
+    runTimePlugins: {},
 
     // Smarty object which has version, delimiters, config, current directory
     // and all blocks like PHP Smarty.
@@ -1380,48 +2002,47 @@ var
         // If delimiters are passed locally take them.
         this.smarty.rdelim = options.rdelim;
       } else if (jSmart.prototype.right_delimiter) {
-        // If no delimiters are passed locally, take global if present.
+        // Backward compatible. Old way to set via prototype.
         this.smarty.rdelim = jSmart.prototype.right_delimiter;
       }
       if (options.ldelim) {
         // If delimiters are passed locally take them.
         this.smarty.ldelim = options.ldelim;
       } else if (jSmart.prototype.left_delimiter) {
-        // If no delimiters are passed locally, take global if present.
+        // Backward compatible. Old way to set via prototype.
         this.smarty.ldelim = jSmart.prototype.left_delimiter;
       }
       if (options.autoLiteral !== undefined) {
         // If autoLiteral is passed locally, take it.
         this.autoLiteral = options.autoLiteral;
       } else if (jSmart.prototype.auto_literal !== undefined) {
-        // If no autoLiteral is passed locally, take global if present.
+        // Backward compatible. Old way to set via prototype.
         this.autoLiteral = jSmart.prototype.auto_literal;
       }
 
       if (options.debugging !== undefined) {
         // If debugging is passed locally, take it.
         this.debugging = options.debugging;
-      } else if (jSmart.prototype.debugging !== undefined) {
-        // If no debugging is passed locally, take global if present.
-        this.debugging = jSmart.prototype.debugging;
+      }
+
+      if (options.escapeHtml !== undefined) {
+        // If escapeHtml is passed locally, take it.
+        this.escapeHtml = options.escapeHtml;
+      } else if (jSmart.prototype.escape_html !== undefined) {
+        // Backward compatible. Old way to set via prototype.
+        this.escapeHtml = jSmart.prototype.escape_html;
       }
 
       // Is template string or at least defined?!
       template = new String(template ? template : '');
-      // Remove comments, we never want them.
-      template = this.removeComments(template);
-      // Make use of linux new comments. It will be consistent across all templates.
-      template = template.replace(/\r\n/g,'\n');
-      // Apply global pre filters to the template. These are global filters,
-      // so we take it from global object, rather than taking it as args to
-      // "new jSmart()" object.
-      template = this.applyFilters(jSmart.prototype.filtersGlobal.pre, template);
 
       // Generate the tree. We pass "this", so Parser can read jSmart.*
       // config values. Please note that, jSmart.* are not supposed to be
       // modified in parsers. We get them here and then update jSmart object.
 
-      this.tree = jSmartParser.getParsed(template, this);
+      var parsedTemplate = jSmartParser.getParsed(template, this);
+      this.tree = parsedTemplate.tree;
+      this.runTimePlugins = parsedTemplate.runTimePlugins;
     },
 
     // Process the generated tree.
@@ -1461,25 +2082,6 @@ var
       return tpl;
     },
 
-    // Remove comments. We do not want to parse them anyway.
-    removeComments: function (tpl) {
-      var ldelim = new RegExp(this.smarty.ldelim+'\\*'),
-          rdelim = new RegExp('\\*'+this.smarty.rdelim),
-          newTpl = '';
-
-      for (var openTag=tpl.match(ldelim); openTag; openTag=tpl.match(rdelim)) {
-        newTpl += tpl.slice(0,openTag.index);
-        s = tpl.slice(openTag.index+openTag[0].length);
-        var closeTag = tpl.match(rDelim);
-        if (!closeTag)
-        {
-          throw new Error('Unclosed '+this.smarty.ldelim+'*');
-        }
-        tpl = tpl.slice(closeTag.index+closeTag[0].length);
-      }
-      return newTpl + tpl;
-    },
-
     // Register a plugin.
     registerPlugin: function (type, name, callback) {
       if (type == 'modifier') {
@@ -1494,14 +2096,6 @@ var
         (this.tree ? this.filters : jSmart.prototype.filtersGlobal)[((type == 'output') ? 'post' : type)].push(callback);
     },
 
-    add: function(thingsToAdd) {
-      for (var i in thingsToAdd) {
-        if (thingsToAdd.hasOwnProperty(i)) {
-          jSmart.prototype[i] = thingsToAdd[i];
-        }
-      }
-    },
-
     addDefaultModifier: function(modifiers) {
       if (!(modifiers instanceof Array)) {
         modifiers = [modifiers];
@@ -1511,6 +2105,22 @@ var
         var data = jSmartParser.parseModifiers('|'+modifiers[i], [0]);
         (this.tree ? this.defaultModifiers : this.defaultModifiersGlobal).push(data.tree[0]);
       }
+    },
+
+    getTemplate: function(name) {
+      throw new Error('No template for ' + name);
+    },
+
+    getFile: function (name) {
+      throw new Error('No file for ' + name);
+    },
+
+    getJavascript: function (name) {
+      throw new Error('No Javascript for ' + name);
+    },
+
+    getConfig: function (name) {
+      throw new Error('No config for ' + name);
     }
   };
 jSmart.prototype.registerPlugin(
@@ -1518,6 +2128,14 @@ jSmart.prototype.registerPlugin(
     'upper',
     function(s) {
       return (new String(s)).toUpperCase();
+    }
+  );
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'lower',
+    function(s) {
+      return (new String(s)).toLowerCase();
     }
   );
 /**
@@ -1531,7 +2149,10 @@ jSmart.prototype.registerPlugin(
    */
   function ExecuteByFuncObject(obj, args) {
     try {
-      return obj.apply(this, args);
+      if (args) {
+        return obj.apply(this, args);
+      }
+      return obj.apply(this);
     } catch (e) {
       throw new Error(e.message);
     }
@@ -1569,7 +2190,7 @@ jSmart.prototype.registerPlugin(
           paramData = [],
           i,
           fname,
-          mergedParams;
+          mergedData;
 
       for (i = 0; i < params.length; ++i) {
         paramNames.push((params.name + '__p'+i));
@@ -1577,22 +2198,31 @@ jSmart.prototype.registerPlugin(
         paramValues[(params.name + '__p' + i)] = params[i];
       }
 
-      mergedParams = ObjectMerge({}, data, paramValues);
+      mergedData = ObjectMerge({}, data, paramValues);
       if (('__owner' in data && params.name in data.__owner)) {
         fname = '__owner.'+params.name;
-        return execute(fname + '(' + paramNames.join(',') + ')', mergedParams);
+        return execute(fname + '(' + paramNames.join(',') + ')', mergedData);
       } else if (jSmart.prototype.modifiers.hasOwnProperty(params.name)) {
         fname = jSmart.prototype.modifiers[params.name]
-        return ExecuteByFuncObject(fname, paramData, mergedParams);
+        return ExecuteByFuncObject(fname, paramData);
       } else {
         fname = params.name;
-        return execute(fname + '(' + paramNames.join(',') + ')', mergedParams);
+        if (paramNames.length) {
+          var values = [];
+          // When function has arguments.
+          for(var i=0; i<paramNames.length; i++) {
+            values.push(mergedData[paramNames[i]]);
+          }
+          return ExecuteByFuncObject(window[fname], values);
+        } else {
+          // When function doesn't has arguments.
+          return ExecuteByFuncObject(window[fname]);
+        }
       }
     }
   );
 
 
- // build.js inserts compiled jQuery here
 
   return jSmart;
 });
