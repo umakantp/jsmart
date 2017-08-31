@@ -1,4 +1,4 @@
-define(['./core', 'util/objectmerge', 'util/executebyobject'], function (jSmart, ObjectMerge, ExecuteByFuncObject) {
+define(['./core', 'util/objectmerge'], function (jSmart, ObjectMerge) {
 
   jSmart.prototype.registerPlugin(
     'function',
@@ -28,39 +28,37 @@ define(['./core', 'util/objectmerge', 'util/executebyobject'], function (jSmart,
     'function',
     '__func',
     function(params, data) {
-      var paramNames = [],
-          paramValues = {},
-          paramData = [],
+      var paramData = [],
           i,
-          fname,
-          mergedData;
+          fname;
 
       for (i = 0; i < params.length; ++i) {
-        paramNames.push((params.name + '__p'+i));
         paramData.push(params[i]);
-        paramValues[(params.name + '__p' + i)] = params[i];
       }
 
-      mergedData = ObjectMerge({}, data, paramValues);
       if (('__owner' in data && params.name in data.__owner)) {
-        fname = '__owner.'+params.name;
-        return execute(fname + '(' + paramNames.join(',') + ')', mergedData);
-      } else if (jSmart.prototype.modifiers.hasOwnProperty(params.name)) {
-        fname = jSmart.prototype.modifiers[params.name]
-        return ExecuteByFuncObject(fname, paramData);
-      } else {
-        fname = params.name;
-        if (paramNames.length) {
-          var values = [];
-          // When function has arguments.
-          for(var i=0; i<paramNames.length; i++) {
-            values.push(mergedData[paramNames[i]]);
-          }
-          return ExecuteByFuncObject(window[fname], values);
+        fname = data['__owner'];
+        if (params.length) {
+          return fname[params.name].apply(fname, params);
         } else {
           // When function doesn't has arguments.
-          return ExecuteByFuncObject(window[fname]);
+          return fname[params.name].apply(fname);
         }
+        // something went wrong.
+        return '';
+      } else if (jSmart.prototype.modifiers.hasOwnProperty(params.name)) {
+        fname = jSmart.prototype.modifiers[params.name]
+        return fname.apply(fname, paramData);
+      } else {
+        fname = params.name;
+
+        if (data[fname]) {
+          return data[fname].apply(data[fname], paramData);
+        } else if (window[fname]) {
+          return window[fname].apply(window[fname], paramData);
+        }
+        // something went wrong.
+        return '';
       }
     }
   );
