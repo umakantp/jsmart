@@ -28,7 +28,7 @@ module.exports = function(grunt) {
 
       config = {
         baseUrl: "src",
-        
+
         name: "jsmart",
 
         // Allow strict mode
@@ -105,8 +105,9 @@ module.exports = function(grunt) {
             // yyyy-mm-ddThh:mmZ
             .replace( /@DATE/g, ( new Date() ).toISOString().replace( /:\d+\.\d+Z$/, "Z" ) );
 
+        name = name ? ( "dist/" + name ) : this.data.dest;
         // Write concatenated source to file
-        grunt.file.write('dist/'+name, compiled);
+        grunt.file.write(name, compiled);
       };
 
       // Trace dependencies and concatenate files

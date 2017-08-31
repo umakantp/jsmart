@@ -1,39 +1,39 @@
-module.exports = function(grunt) {
-  "use strict";
+module.exports = function (grunt) {
+  'use strict'
 
-  grunt.option("filename", "jsmart.js");
+  if (!grunt.option('filename')) {
+    grunt.option('filename', 'jsmart.js')
+  }
 
   grunt.initConfig({
-    pkg: grunt.file.readJSON("package.json"),
+    pkg: grunt.file.readJSON('package.json'),
     build: {
       all: {
-        dest: "dist/<%= grunt.option('filename') %>",
-        minimum: [
-          "core",
-          "selector"
-        ]
+        dest: "dist/<%= grunt.option('filename') %>"
       }
     },
+    eslint: {
+      src: ['src/**/*.js', 'Gruntfile.js', 'karma.conf.js', 'test/**/*.js', 'build/*.js']
+    },
     karma: {
-        unit: {
-            configFile: "karma.conf.js"
-        }
+      unit: {
+        configFile: 'karma.conf.js'
+      }
     },
     uglify: {
-      all : {
+      all: {
         options: {
           preserveComments: false,
-          sourceMap: true,
-          sourceMapName: "dist/<%= grunt.option('filename').replace('.js', '.min.map') %>",
-          report: "min",
-          banner: "/*!\n" +
-          " * jSmart JavaScript template engine (v<%= pkg.version %>)\n" +
-          " * https://github.com/umakantp/jsmart\n" +
-          " * https://opensource.org/licenses/MIT\n" +
-          " *\n" +
-          " * Copyright 2011-2017, Umakant Patil <me @ umakantpatil dot com>\n" +
-          " *                      Max Miroshnikov <miroshnikov at gmail dot com>\n" +
-          " */\n"
+          sourceMap: false,
+          report: 'min',
+          banner: '/*!\n' +
+          ' * jSmart JavaScript template engine (v<%= pkg.version %>)\n' +
+          ' * https://github.com/umakantp/jsmart\n' +
+          ' * https://opensource.org/licenses/MIT\n' +
+          ' *\n' +
+          ' * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>\n' +
+          ' *                      Max Miroshnikov <miroshnikov at gmail dot com>\n' +
+          ' */\n'
         },
         files: {
           "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>": ["dist/<%= grunt.option('filename') %>"]
@@ -45,31 +45,32 @@ module.exports = function(grunt) {
         files: [
           {
             src: "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>",
-            dest: "examples/simple/<%= pkg.name %>.min.js"
+            dest: 'examples/simple/<%= pkg.name %>.min.js'
           },
           {
             src: "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>",
-            dest: "examples/requirejs/js/<%= pkg.name %>.min.js"
+            dest: 'examples/requirejs/js/<%= pkg.name %>.min.js'
           },
           {
             src: "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>",
-            dest: "examples/node/<%= pkg.name %>.min.js"
+            dest: 'examples/node/<%= pkg.name %>.min.js'
           }
         ]
       }
     }
-  });
+  })
 
   // Load grunt tasks from NPM packages
-	require("load-grunt-tasks")(grunt);
+  require('load-grunt-tasks')(grunt)
 
-  // Integrate jQuery specific tasks
-	grunt.loadTasks("build/tasks");
+  // Integrate jSmart specific tasks
+  grunt.loadTasks('build/tasks')
 
-  grunt.loadNpmTasks('grunt-karma');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-contrib-copy');
+  // Register tasks from karma, uglify and copy.
+  grunt.loadNpmTasks('grunt-karma')
+  grunt.loadNpmTasks('grunt-contrib-uglify')
+  grunt.loadNpmTasks('grunt-contrib-copy')
 
-  grunt.registerTask('default', ['karma', 'build', 'uglify', 'copy']);
-
-};
+  // Order goes as test, compile, compress and distribute.
+  grunt.registerTask('default', ['eslint', 'karma', 'build', 'uglify', 'copy'])
+}
