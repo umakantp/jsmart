@@ -19,13 +19,14 @@ module.exports = function(config) {
       {pattern: 'node_modules/requirejs-text/*.js', included: false},
       {pattern: 'test/templates/*.tpl', included: false},
       {pattern: 'test/output/*.tpl', included: false},
-      {pattern: 'src/*.js', included: true},
+      {pattern: 'src/**/*.js', included: false},
       {pattern: 'test/*spec.js', included: false}
     ],
 
 
     // list of files to exclude
     exclude: [
+      'src/wrapper.js'
     ],
 
 
@@ -36,7 +37,7 @@ module.exports = function(config) {
 
 
     // test results reporter to use
-    // possible values: 'dots', 'progress'
+    // possible values: 'spec', 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     //reporters: ['progress'],
     reporters: ['spec'],
@@ -65,7 +66,7 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false,
+    singleRun: true,
 
     // Concurrency level
     // how many browser should be started simultaneous
