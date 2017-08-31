@@ -17,7 +17,20 @@ require.config({
   baseUrl: '/base',
 
   paths: {
-    text: 'node_modules/requirejs-text/text'
+    text: 'node_modules/requirejs-text/text',
+    'jSmart': 'src/jsmart',
+    'core': 'src/core',
+    'plugins': 'src/plugins',
+    'inbuiltModifiers': 'src/inbuiltModifiers',
+    'parser/parser': 'src/parser/parser',
+    'processor/processor': 'src/processor/processor',
+    'util/objectmerge': 'src/util/objectmerge',
+    'util/executebyobject': 'src/util/executebyobject',
+    'util/trimallquotes': 'src/util/trimallquotes',
+    'util/evalstring': 'src/util/evalstring',
+    'util/findinarray': 'src/util/findinarray',
+    'util/isemptyobject': 'src/util/isemptyobject',
+    'util/countproperties': 'src/util/countproperties',
   },
 
   // dynamically load all test files

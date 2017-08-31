@@ -1,21 +1,19 @@
 bar
 4
 prop1
--
-	baz
+-baz
 
-	|bar:
+|bar:
 
-	abcdef
+abcdef
 
-		text value
+text value
 
-		new text value
+new text value
 
-		EMPTY
+EMPTY
 
-	abcdef
-
+abcdef
 
 prop value
 

@@ -78,11 +78,11 @@ str_without_quotes
  //param is an Object's property
  property: txt -
 
-  // change local object
+    // change local object
   zzzz -
 bar
 
-   // set new property
+    // set new property
   new -
 
 -

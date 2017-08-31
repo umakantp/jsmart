@@ -23,16 +23,16 @@ define(['jSmart', 'text!./templates/var.tpl', 'text!./output/var.tpl'], function
 
 	  it("test array/object variable", function() {
 		// Objects.
-	    var t = new jSmart('Hello {$user.name.first}, how are you?');
-	    expect(t.fetch({user: {name: { first: 'Uma'}}})).toBe('Hello Uma, how are you?');
+	    var t = new jSmart('1. Hello {$user.name.first}, how are you?');
+	    expect(t.fetch({user: {name: { first: 'Uma'}}})).toBe('1. Hello Uma, how are you?');
 
 		// Arrays.
-		var t = new jSmart("Hello {$user['name']['first']}, how are you?");
-	    expect(t.fetch({user: {name: { first: 'Uma'}}})).toBe('Hello Uma, how are you?');
+		var t = new jSmart("2. Hello {$user['name']['first']}, how are you?");
+	    expect(t.fetch({user: {name: { first: 'Uma'}}})).toBe('2. Hello Uma, how are you?');
 
 		// Objects.
-		var t = new jSmart("Hello {$user->name->first}, how are you?");
-	    expect(t.fetch({user: {name: { first: 'Uma'}}})).toBe('Hello Uma, how are you?');
+		var t = new jSmart("3. Hello {$user->name->first}, how are you?");
+	    expect(t.fetch({user: {name: { first: 'Uma'}}})).toBe('3. Hello Uma, how are you?');
 	  });
 
 	  it("test comment", function() {

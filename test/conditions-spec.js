@@ -7,7 +7,7 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function(j
         return (params.s.length == 0);
       }
     );
-    
+
     jSmart.prototype.registerPlugin(
   	    'function',
   	    'sayHello',
@@ -100,6 +100,7 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function(j
       expect(t.fetch({x: false, y: 'yo', z: {a: {b: true}}})).toBe(output);
     });
 
+    
     it("test complex template", function() {
 			// Insert complex statements in the template and test them.
 			var t = new jSmart(smartyTpl);
