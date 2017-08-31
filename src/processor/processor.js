@@ -1,13 +1,7 @@
-define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties'], function (FindInArray, IsEmptyObject, CountProperties) {
+define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties', '../util/objectmerge'], function (FindInArray, IsEmptyObject, CountProperties, ObjectMerge) {
 
   // Processor object. Plain object which just does processing.
   var jSmartProcessor = {
-
-    // jSmart object used for current processing.
-    jSmart: {},
-
-    // Object which is copy of jSmart.smarty for local modification.
-    smarty: {},
 
     // Variable set temporary for processing.
     tplModifiers: [],
@@ -15,27 +9,42 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
     // Store run time plugins.
     runTimePlugins: {},
 
-    // Process the tree and return the data.
-    getProcessed: function (tree, data, that) {
-      // Copy the jSmart object, so we could use it while processing.
-      this.jSmart = that;
-      // Create a copy of smarty object, as we modify that data and
-      // we want to keep a copy rather than modifying original jSmart object.
-      ObjectMerge(this.smarty, that.smarty);
-      // Copy the runtime plugins.
-      this.runTimePlugins = that.runTimePlugins;
+    // Plugins function to use for processing.
+    // They are added later from jSmart, so we need a copy here.
+    plugins: {},
 
-      // Process the tree and get the output.
-      var output = this.process(tree, data),
-          smarty = this.smarty;
-      // Empty parser objects. Clean up.
-      // We do not want old data held up here.
-      this.jSmart = {};
-      this.smarty = {};
+    // Modifiers function to use for processing.
+    // They are added later from jSmart, so we need a copy here.
+    modifiers: {},
+
+    // Variable modifiers default to be applied.
+    defaultModifiers: {},
+
+    // If to escape html?.
+    escapeHtml: false,
+
+    // All filters for variable to run.
+    variableFilters:  [],
+
+    clear: function() {
+      // Clean up config, specific for this processing.
       this.runTimePlugins = {};
+      this.variableFilters = [];
+      this.escapeHtml = false;
+      this.defaultModifiers = {};
+      this.modifiers = {};
+      this.plugins = {};
+    },
+
+    // Process the tree and return the data.
+    getProcessed: function (tree, data) {
+      // Process the tree and get the output.
+      var output = this.process(tree, data);
+      this.clear();
+
       return {
-        output: output,
-        smarty: smarty
+        output: output.tpl,
+        smarty: output.smarty
       };
     },
 
@@ -44,28 +53,45 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       var res = '',
           i,
           s,
-          node;
+          node,
+          tmp;
 
       for (i = 0; i < tree.length; ++i) {
         s = '';
         node = tree[i];
+
         if (node.type == 'text') {
           s = node.data;
 		    } else if (node.type == 'var') {
           s = this.getVarValue(node, data);
 		    } else if (node.type == 'boolean') {
           s = node.data ? '1' : '';
-        } else if (node.type == 'build-in-data') {
-          data = this.buildInFunctionsData[node.name].process.call(this, node, data);
-          data.smarty = ObjectMerge(data.smarty, this.smarty);
         } else if (node.type == 'build-in') {
-          s = this.buildInFunctions[node.name].process.call(this, node, data);
+          tmp = this.buildInFunctions[node.name].process.call(this, node, data);
+          if (tmp.tpl !== undefined) {
+            // If tmp is object, which means it has modified, data also
+            // so copy it back to data.
+            s = tmp.tpl;
+            data = tmp.data;
+          } else {
+            // If tmp is string means it has not modified data.
+            s = tmp;
+          }
         } else if (node.type == 'plugin') {
           if (this.runTimePlugins[node.name]) {
             // Thats call for {function}.
-            s = this.buildInFunctions['function'].process.call(this, node, data);
+            tmp = this.buildInFunctions['function'].process.call(this, node, data);
+            if (tmp.tpl !== undefined) {
+              // If tmp is object, which means it has modified, data also
+              // so copy it back to data.
+              s = tmp.tpl;
+              data = tmp.data;
+            } else {
+              // If tmp is string means it has not modified data.
+              s = tmp;
+            }
           } else {
-            var plugin = this.jSmart.plugins[node.name];
+            var plugin = this.plugins[node.name];
             if (plugin.type == 'block') {
               // TODO
             } else if (plugin.type == 'function') {
@@ -79,14 +105,16 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         if (s == null) {
             s = '';
         }
-
-        data.smarty = ObjectMerge(data.smarty, this.smarty);
         if (tree.length == 1) {
-            return s;
+          return {tpl: s, data: data};
         }
         res += ((s!==null) ? s : '');
+
+        if (data.smarty.continue || data.smarty.break) {
+          return {tpl: res, data: data};
+        }
       }
-      return res;
+      return {tpl: res, data: data};
     },
 
     getActualParamValues: function (params, data) {
@@ -94,6 +122,10 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       for (var name in params.__parsed) {
         if (params.__parsed.hasOwnProperty(name)) {
           var v = this.process([params.__parsed[name]], data);
+          if (v !== undefined) {
+            data = v.data;
+            v = v.tpl;
+          }
           actualParams[name] = v;
         }
       }
@@ -123,27 +155,40 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         if (part.type == 'plugin' && part.name == '__func' && part.hasOwner) {
             data.__owner = v;
             v = this.process([node.parts[i]], data);
+            if (v.tpl !== undefined) {
+              data = v.data;
+              v = v.tpl;
+            }
             delete data.__owner;
         } else {
           name = this.process([part], data);
+          if (name !== undefined) {
+            data = name.data;
+            name = name.tpl;
+          }
 
           // Section Name
-          if (name in this.smarty.section && part.type=='text' && (this.process([node.parts[0]], data) != 'smarty')) {
-            name = this.smarty.section[name].index;
+          var processOutput = this.process([node.parts[0]], data);
+          if (processOutput !== undefined) {
+            data = processOutput.data;
+            processOutput = processOutput.tpl;
+          }
+          if (name in data.smarty.section && part.type=='text' && (processOutput != 'smarty')) {
+            name = data.smarty.section[name].index;
           }
 
           // Add to array
-          if (!name && typeof val != 'undefined' && v instanceof Array) {
+          if (!name && typeof value != 'undefined' && v instanceof Array) {
             name = v.length;
           }
 
           // Set new value.
           if (value != undefined && i == (node.parts.length - 1)) {
-              v[name] = value;
+            v[name] = value;
           }
 
           if (typeof v == 'object' && v !== null && name in v) {
-              v = v[name];
+            v = v[name];
           } else {
             if (value == undefined) {
               return value;
@@ -175,7 +220,45 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       return data;
     },
 
-    buildInFunctionsData: {
+    buildInFunctions: {
+      expression: {
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data),
+              res = this.process([node.expression], data);
+
+          if (res !== undefined) {
+            data = res.data;
+            res = res.tpl;
+          }
+          if (FindInArray(params, 'nofilter') < 0) {
+            for (var i=0; i < this.defaultModifiers.length; ++i) {
+              var m = this.defaultModifiers[i];
+              m.params.__parsed[0] = {type: 'text', data: res};
+              res = this.process([m], data);
+              if (res !== undefined) {
+                data = res.data;
+                res = res.tpl;
+              }
+            }
+            if (this.escapeHtml) {
+              res = this.modifiers.escape(res);
+            }
+            res = this.applyFilters(this.variableFilters, res);
+            if (this.tplModifiers.length) {
+              // Write in global scope __t() function is called, it works.
+              // TODO:: Refactor this code.
+              window.__t = function(){ return res; }
+              res = this.process(this.tplModifiers, data);
+              if (res !== undefined) {
+                data = res.data;
+                res = res.tpl;
+              }
+            }
+          }
+          return {tpl: res, data: data};
+        }
+      },
+
       append: {
         process: function(node, data) {
           var params = this.getActualParamValues(node.params, data);
@@ -190,24 +273,14 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           } else {
             data[varName][index] = val;
           }
-          return data;
+          return {tpl: '', data: data};
         }
       },
 
       assign: {
         process: function(node, data) {
           var params = this.getActualParamValues(node.params, data);
-          return this.assignVar(params.__get('var', null, 0), params.__get('value', null, 1), data);
-        }
-      },
-
-      'call': {
-        process: function(node, data) {
-          var params = this.getActualParamValues(node.params, data);
-          node.name = node.params.name;
-          var s = this.buildInFunctions['function'].process.call(this, node, data);
-          var assignTo = params.__get('assign', false);
-          return this.assignVar(assignTo, s, data);
+          return {tpl: '', data: this.assignVar(params.__get('var', null, 0), params.__get('value', null, 1), data)};
         }
       },
 
@@ -216,7 +289,12 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           var params = this.getActualParamValues(node.params, data);
           node.name = ('cap-' + node.params.name);
           var content = this.process(node.subTree, data);
-          this.smarty.capture[params.__get('name', 'default', 0)] = content;
+          if (content !== undefined) {
+            data = content.data;
+            content = content.tpl;
+          }
+          content = content.replace(/^\n/, '');
+          data.smarty.capture[params.__get('name', 'default', 0)] = content;
           if ('assign' in params) {
             data = this.assignVar(params.assign, content, data);
           }
@@ -230,46 +308,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 		         data[append] = [content];
 	          }
           }
-          return data;
-        }
-      },
-
-      include: {
-        process: function (node, data) {
-          var params = this.getActualParamValues(node.params, data);
-          var file = params.__get('file', null, 0);
-          var incData = ObjectMerge({}, data, params);
-          incData.smarty.template = file;
-          var content = this.process(node.subTree, incData);
-          return this.assignVar(params.assign, content, data);
-        }
-      }
-    },
-
-    buildInFunctions: {
-      expression: {
-        process: function(node, data) {
-          var params = this.getActualParamValues(node.params, data),
-              res = this.process([node.expression], data);
-
-          if (FindInArray(params, 'nofilter') < 0) {
-            for (var i=0; i < this.jSmart.defaultModifiers.length; ++i) {
-              var m = this.jSmart.defaultModifiers[i];
-              m.params.__parsed[0] = {type: 'text', data: res};
-              res = this.process([m],data);
-            }
-            if (this.jSmart.escapeHtml) {
-              res = this.jSmart.modifiers.escape(res);
-            }
-            res = this.applyFilters(this.jSmart.globalAndDefaultFilters, res);
-            if (this.tplModifiers.length) {
-              // Write in global scope __t() function is called, it works.
-              // TODO:: Refactor this code.
-              window.__t = function(){ return res; }
-              res = this.process(this.tplModifiers, data);
-            }
-          }
-          return res;
+          return {tpl: '', data: data};
         }
       },
 
@@ -285,7 +324,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       				this.getVarValue(node.params.__parsed[0], data, arg2);
               return '';
       			} else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/)) {
-      				arg1 = getVarValue(node.params.__parsed[0], data);
+      				arg1 = this.getVarValue(node.params.__parsed[0], data);
       				switch (node.op) {
       				  case '+=': {
                   arg1+=arg2;
@@ -366,7 +405,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           var params = this.getActualParamValues(node.params, data);
 
           var props = {};
-          this.smarty.section[params.__get('name', null, 0)] = props;
+          data.smarty.section[params.__get('name', null, 0)] = props;
 
           var show = params.__get('show', true);
           props.show = show;
@@ -403,7 +442,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           count = 0;
           var s = '';
           for (i=from; i>=0 && i<to && count<max; i+=step,++count) {
-            if (this.smarty['break']) {
+            if (data.smarty.break) {
               break;
             }
 
@@ -414,13 +453,17 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             props.index_next = i+step;
             props.iteration = props.rownum = count+1;
 
-            s += this.process(node.subTree, data);
-            this.smarty['continue'] = false;
+            var tmp = this.process(node.subTree, data);
+            if (tmp !== undefined) {
+              data = tmp.data;
+              s += tmp.tpl;
+            }
+            data.smarty.continue = false;
           }
-          this.smarty['break'] = false;
+          data.smarty.break = false;
 
           if (count) {
-            return s;
+            return {tpl: s, data: data};
           }
           return this.process(node.subTreeElse, data);
         }
@@ -430,8 +473,12 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         process: function(node, data) {
           this.tplModifiers = node.params;
           var s = this.process(node.subTree, data);
+          if (s !== undefined) {
+            data = s.data;
+            s =  s.tpl;
+          }
           this.tplModifiers = [];
-          return s;
+          return {tpl: s, data: data};
         }
       },
 
@@ -454,19 +501,27 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           var total = Math.min( Math.ceil( ((step > 0 ? to-from : from-to)+1) / Math.abs(step)  ), max);
 
           for (var i=parseInt(params.from, 10); count<total; i+=step,++count) {
-            if (this.smarty['break']) {
+            if (data.smarty.break) {
               break;
             }
             data[params.varName] = i;
-            s += this.process(node.subTree, data);
-            this.smarty['continue'] = false;
+            var tmp = this.process(node.subTree, data);
+            if (tmp !== undefined) {
+              data = tmp.data;
+              s += tmp.tpl;
+            }
+            data.smarty.continue = false;
           }
-          this.smarty['break'] = false;
+          data.smarty.break = false;
 
           if (!count) {
-            s = this.process(node.subTreeElse, data);
+            var tmp2 = this.process(node.subTreeElse, data);
+            if (tmp2 !== undefined) {
+              data = tmp2.data;
+              s = tmp2.tpl;
+            }
           }
-          return s;
+          return {tpl: s, data: data};
         }
       },
 
@@ -481,6 +536,12 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           } else {
             return this.process(node.subTreeElse, data);
           }
+        }
+      },
+
+      nocache: {
+        process: function(node, data) {
+          return this.process(node.subTree, data);
         }
       },
 
@@ -499,8 +560,8 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
           data[params.item+'__total'] = total;
           if ('name' in params) {
-            this.smarty.foreach[params.name] = {};
-            this.smarty.foreach[params.name].total = total;
+            data.smarty.foreach[params.name] = {};
+            data.smarty.foreach[params.name].total = total;
           }
 
           var s = '';
@@ -510,7 +571,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
               continue;
             }
 
-            if (this.smarty['break']) {
+            if (data.smarty.break) {
               break;
             }
 
@@ -525,22 +586,26 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             data[params.item+'__last'] = (i==total-1);
 
             if ('name' in params) {
-              this.smarty.foreach[params.name].index = parseInt(i, 10);
-              this.smarty.foreach[params.name].iteration = parseInt(i+1, 10);
-              this.smarty.foreach[params.name].first = (i===0) ? 1 : '';
-              this.smarty.foreach[params.name].last = (i==total-1) ? 1 : '';
+              data.smarty.foreach[params.name].index = parseInt(i, 10);
+              data.smarty.foreach[params.name].iteration = parseInt(i+1, 10);
+              data.smarty.foreach[params.name].first = (i===0) ? 1 : '';
+              data.smarty.foreach[params.name].last = (i==total-1) ? 1 : '';
             }
 
             ++i;
 
-            s += this.process(node.subTree, data);
-            this.smarty['continue'] = false;
+            var tmp2 = this.process(node.subTree, data);
+            if (tmp2 !== undefined) {
+              data = tmp2.data;
+              s += tmp2.tpl;
+            }
+            data.smarty.continue = false;
           }
-          this.smarty['break'] = false;
+          data.smarty.break = false;
 
           data[params.item+'__show'] = (i>0);
           if (params.name) {
-            this.smarty.foreach[params.name].show = (i>0) ? 1 : '';
+            data.smarty.foreach[params.name].show = (i>0) ? 1 : '';
           }
           if (i > 0) {
             return s;
@@ -550,10 +615,16 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       },
 
       'call': {
-        process: function (node, data) {
-          node.name = node.params.name;
-          var t = this.buildInFunctions['function'].process.call(this, node, data);
-          return t;
+        process: function(node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          var newNode = {name: params.__get('name'), params: node.params };
+          var s = this.buildInFunctions['function'].process.call(this, newNode, data);
+          var assignTo = params.__get('assign', false);
+          if (assignTo) {
+            return {tpl:'', data: this.assignVar(assignTo, s, data)};
+          } else {
+            return s;
+          }
         }
       },
 
@@ -563,18 +634,76 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           var file = params.__get('file', null, 0);
           var incData = ObjectMerge({}, data, params);
           incData.smarty.template = file;
-          return this.process(node.subTree, incData);
+          var content = this.process(node.subTree, incData);
+          if (content !== undefined) {
+            // We do not copy data from child template, to the parent.
+            // Child template can use parent data blocks, but does
+            // send it back to parent.
+            // data = content.data;
+            content = content.tpl;
+          }
+          if (params.assign) {
+            return {tpl: '', data: this.assignVar(params.assign, content, data)};
+          } else {
+            return content;
+          }
+        }
+      },
+
+      counter: {
+        process: function (node, data) {
+          var params = this.getActualParamValues(node.params, data);
+          var name = params.__get('name', 'default');
+          if (name in data.smarty.counter) {
+            var counter = data.smarty.counter[name];
+            if ('start' in params) {
+              counter.value = parseInt(params['start'], 10);
+            } else {
+              counter.value = parseInt(counter.value, 10);
+              counter.skip = parseInt(counter.skip, 10);
+              if ('down' == counter.direction) {
+                counter.value -= counter.skip;
+              } else {
+                  counter.value += counter.skip;
+              }
+            }
+            counter.skip = params.__get('skip', counter.skip);
+            counter.direction = params.__get('direction', counter.direction);
+            counter.assign = params.__get('assign', counter.assign);
+            data.smarty.counter[name] = counter;
+          } else {
+            data.smarty.counter[name] = {
+              value: parseInt(params.__get('start', 1), 10),
+              skip: parseInt(params.__get('skip', 1), 10),
+              direction: params.__get('direction', 'up'),
+              assign: params.__get('assign', false)
+            };
+          }
+          if (data.smarty.counter[name].assign) {
+            data[data.smarty.counter[name].assign] = data.smarty.counter[name].value;
+            return {tpl: '', data: data};
+          }
+          if (params.__get('print', true)) {
+            return {tpl: data.smarty.counter[name].value, data: data};
+          }
+          // User didn't assign and also said, print false.
+          return {tpl: '', data: data};
         }
       },
 
       'function': {
         process: function (node, data) {
+
           var funcData = this.runTimePlugins[node.name];
           var defaults = this.getActualParamValues(funcData.defaultParams, data);
           delete defaults.name;
           // We need to get param values for node.params too.
-          node.params = this.getActualParamValues(node.params, data);
-          return this.process(funcData.tree, ObjectMerge({}, data, defaults, node.params));
+          var params = this.getActualParamValues(node.params, data);
+
+          var obj = this.process(funcData.tree, ObjectMerge({}, data, defaults, params));
+          // We do not return data:data like other built in  functions. Because node.params are specific
+          // as argument for this function and we do not want modifify original object with this value.
+          return obj.tpl;
         }
       },
 
@@ -582,14 +711,18 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         process: function(node, data) {
           var s = '';
           while (this.getActualParamValues(node.params, data)[0]) {
-            if (this.smarty['break']) {
+            if (data.smarty.break) {
                 break;
             }
-            s += this.process(node.subTree, data);
-            this.smarty['continue'] = false;
+            var tmp2 = this.process(node.subTree, data);
+            if (tmp2 !== undefined) {
+              data = tmp2.data;
+              s += tmp2.tpl;
+            }
+            data.smarty.continue = false;
           }
-          this.smarty['break'] = false;
-          return s;
+          data.smarty.break = false;
+          return {tpl: s, data: data};
         }
       }
     }

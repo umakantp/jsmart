@@ -3,27 +3,45 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
   // Parser object. Plain object which just does parsing.
   var jSmartParser = {
 
-    // jSmart object used for current parsing.
-    jSmart: {},
-
-    // Object which is copy of jSmart.smarty for local modification.
-    smarty: {},
-
     // Cached templates.
     files: {},
+
+    // Default left delimiter.
+    ldelim: '{',
+
+    // Default right delimiter.
+    rdelim: '}',
+
+    // Default auto literal value.
+    autoLiteral: true,
 
     // Store runtime generated runtime plugins.
     runTimePlugins: {},
 
-    // Parse the template and return the data.
-    getParsed: function (template, that) {
-      var tree, smarty, runTimePlugins;
-      // Copy the jSmart object, so we could use it while parsing.
-      this.jSmart = that;
-      // Create a copy of smarty object, as we modify that data and
-      // we want to keep a copy rather than modifying original jSmart object.
-      ObjectMerge(this.smarty, that.smarty);
+    // Plugins function to use for parsing.
+    // They are added later from jSmart, so we need a copy here.
+    plugins: {},
 
+    // Listing down all pre filters, before processing a template.
+    preFilters: [],
+
+    getTemplate: function(name) {
+      throw new Error('no getTemplate function defined.');
+    },
+
+    clear: function() {
+      // Clean up config, specific for this parsing.
+      this.runTimePlugins = {};
+      this.preFilters = [];
+      this.autoLiteral = true;
+      this.plugins = {};
+      this.ldelim = '{';
+      this.rdelim = '}';
+    },
+
+    // Parse the template and return the data.
+    getParsed: function (template) {
+      var tree = [], runTimePlugins;
       // Remove comments, we never want them.
       template = this.removeComments(template);
       // Make use of linux new comments. It will be consistent across all templates.
@@ -31,17 +49,20 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       // Apply global pre filters to the template. These are global filters,
       // so we take it from global object, rather than taking it as args to
       // "new jSmart()" object.
-      template = this.applyFilters(this.jSmart.filtersGlobal.pre, template);
+      template = this.applyFilters(this.preFilters, template);
 
       // Parse the template and get the output.
-      tree = this.parse(template),
-      smarty = this.smarty;
+      tree = this.parse(template);
+      // console.log(tree);
+
+      // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins;
-      // Empty parser objects. Clean up.
-      // We do not want old data held up here.
-      this.jSmart = {};
-      this.smarty = {};
-      return {tree: tree, runTimePlugins: runTimePlugins };
+
+      this.clear();
+      // Nope, we do not want to clear the cache.
+      // Refactor to maintain cache. Until that keep commented.
+      // this.files = {};
+      return {tree: tree, runTimePlugins: runTimePlugins};
     },
 
     // Parse the template and generate tree.
@@ -52,7 +73,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           name,
           paramStr,
           node;
-
       for (openTag = this.findTag('', tpl); openTag; openTag = this.findTag('', tpl))  {
         if (openTag.index) {
           tree = tree.concat(this.parseText(tpl.slice(0, openTag.index)));
@@ -87,13 +107,22 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
                 // tree = []; //throw away further parsing except for {block}
               }
             }
-            tpl = tpl.replace(/^\n/,'');
+            tpl = tpl.replace(/^\n/, '');
           } else if (name in this.runTimePlugins) {
             // Possible it is function name. give it a priority before plugin.
-            var plugin = this.runTimePlugins[name];
-            tree.push((this.parsePluginFunc(name, this.parseParams(paramStr))[0]));
-          } else if (name in this.jSmart.plugins) {
-
+            tree = tree.concat(this.parsePluginFunc(name, this.parseParams(paramStr)));
+          } else if (name in this.plugins) {
+            var plugin = this.plugins[name];
+            if (plugin.type == 'block') {
+              var closeTag = this.findCloseTag('\/'+name, name+' +[^}]*', s);
+              tree = tree.concat(this.parsePluginBlock(name, this.parseParams(paramStr), s.slice(0,closeTag.index)));
+              tpl = tpl.slice(closeTag.index+closeTag[0].length);
+            } else if (plugin.type == 'function') {
+              tree = tree.concat(this.parsePluginFunc(name, this.parseParams(paramStr)));
+            }
+            if (name == 'append' || name == 'assign' || name == 'capture' || name == 'eval' ||  name == 'include') {
+              tpl = tpl.replace(/^\n/, '');
+            }
           } else {
             // Variable.
             node = this.buildInFunctions.expression.parse.call(this, openTag[1]);
@@ -102,16 +131,17 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         } else {
           // Variable.
           node = this.buildInFunctions.expression.parse.call(this, openTag[1]);
-          if (node.type=='build-in' && node.name=='operator' && node.op == '=') {
+          if (node.expression.type=='build-in' && node.expression.name=='operator' && node.expression.op == '=') {
             tpl = tpl.replace(/^\n/, '');
           }
           tree.push(node);
+        }
+        if (tree.length >= 3) {
         }
       }
       if (tpl) {
         tree = tree.concat(this.parseText(tpl));
       }
-      console.log(tree);
       return tree;
     },
 
@@ -120,9 +150,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       var openCount = 0,
           offset = 0,
           i,
-          ldelim = this.smarty.ldelim,
-          rdelim = this.smarty.rdelim,
-          skipInWhitespace = this.jSmart.autoLiteral,
+          ldelim = this.ldelim,
+          rdelim = this.rdelim,
+          skipInWhitespace = this.autoLiteral,
           expressionAny = /^\s*(.+)\s*$/i,
           expressionTag = expression ? new RegExp('^\\s*('+expression+')\\s*$','i') : expressionAny,
           sTag,
@@ -192,7 +222,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         }
         closeTag = this.findTag(expressionClose, s);
         if (!closeTag) {
-          throw new Error('Unclosed '+this.smarty.ldelim+expressionOpen+this.smarty.rdelim);
+          throw new Error('Unclosed '+this.ldelim+expressionOpen+this.rdelim);
         }
         sInner += s.slice(0, closeTag.index);
         findIndex += closeTag.index;
@@ -263,19 +293,24 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return false;
     },
 
-    parseVar: function (s, name) {
+    parseVar: function (s, name, token) {
       var expression = /^(?:\.|\s*->\s*|\[\s*)/,
           op,
           data = {value: '', tree: []},
           lookUpData,
-          token = '',
-          parts = [{type: 'text', data: name}];
-
+          value = '',
+          parsedData,
+          parts = [{type: 'text', data: name}],
+          rootName = token;
+      if (!token) {
+        token = name;
+        rootName = token;
+      }
       for (op = s.match(expression); op; op = s.match(expression)) {
         token += op[0];
         s = s.slice(op[0].length);
         if (op[0].match(/\[/)) {
-          data = this.parseExpression(s);
+          data = this.parseExpression(s, true);
           if (data.tree) {
             token += data.value;
             parts.push(data.tree);
@@ -289,9 +324,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         } else {
           var parseMod = this.parseModifiersStop;
           this.parseModifiersStop = true;
-          lookUpData = this.lookUp(s, data.value);
+          lookUpData = this.lookUp(s, '');
           if (lookUpData) {
-            data.tree = data.tree.concat(lookUpData.tree);
+            data.tree = [].concat(data.tree, lookUpData.tree);
             data.value = lookUpData.value;
             token += lookUpData.value;
 
@@ -312,8 +347,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           parts.push({type:'text', data:''});
         }
       }
+      value = token.substr(rootName.length);
 
-      return {s: s, token: token, tree: [{type: 'var', parts: parts}]};
+      return {s: s, token: token, tree: [{type: 'var', parts: parts}], value: value};
     },
 
     parseFunc: function(name, params, tree) {
@@ -337,7 +373,16 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       }];
     },
 
-    parsePluginFunc: function (name, params) {
+    parsePluginBlock: function(name, params, content) {
+      return [{
+          type: 'plugin',
+          name: name,
+          params: params,
+          subTree: this.parse(content, [])
+      }];
+    },
+
+    parsePluginFunc: function(name, params) {
       return [{
           type: 'plugin',
           name: name,
@@ -456,19 +501,21 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     },
 
     lookUp: function (s, value) {
-      var tree = [];
+      var tree = [], tag;
       if (!s) {
         return false;
       }
-
-      if (s.substr(0, this.smarty.ldelim) == this.smarty.ldelim) {
-        // TODO :: Explore more where it is used.
+      if (s.substr(0, this.ldelim.length) == this.ldelim) {
         tag = this.findTag('', s);
         value += tag[0];
         if (tag) {
-          tree.concat(this.parse(tag[0]));
+          var t = this.parse(tag[0]);
+          tree = tree.concat(t);
           var modData = this.parseModifiers(s.slice(value.length), tree);
-          return {ret: true, tree: modData.tree, value: value};
+          if (modData) {
+            return {ret: true, tree: modData.tree, value: modData.value};
+          }
+          return {ret: true, tree: tree, value: value};
         }
       }
 
@@ -476,6 +523,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       if (anyMatchingToken !== false) {
         value += RegExp.lastMatch;
         var newTree = this.tokens[anyMatchingToken].parse.call(this, s.slice(RegExp.lastMatch.length), { tree: tree, token: RegExp.lastMatch });
+
         if (typeof newTree == 'string') {
           if (newTree == 'parenStart') {
             var blankTree = [];
@@ -492,8 +540,10 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           // only getting tree (no value should be needed.)
           value += newTree.value;
           newTree = newTree.tree;
+          tree = tree.concat(newTree);
+        } else {
+          tree = tree.concat(newTree);
         }
-        tree = tree.concat(newTree);
         return {ret: true, tree: tree, value: value};
       }
       return {ret: false, tree: tree, value: value};
@@ -515,17 +565,17 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           tree = tree.concat(data.tree);
           value = data.value;
           this.lastTreeInExpression = tree;
-          if (!data.ret) {
+          if (!data.ret)  {
             break;
           }
         } else {
           break;
         }
       }
-      if (!tree.length) {
-        return false;
+      if (tree.length) {
+        tree = this.composeExpression(tree);
       }
-      tree = this.composeExpression(tree);
+
       return {tree: tree, value: value};
     },
 
@@ -550,16 +600,16 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return tree;
     },
 
-    getTemplate: function(name, nocache) {
+    loadTemplate: function(name, nocache) {
       var tree = [];
       if (nocache || !(name in this.files)) {
-        var tpl = this.jSmart.getTemplate(name);
+        var tpl = this.getTemplate(name);
         if (typeof(tpl) != 'string') {
             throw new Error('No template for '+ name);
         }
         // TODO:: Duplicate code like getParsed. Refactor.
         tpl = this.removeComments(tpl.replace(/\r\n/g, '\n'));
-        tpl = this.applyFilters(this.jSmart.filtersGlobal.pre, tpl);
+        tpl = this.applyFilters(this.preFilters, tpl);
         tree = this.parse(tpl);
         this.files[name] = tree;
       } else {
@@ -570,17 +620,17 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
     // Remove comments. We do not want to parse them anyway.
     removeComments: function (tpl) {
-      var ldelim = new RegExp(this.smarty.ldelim+'\\*'),
-          rdelim = new RegExp('\\*'+this.smarty.rdelim),
+      var ldelim = new RegExp(this.ldelim+'\\*'),
+          rdelim = new RegExp('\\*'+this.rdelim),
           newTpl = '';
 
       for (var openTag=tpl.match(ldelim); openTag; openTag=tpl.match(rdelim)) {
         newTpl += tpl.slice(0,openTag.index);
-        s = tpl.slice(openTag.index+openTag[0].length);
-        var closeTag = tpl.match(rDelim);
+        tpl = tpl.slice(openTag.index+openTag[0].length);
+        var closeTag = tpl.match(rdelim);
         if (!closeTag)
         {
-          throw new Error('Unclosed '+this.smarty.ldelim+'*');
+          throw new Error('Unclosed '+ldelim+'*');
         }
         tpl = tpl.slice(closeTag.index+closeTag[0].length);
       }
@@ -602,13 +652,13 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         // Token for variable.
         'regex': /^\$([\w@]+)/,
         parse: function(s, data) {
-          var dataVar = this.parseVar(s, RegExp.$1);
+          var dataVar = this.parseVar(s, RegExp.$1, RegExp.$1);
           var dataMod = this.parseModifiers(dataVar.s, dataVar.tree);
           if (dataMod) {
             dataVar.value += dataMod.value;
-            return dataMod.tree;
+            return dataMod;
           }
-          return dataVar.tree;
+          return dataVar;
         }
       },
   	  {
@@ -627,7 +677,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     		  var textTree = this.parseText(regexStr);
     		  var dataMod = this.parseModifiers(s, textTree);
           if (dataMod) {
-    		      return dataMod.tree;
+    		      return dataMod;
           }
           return textTree;
   	    }
@@ -640,8 +690,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           var v = EvalString(RegExp.$1);
           var isVar = v.match(this.tokens[0]['regex']);
           if (isVar) {
-            var newData = this.parseVar(v, isVar[1]);
-            if ((isVar[0] + newData.token).length == v.length) {
+            var newData = this.parseVar(v, isVar[1], isVar[0]);
+            if (newData.token.length == v.length) {
               return [newData.tree[0]];
             }
           }
@@ -655,7 +705,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           this.parseEmbeddedVars = false;
           var modData = this.parseModifiers(s, tree);
           if (modData) {
-            return modData.tree;
+            return modData;
           }
           return tree;
         }
@@ -663,6 +713,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Token for func().
         'regex': /^(\w+)\s*[(]([)]?)/,
+        //'regex': /^(\w+)\s*[(](\s*[a-zA-Z0-9$,_'"]*\s*)([)]?)/,
         parse: function(s, data) {
           var funcName = RegExp.$1;
           var noArgs = RegExp.$2;
@@ -671,7 +722,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           // var value += params.toString();
           var dataMod = this.parseModifiers(s.slice(params.toString().length), tree);
           if (dataMod) {
-            return dataMod.tree;
+            return dataMod;
           }
           return tree;
         }
@@ -793,7 +844,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           var op = RegExp.$1 ? ((RegExp.$2=='odd')?'even':'even_not') : ((RegExp.$2=='odd')?'even_not':'even');
           var tree = this.parseOperator(op, 'binary', 7);
           if (!RegExp.$3) {
-            return tree.concat(this.parseText('1', e.tree));
+            return tree.concat(this.parseText('1', tree));
           }
           return tree;
         }
@@ -870,7 +921,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           var textTree = this.parseText(data.token);
           var dataMod = this.parseModifiers(s, textTree);
           if (dataMod) {
-            return dataMod.tree;
+            return dataMod;
           }
           return textTree;
         }
@@ -882,7 +933,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           var textTree = this.parseText(data.token);
           var dataMod = this.parseModifiers(s, textTree);
           if (dataMod) {
-            return dataMod.tree;
+            return dataMod;
           }
           return textTree;
         }
@@ -943,7 +994,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         'type': 'function',
         parse: function (params) {
           return {
-            type: 'build-in-data',
+            type: 'build-in',
             name: 'append',
             params: params
           };
@@ -954,7 +1005,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         'type': 'function',
         parse: function (params) {
           return {
-            type: 'build-in-data',
+            type: 'build-in',
             name: 'assign',
             params: params
           };
@@ -964,14 +1015,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       'call': {
         'type': 'function',
         parse: function(params) {
-          var type;
-          if (params.assign) {
-            type = 'build-in-data';
-          } else {
-            type = 'build-in';
-          }
           return {
-            type: type,
+            type: 'build-in',
             name: 'call',
             params: params
           };
@@ -983,8 +1028,21 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         parse: function(params, content) {
           var tree = this.parse(content);
           return {
-            type: 'build-in-data',
+            type: 'build-in',
             name: 'capture',
+            params: params,
+            subTree: tree
+          };
+        }
+      },
+
+      nocache: {
+        'type': 'block',
+        parse: function(params, content) {
+          var tree = this.parse(content);
+          return {
+            type: 'build-in',
+            name: 'nocache',
             params: params,
             subTree: tree
           };
@@ -996,13 +1054,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         parse: function(params) {
           var file = TrimAllQuotes(params.file?params.file:params[0]);
           var nocache = (FindInArray(params, 'nocache') >= 0);
-          var tree = this.getTemplate(file, nocache);
-          var type = 'build-in';
-          if ('assign' in params) {
-            type = 'build-in-data';
-          }
+          var tree = this.loadTemplate(file, nocache);
           return {
-            type: type,
+            type: 'build-in',
             name: 'include',
             params: params,
             subTree: tree
@@ -1052,9 +1106,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
             content = content.slice(findElse.index+findElse[0].length);
             var findElseIf = findElse[1].match(/^else\s*if(.*)/);
             if (findElseIf) {
-              subTreeElse = this.buildInFunctions['if'].parse(this.parseParams(findElseIf[1]), content.replace(/^\n/,''));
+              subTreeElse = this.buildInFunctions['if'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''));
             } else {
-              subTreeElse = this.parse(content.replace(/^\n/,''));
+              subTreeElse = this.parse(content.replace(/^\n/, ''));
             }
           } else {
             subTreeIf = this.parse(content);
@@ -1068,6 +1122,18 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           }];
         }
       },
+
+      counter: {
+        type: 'function',
+        parse: function (params) {
+          return {
+            type: 'build-in',
+            name: 'counter',
+            params: params
+          };
+        }
+      },
+
       'foreach': {
         type: 'block',
         parseParams: function(paramStr) {
@@ -1118,8 +1184,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
           var tree = this.parse(content);
           // We have a tree, now we need to add it to runtime plugins list.
-          // we do not modify this.jSmart object here. It is just
-          // for read purposes. Let us store it as local plugin and end of parsing
+          // Let us store it as local plugin and end of parsing
           // we pass it to original jSmart object.
           this.runTimePlugins[TrimAllQuotes(params.name?params.name:params[0])] = {
             tree: tree,
@@ -1142,7 +1207,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       'extends': {
         type: 'function',
         parse: function(params) {
-          return this.getTemplate(TrimAllQuotes(((params.file)?params.file:params[0])));
+          return this.loadTemplate(TrimAllQuotes(((params.file)?params.file:params[0])));
         }
       },
 
@@ -1162,15 +1227,15 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       ldelim: {
         type: 'function',
-        parse: function(params, tree) {
-          return this.parseText(this.smarty.ldelim);
+        parse: function(params) {
+          return this.parseText(this.ldelim);
         }
       },
 
       rdelim: {
         type: 'function',
-        parse: function(params, tree) {
-          return this.parseText(this.smarty.rdelim);
+        parse: function(params) {
+          return this.parseText(this.rdelim);
         }
       },
 

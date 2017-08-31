@@ -1,4 +1,4 @@
-define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartProcessor) {
+define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (jSmartParser, jSmartProcessor, ObjectMerge) {
   var
       version = '@VERSION',
 
@@ -131,7 +131,6 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
     // Initialize, jSmart, set settings and parse the template.
     parse: function (template, options) {
       var parsedTemplate;
-
       if (!options) {
         options = {};
       }
@@ -173,11 +172,17 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
       // Is template string or at least defined?!
       template = new String(template ? template : '');
 
-      // Generate the tree. We pass "this", so Parser can read jSmart.*
-      // config values. Please note that, jSmart.* are not supposed to be
-      // modified in parsers. We get them here and then update jSmart object.
-
-      var parsedTemplate = jSmartParser.getParsed(template, this);
+      // Generate the tree. We pass delimiters and many config values
+      // which are needed by parser to parse like delimiters.
+      jSmartParser.clear();
+      jSmartParser.rdelim = this.smarty.rdelim;
+      jSmartParser.ldelim = this.smarty.ldelim;
+      jSmartParser.getTemplate = this.getTemplate;
+      jSmartParser.autoLiteral = this.autoLiteral;
+      jSmartParser.plugins = this.plugins;
+      jSmartParser.preFilters = this.filtersGlobal.pre;
+      // Above parser config are set, lets parse.
+      var parsedTemplate = jSmartParser.getParsed(template);
       this.tree = parsedTemplate.tree;
       this.runTimePlugins = parsedTemplate.runTimePlugins;
     },
@@ -197,13 +202,20 @@ define(['parser/parser', 'processor/processor'], function (jSmartParser, jSmartP
       // Merge them and keep them cached.
       this.globalAndDefaultModifiers = jSmart.prototype.defaultModifiersGlobal.concat(this.defaultModifiers);
 
-
       // Take default global filters, add with local default filters.
       // Merge them and keep them cached.
       this.globalAndDefaultFilters = jSmart.prototype.filtersGlobal.variable.concat(this.filters.variable);
 
+      jSmartProcessor.clear();
+      jSmartProcessor.plugins = this.plugins;
+      jSmartProcessor.modifiers = this.modifiers;
+      jSmartProcessor.defaultModifiers = this.defaultModifiers;
+      jSmartProcessor.escapeHtml = this.escapeHtml;
+      jSmartProcessor.variableFilters = this.globalAndDefaultFilters;
+      jSmartProcessor.runTimePlugins = this.runTimePlugins;
+
       // Capture the output by processing the template.
-      outputData = jSmartProcessor.getProcessed(this.tree, data, this);
+      outputData = jSmartProcessor.getProcessed(this.tree, data, this.smarty);
 
       // Merge back smarty data returned by process to original object.
       ObjectMerge(this.smarty, outputData.smarty);
