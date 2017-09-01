@@ -63,13 +63,11 @@ define(['jSmart'], function (jSmart) {
     })
 
     it('test identity equal/not equal', function () {
-      // TODO:: false !== '' should return true.
       var t = new jSmart("{if 2 !== '2'}yes1{/if} {if false !== ''}yes2{/if} {if false !== false}no1{/if} {if 'uma' !== 'uma'}no2{/if} {if 'uma' !== 'umakant'}yup3{/if}")
-      expect(t.fetch()).toBe('yes1    yup3')
+      expect(t.fetch()).toBe('yes1 yes2   yup3')
 
-      // TODO:: false === '' should return false.
       t = new jSmart("{if 2 === '2'}yes1{/if} {if false === ''}yes2{/if} {if false === false}no1{/if} {if 'uma' === 'uma'}no2{/if} {if 'uma' === 'umakant'}yup3{/if}")
-      expect(t.fetch()).toBe(' yes2 no1 no2 ')
+      expect(t.fetch()).toBe('  no1 no2 ')
     })
 
     it('test operators priority', function () {

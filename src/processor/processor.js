@@ -64,7 +64,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         } else if (node.type === 'var') {
           s = this.getVarValue(node, data)
         } else if (node.type === 'boolean') {
-          s = node.data ? '1' : ''
+          s = !!node.data
         } else if (node.type === 'build-in') {
           tmp = this.buildInFunctions[node.name].process.call(this, node, data)
           if (typeof tmp.tpl !== 'undefined') {
@@ -98,7 +98,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             }
           }
         }
-        if (typeof s === 'boolean') {
+        if (typeof s === 'boolean' && tree.length !== 1) {
           s = s ? '1' : ''
         }
         if (s === null) {

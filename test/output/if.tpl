@@ -41,7 +41,7 @@ f():[]    //empty string
 
 "false"
 
-er
+'abc' is not empty
 
 
 now empty!
