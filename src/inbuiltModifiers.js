@@ -48,10 +48,19 @@ define(['./core'], function (jSmart) {
         return fname.apply(fname, paramData)
       } else {
         fname = params.name
+        var func
+        if (typeof module === 'object' && module && typeof module.exports === 'object') {
+          func = global[fname]
+        } else {
+          if (window && window.document) {
+            func = window[fname]
+          }
+        }
+
         if (data[fname]) {
           return data[fname].apply(data[fname], paramData)
-        } else if (window[fname]) {
-          return window[fname].apply(window[fname], paramData)
+        } else if (func) {
+          return func.apply(func, paramData)
         }
         // something went wrong.
         return ''
