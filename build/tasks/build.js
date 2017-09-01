@@ -60,7 +60,7 @@ module.exports = function(grunt) {
     var amdName;
 
     contents = contents
-				.replace( /\s*return\s+[^\}]+(\}\s*?\);[^\w\}]*)$/, "$1" )
+				.replace( /\s*return\s+[^\}]+(\}\s*?\)[^\w\}]*)$/, "" )
         // Multiple exports
         .replace( /\s*exports\.\w+\s*=\s*\w+;/g, "" );
 
