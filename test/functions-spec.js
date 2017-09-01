@@ -18,6 +18,16 @@ define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl
       }
     )
 
+    function strayFunc (v1, v2) { // eslint-disable-line no-unused-vars
+      return v1 + ',' + v2
+    }
+    window.strayFunc = strayFunc
+
+    function strayNoArgs () { // eslint-disable-line no-unused-vars
+      return 'bar'
+    }
+    window.strayNoArgs = strayNoArgs
+
     // TODO:: None of these are working. Currrently skipped.
     it('test inline functions', function () {
       var tpl = "{function 'sayHello' to=''}Hello {$to}!{/function}"
