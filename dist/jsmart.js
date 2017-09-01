@@ -2250,7 +2250,8 @@ var
 
     // Process the generated tree.
     fetch: function (data) {
-      var outputData = '';
+      var outputData = ''
+      var test = ''
       if (!(typeof data == 'object')) {
         data = {};
       }
@@ -2451,5 +2452,5 @@ jSmart.prototype.registerPlugin(
 
 
 
-  return jSmart;
-});
+  return jSmart
+})

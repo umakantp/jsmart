@@ -1,8 +1,8 @@
-define(['util/evalstring'], function (EvalString) {
+define(['util/evalstring'], function (evalString) {
   // Trim all quotes.
-  function TrimAllQuotes(s) {
-    return EvalString(s.replace(/^['"](.*)['"]$/,'$1')).replace(/^\s+|\s+$/g,'');
+  function trimAllQuotes (s) {
+    return evalString(s.replace(/^['"](.*)['"]$/, '$1')).replace(/^\s+|\s+$/g, '')
   }
 
-  return TrimAllQuotes;
-});
+  return trimAllQuotes
+})

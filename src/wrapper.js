@@ -8,28 +8,28 @@
  *
  * Date: @DATE
  */
-(function(factory) {
-  "use strict";
+(function (factory) {
+  'use strict'
 
-  if (typeof module === "object" && module && typeof module.exports === "object") {
+  if (typeof module === 'object' && module && typeof module.exports === 'object') {
     // Node.js like environment. Export jSmart
-    module.exports = factory();
+    module.exports = factory()
   } else {
     if (window && window.document) {
       // Assign to browser window if window is present.
-      window.jSmart = factory();
+      window.jSmart = factory()
     }
 
-    if (typeof define === "function" && define.amd) {
-        // Require js is present? Lets define module.
-        define("jSmart", [], factory);
+    if (typeof define === 'function' && define.amd) {
+      // Require js is present? Lets define module.
+      define('jSmart', [], factory)
     }
   }
 // Pass this if window is not defined yet
-})(function() {
-"use strict";
+})(function () {
+  'use strict'
 
- // @CODE
+  // @CODE
 
-  return jSmart;
-});
+  return jSmart
+})

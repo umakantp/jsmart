@@ -3,5 +3,9 @@
   "extends": "../.eslintrc.json",
   "env": {
     "mocha": true
+  },
+  "globals": {
+    "expect": true,
+    "getData": true
   }
 }

@@ -6,14 +6,14 @@ define(function () {
    *
    * @return boolean
    */
-  function IsEmptyObject(hash) {
+  function isEmptyObject (hash) {
     for (var i in hash) {
       if (hash.hasOwnProperty(i)) {
-        return false;
+        return false
       }
     }
-    return true;
+    return true
   }
 
-  return IsEmptyObject;
-});
+  return isEmptyObject
+})

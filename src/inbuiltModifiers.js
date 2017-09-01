@@ -1,67 +1,63 @@
-define(['./core', 'util/objectmerge'], function (jSmart, ObjectMerge) {
-
+define(['./core'], function (jSmart) {
   jSmart.prototype.registerPlugin(
     'function',
     '__quoted',
-    function(params, data) {
-      return params.join('');
+    function (params, data) {
+      return params.join('')
     }
-  );
+  )
 
   // Register __array which gets called for all arrays.
   jSmart.prototype.registerPlugin(
     'function',
     '__array',
-    function(params, data) {
-      var a = [];
+    function (params, data) {
+      var a = []
       for (var name in params) {
-        if (params.hasOwnProperty(name) && params[name] && typeof params[name] != 'function') {
-          a[name] = params[name];
+        if (params.hasOwnProperty(name) && params[name] && typeof params[name] !== 'function') {
+          a[name] = params[name]
         }
       }
-      return a;
+      return a
     }
-  );
+  )
 
   // Register __func which gets called for all modifiers and function calls.
   jSmart.prototype.registerPlugin(
     'function',
     '__func',
-    function(params, data) {
-      var paramData = [],
-          i,
-          fname;
+    function (params, data) {
+      var paramData = []
+      var i
+      var fname
 
       for (i = 0; i < params.length; ++i) {
-        paramData.push(params[i]);
+        paramData.push(params[i])
       }
 
       if (('__owner' in data && params.name in data.__owner)) {
-        fname = data['__owner'];
+        fname = data['__owner']
         if (params.length) {
-          return fname[params.name].apply(fname, params);
+          return fname[params.name].apply(fname, params)
         } else {
           // When function doesn't has arguments.
-          return fname[params.name].apply(fname);
+          return fname[params.name].apply(fname)
         }
-        // something went wrong.
-        return '';
       } else if (jSmart.prototype.modifiers.hasOwnProperty(params.name)) {
         fname = jSmart.prototype.modifiers[params.name]
-        return fname.apply(fname, paramData);
+        return fname.apply(fname, paramData)
       } else {
-        fname = params.name;
-
+        fname = params.name
         if (data[fname]) {
-          return data[fname].apply(data[fname], paramData);
+          return data[fname].apply(data[fname], paramData)
         } else if (window[fname]) {
-          return window[fname].apply(window[fname], paramData);
+          return window[fname].apply(window[fname], paramData)
         }
         // something went wrong.
-        return '';
+        return ''
       }
     }
-  );
+  )
 
-  return jSmart;
-});
+  return jSmart
+})

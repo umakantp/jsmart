@@ -1,12 +1,12 @@
 define(function () {
-  function ObjectMerge(ob1, ob2 /*, ...*/) {
-    for (var i=1; i<arguments.length; ++i) {
-      for (var nm in arguments[i]) {
-        ob1[nm] = arguments[i][nm];
+  function objectMerge (ob1, ob2 /* , ... */) {
+    for (var i = 1; i < arguments.length; ++i) {
+      for (var name in arguments[i]) {
+        ob1[name] = arguments[i][name]
       }
     }
-    return ob1;
+    return ob1
   }
 
-  return ObjectMerge;
-});
+  return objectMerge
+})

@@ -1,5 +1,5 @@
-define(["./core", "./plugins", "./inbuiltModifiers"], function(jSmart) {
-  "use strict";
+define(['./core', './plugins', './inbuiltModifiers'], function (jSmart) {
+  'use strict'
 
-  return jSmart;
-});
+  return jSmart
+})

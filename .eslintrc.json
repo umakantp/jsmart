@@ -8,8 +8,7 @@
     "browser": true
   },
   "globals": {
-    "expect": true,
-    "getData": true
+    "jSmart": true
   },
   "rules": {
     "new-cap": ["error", { "newIsCapExceptions": ["jSmart"] }]
