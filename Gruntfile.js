@@ -50,10 +50,6 @@ module.exports = function (grunt) {
           {
             src: "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>",
             dest: 'examples/requirejs/js/<%= pkg.name %>.min.js'
-          },
-          {
-            src: "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>",
-            dest: 'examples/node/<%= pkg.name %>.min.js'
           }
         ]
       }
