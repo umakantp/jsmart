@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-01T08:56Z
+ * Date: 2017-09-01T17:31Z
  */
 (function (factory) {
   'use strict'
@@ -119,7 +119,6 @@
 
       // Parse the template and get the output.
       tree = this.parse(template)
-      // console.log(tree);
 
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
@@ -367,7 +366,7 @@
       var data = {value: '', tree: []}
       var lookUpData
       var value = ''
-      var parts = [{type: 'text', data: name}]
+      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|first|last|show|total)/gi, '$1__$2')}]
       var rootName = token
 
       if (!token) {
@@ -1416,7 +1415,7 @@
         } else if (node.type === 'var') {
           s = this.getVarValue(node, data)
         } else if (node.type === 'boolean') {
-          s = node.data ? '1' : ''
+          s = !!node.data
         } else if (node.type === 'build-in') {
           tmp = this.buildInFunctions[node.name].process.call(this, node, data)
           if (typeof tmp.tpl !== 'undefined') {
@@ -1450,7 +1449,7 @@
             }
           }
         }
-        if (typeof s === 'boolean') {
+        if (typeof s === 'boolean' && tree.length !== 1) {
           s = s ? '1' : ''
         }
         if (s === null) {
@@ -2015,7 +2014,8 @@
       'call': {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
-          var newNode = {name: params.__get('name'), params: node.params}
+          var name = params.__get('name') ? params.__get('name') : params.__get('0')
+          var newNode = {name: name, params: node.params}
           var s = this.buildInFunctions['function'].process.call(this, newNode, data)
           var assignTo = params.__get('assign', false)
           if (assignTo) {
@@ -2510,7 +2510,7 @@ jSmart.prototype.registerPlugin(
             func = window[fname]
           }
         }
-        console.log(func)
+
         if (data[fname]) {
           return data[fname].apply(data[fname], paramData)
         } else if (func) {

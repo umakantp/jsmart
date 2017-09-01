@@ -663,7 +663,8 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       'call': {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
-          var newNode = {name: params.__get('name'), params: node.params}
+          var name = params.__get('name') ? params.__get('name') : params.__get('0')
+          var newNode = {name: name, params: node.params}
           var s = this.buildInFunctions['function'].process.call(this, newNode, data)
           var assignTo = params.__get('assign', false)
           if (assignTo) {

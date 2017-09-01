@@ -53,7 +53,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       // Parse the template and get the output.
       tree = this.parse(template)
-      // console.log(tree);
 
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
@@ -301,7 +300,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       var data = {value: '', tree: []}
       var lookUpData
       var value = ''
-      var parts = [{type: 'text', data: name}]
+      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|first|last|show|total)/gi, '$1__$2')}]
       var rootName = token
 
       if (!token) {
