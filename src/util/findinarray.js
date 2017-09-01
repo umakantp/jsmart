@@ -1,4 +1,6 @@
 define(function () {
+  'use strict'
+
   // Find in array.
   function findInArray (arr, val) {
     if (Array.prototype.indexOf) {

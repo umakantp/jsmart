@@ -1,4 +1,6 @@
 define(function () {
+  'use strict'
+
   function countProperties (ob) {
     var count = 0
     for (var name in ob) {

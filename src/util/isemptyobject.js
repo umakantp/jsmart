@@ -1,4 +1,6 @@
 define(function () {
+  'use strict'
+
   /**
    * Returns boolean true if object is empty otherwise false.
    *
