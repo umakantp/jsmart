@@ -20,7 +20,7 @@ module.exports = function (config) {
       {pattern: 'test/templates/*.tpl', included: false},
       {pattern: 'test/output/*.tpl', included: false},
       {pattern: 'src/**/*.js', included: false},
-      {pattern: 'test/*spec.js', included: false}
+      {pattern: 'test/**/*spec.js', included: false}
     ],
 
     // list of files to exclude
