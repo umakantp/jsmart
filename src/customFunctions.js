@@ -43,5 +43,83 @@ define(['./core'], function (jSmart) {
     }
   )
 
+  jSmart.prototype.registerPlugin(
+    'function',
+    'cycle',
+    function (params, data) {
+      var name = params.__get('name', 'default')
+      var reset = params.__get('reset', false)
+      if (!(name in data.smarty.cycle)) {
+        data.smarty.cycle[name] = {arr: [''], delimiter: params.__get('delimiter', ','), index: 0}
+        reset = true
+      }
+
+      if (params.__get('delimiter', false)) {
+        data.smarty.cycle[name].delimiter = params.delimiter
+      }
+      var values = params.__get('values', false)
+      if (values) {
+        var arr = []
+        if (values instanceof Object) {
+          for (var nm in values) {
+            arr.push(values[nm])
+          }
+        } else {
+          arr = values.split(data.smarty.cycle[name].delimiter)
+        }
+
+        if (arr.length !== data.smarty.cycle[name].arr.length || arr[0] !== data.smarty.cycle[name].arr[0]) {
+          data.smarty.cycle[name].arr = arr
+          data.smarty.cycle[name].index = 0
+          reset = true
+        }
+      }
+
+      if (params.__get('advance', 'true')) {
+        data.smarty.cycle[name].index += 1
+      }
+      if (data.smarty.cycle[name].index >= data.smarty.cycle[name].arr.length || reset) {
+        data.smarty.cycle[name].index = 0
+      }
+
+      if (params.__get('assign', false)) {
+        this.assignVar(params.assign, data.smarty.cycle[name].arr[data.smarty.cycle[name].index], data)
+        return ''
+      }
+
+      if (params.__get('print', true)) {
+        return data.smarty.cycle[name].arr[data.smarty.cycle[name].index]
+      }
+
+      return ''
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'eval',
+    function (params, data) {
+      var s = params.var
+      if ('assign' in params) {
+        this.assignVar(params.assign, s, data)
+        return ''
+      }
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'fetch',
+    function (params, data) {
+      var s = jSmart.prototype.getFile(params.__get('file', null, 0))
+      if ('assign' in params) {
+        this.assignVar(params.assign, s, data)
+        return ''
+      }
+      return s
+    }
+  )
+
   return jSmart
 })

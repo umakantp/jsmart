@@ -1075,6 +1075,13 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         }
       },
 
+      'eval': {
+        'type': 'function',
+        parse: function (params) {
+          return this.parsePluginFunc('eval', params)
+        }
+      },
+
       include: {
         'type': 'function',
         parse: function (params) {

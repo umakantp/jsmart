@@ -94,7 +94,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             if (plugin.type === 'block') {
               // TODO:: Add code to handle block level plugins.
             } else if (plugin.type === 'function') {
-              s = plugin.process(this.getActualParamValues(node.params, data), data)
+              s = plugin.process.call(this, this.getActualParamValues(node.params, data), data)
             }
           }
         }
