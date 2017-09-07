@@ -11,6 +11,68 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
    jSmart object.
   */
   var jSmart = function (template, options) {
+    // Smarty object which has version, delimiters, config, current directory
+    // and all blocks like PHP Smarty.
+    this.smarty = {
+
+      // Blocks in the current smarty object.
+      block: {},
+
+      // TODO:: Yet to figure out, what it is.
+      'break': false,
+
+      // All the capture blocks in the current smarty object.
+      capture: {},
+
+      // TODO:: Yet to figure out, what it is.
+      'continue': false,
+
+      // Current counter information. Smarty like feature.
+      counter: {},
+
+      // TODO:: Yet to figure out, what it is.
+      cycle: {},
+
+      // All the foreach blocks in the current smarty object.
+      'foreach': {},
+
+      // All the section blocks in the current smarty object.
+      section: {},
+
+      // Current timestamp, when the object is created.
+      now: Math.floor(((new Date()).getTime() / 1000)),
+
+      // All the constants defined the current smarty object.
+      'const': {},
+
+      // Current configuration.
+      config: {},
+
+      // Current directory, underscored name as PHP Smarty does it.
+      current_dir: '/',
+
+      // Currrent template.
+      template: '',
+
+      // Left delimiter.
+      ldelim: '{',
+
+      // Right delimiter.
+      rdelim: '}',
+
+      // Current version of jSmart.
+      version: version
+    }
+
+    // Whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before.
+    this.autoLiteral = true
+
+    // Escape html??
+    this.escapeHtml = false
+
+    // Currently disabled, will decide in future, what TODO.
+    this.debugging = false
+
     this.parse(template, options)
   }
 
@@ -60,71 +122,9 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     // Plugins of the functions.
     plugins: {},
 
-    // Whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before.
-    autoLiteral: true,
-
-    // Escape html??
-    escapeHtml: false,
-
-    // Currently disabled, will decide in future, what TODO.
-    debugging: false,
-
     // Store current runtime plugins. Generally used for
     // {function} tags.
     runTimePlugins: {},
-
-    // Smarty object which has version, delimiters, config, current directory
-    // and all blocks like PHP Smarty.
-    smarty: {
-
-      // Blocks in the current smarty object.
-      block: {},
-
-      // TODO:: Yet to figure out, what it is.
-      'break': false,
-
-      // All the capture blocks in the current smarty object.
-      capture: {},
-
-      // TODO:: Yet to figure out, what it is.
-      'continue': false,
-
-      // Current counter information. Smarty like feature.
-      counter: {},
-
-      // TODO:: Yet to figure out, what it is.
-      cycle: {},
-
-      // All the foreach blocks in the current smarty object.
-      'foreach': {},
-
-      // All the section blocks in the current smarty object.
-      section: {},
-
-      // Current timestamp, when the object is created.
-      now: Math.floor(((new Date()).getTime() / 1000)),
-
-      // All the constants defined the current smarty object.
-      'const': {},
-
-      // Current configuration.
-      config: {},
-
-      // Current directory, underscored name as PHP Smarty does it.
-      current_dir: '/',
-
-      // Currrent template.
-      template: '',
-
-      // Left delimiter.
-      ldelim: '{',
-
-      // Right delimiter.
-      rdelim: '}',
-
-      // Current version of jSmart.
-      version: version
-    },
 
     // Initialize, jSmart, set settings and parse the template.
     parse: function (template, options) {
