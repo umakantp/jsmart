@@ -1150,17 +1150,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         }
       },
 
-      counter: {
-        type: 'function',
-        parse: function (params) {
-          return {
-            type: 'build-in',
-            name: 'counter',
-            params: params
-          }
-        }
-      },
-
       'foreach': {
         type: 'block',
         parseParams: function (paramStr) {
