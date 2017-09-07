@@ -138,6 +138,9 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       } else if (jSmart.prototype.right_delimiter) {
         // Backward compatible. Old way to set via prototype.
         this.smarty.rdelim = jSmart.prototype.right_delimiter
+      } else {
+        // Otherwise default delimiters
+        this.smarty.rdelim = '}';
       }
       if (options.ldelim) {
         // If delimiters are passed locally take them.
@@ -145,6 +148,9 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       } else if (jSmart.prototype.left_delimiter) {
         // Backward compatible. Old way to set via prototype.
         this.smarty.ldelim = jSmart.prototype.left_delimiter
+      } else {
+        // Otherwise default delimiters
+        this.smarty.ldelim = '{';
       }
       if (options.autoLiteral !== undefined) {
         // If autoLiteral is passed locally, take it.
