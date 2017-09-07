@@ -481,9 +481,6 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
           var count = 0
           var i = from
-          props.total = count
-          // ? - because it is so in Smarty
-          props.loop = count
 
           count = 0
           var s = ''
@@ -498,6 +495,9 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             props.index_prev = i - step
             props.index_next = i + step
             props.iteration = props.rownum = count + 1
+            props.total = count
+            // ? - because it is so in Smarty
+            props.loop = count
 
             var tmp = this.process(node.subTree, data)
             if (typeof tmp !== 'undefined') {
@@ -506,6 +506,10 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             }
             data.smarty.continue = false
           }
+          props.total = count
+          // ? - because it is so in Smarty
+          props.loop = count
+
           data.smarty.break = false
 
           if (count) {
