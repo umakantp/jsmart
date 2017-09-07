@@ -1220,16 +1220,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         }
       },
 
-      // If someone has used {php} tags, we ignore that tag.
-      // Do not want to post errors.
-      php: {
-        type: 'block',
-        parse: function (params, content) {
-          // Do not take this in tree. Skip it.
-          return false
-        }
-      },
-
       'extends': {
         type: 'function',
         parse: function (params) {
