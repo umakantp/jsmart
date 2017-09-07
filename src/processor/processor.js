@@ -660,6 +660,26 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
+      'break': {
+        process: function (node, data) {
+          data.smarty.break = true
+          return {
+            tpl: '',
+            data: data
+          }
+        }
+      },
+
+      'continue': {
+        process: function (node, data) {
+          data.smarty.continue = true
+          return {
+            tpl: '',
+            data: data
+          }
+        }
+      },
+
       'call': {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)

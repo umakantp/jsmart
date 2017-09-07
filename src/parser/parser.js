@@ -1016,6 +1016,28 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         }
       },
 
+      'break': {
+        'type': 'function',
+        parse: function (params) {
+          return {
+            type: 'build-in',
+            name: 'break',
+            params: params
+          }
+        }
+      },
+
+      'continue': {
+        'type': 'function',
+        parse: function (params) {
+          return {
+            type: 'build-in',
+            name: 'continue',
+            params: params
+          }
+        }
+      },
+
       'call': {
         'type': 'function',
         parse: function (params) {
