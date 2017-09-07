@@ -22,6 +22,7 @@ require.config({
     'core': 'src/core',
     'plugins': 'src/plugins',
     'inbuiltModifiers': 'src/inbuiltModifiers',
+    'customFunctions': 'src/customFunctions',
     'parser/parser': 'src/parser/parser',
     'processor/processor': 'src/processor/processor',
     'util/objectmerge': 'src/util/objectmerge',
