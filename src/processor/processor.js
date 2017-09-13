@@ -92,7 +92,22 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           } else {
             plugin = this.plugins[node.name]
             if (plugin.type === 'block') {
-              // TODO:: Add code to handle block level plugins.
+              var repeat = {value: true}
+              while (repeat.value) {
+                repeat.value = false
+                tmp = this.process(node.subTree, data)
+                if (typeof tmp.tpl !== 'undefined') {
+                  data = tmp.data
+                  tmp = tmp.tpl
+                }
+                s += plugin.process.call(
+                  this,
+                  this.getActualParamValues(node.params, data),
+                  tmp,
+                  data,
+                  repeat
+                )
+              }
             } else if (plugin.type === 'function') {
               s = plugin.process.call(this, this.getActualParamValues(node.params, data), data)
             }
