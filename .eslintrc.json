@@ -11,6 +11,7 @@
     "jSmart": true
   },
   "rules": {
-    "new-cap": ["error", { "newIsCapExceptions": ["jSmart"] }]
+    "new-cap": ["error", { "newIsCapExceptions": ["jSmart"] }],
+    "no-unneeded-ternary": 0
   }
 }
