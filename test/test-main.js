@@ -31,7 +31,9 @@ require.config({
     'util/evalstring': 'src/util/evalstring',
     'util/findinarray': 'src/util/findinarray',
     'util/isemptyobject': 'src/util/isemptyobject',
-    'util/countproperties': 'src/util/countproperties'
+    'util/countproperties': 'src/util/countproperties',
+    'util/phpjs': 'src/util/phpjs',
+    'util/gethtmltranslationtable': 'src/util/gethtmltranslationtable'
   },
 
   // dynamically load all test files
