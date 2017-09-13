@@ -24,6 +24,10 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     // Listing down all pre filters, before processing a template.
     preFilters: [],
 
+    outerBlocks: {},
+
+    blocks: {},
+
     getTemplate: function (name) {
       throw new Error('no getTemplate function defined.')
     },
@@ -36,6 +40,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       this.plugins = {}
       this.ldelim = '{'
       this.rdelim = '}'
+      this.blocks = {}
+      this.outerBlocks = {}
+      this.usedExtends = false
     },
 
     // Parse the template and return the data.
@@ -54,14 +61,36 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       // Parse the template and get the output.
       tree = this.parse(template)
 
+      if (this.usedExtends > 0) {
+        var tmpTree = []
+        // Now in the tree remove anything other than block after extends
+        for (var i = 0; i < tree.length; i++) {
+          if (i < this.usedExtends) {
+            tmpTree.push(tree[i])
+          } else if (tree[i].type === 'build-in' && (tree[i].name === 'block')) {
+            tmpTree.push(tree[i])
+          }
+        }
+        tree = tmpTree
+      }
+
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
+
+      var blocks = this.blocks
+
+      var outerBlocks = this.outerBlocks
 
       this.clear()
       // Nope, we do not want to clear the cache.
       // Refactor to maintain cache. Until that keep commented.
       // this.files = {};
-      return {tree: tree, runTimePlugins: runTimePlugins}
+      return {
+        tree: tree,
+        runTimePlugins: runTimePlugins,
+        blocks: blocks,
+        outerBlocks: outerBlocks
+      }
     },
 
     // Parse the template and generate tree.
@@ -104,8 +133,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
               }
               tree = tree.concat(buildIn.parse.call(this, params))
               if (name === 'extends') {
-                // TODO:: How to implement this?
-                // tree = []; Throw away further parsing except for {block}
+                this.usedExtends = tree.length
               }
             }
             tpl = tpl.replace(/^\n/, '')
@@ -1220,6 +1248,48 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         type: 'function',
         parse: function (params) {
           return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])))
+        }
+      },
+
+      block: {
+        type: 'block',
+        parse: function (params, content) {
+          params.append = findInArray(params, 'append') >= 0
+          params.prepend = findInArray(params, 'prepend') >= 0
+          params.hide = findInArray(params, 'hide') >= 0
+
+          var match
+          var tree = this.parse(content, [])
+          var blockName = trimAllQuotes(params.name ? params.name : params[0])
+          var location
+          if (!(blockName in this.blocks)) {
+            // This is block inside extends as it gets call first
+            // when the extends is processed?!
+            this.blocks[blockName] = []
+            this.blocks[blockName] = {tree: tree, params: params}
+            location = 'inner'
+            match = content.match(/smarty.block.child/)
+            params.needChild = false
+            if (match) {
+              params.needChild = true
+            }
+          } else {
+            // this.blocks has this block, means this outer block after extends
+            this.outerBlocks[blockName] = []
+            this.outerBlocks[blockName] = {tree: tree, params: params}
+            location = 'outer'
+            match = content.match(/smarty.block.parent/)
+            params.needParent = false
+            if (match) {
+              params.needParent = true
+            }
+          }
+          return {
+            type: 'build-in',
+            name: 'block',
+            params: params,
+            location: location
+          }
         }
       },
 

@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-13T07:49Z
+ * Date: 2017-09-13T11:00Z
  */
 (function (factory) {
   'use strict'
@@ -90,6 +90,10 @@
     // Listing down all pre filters, before processing a template.
     preFilters: [],
 
+    outerBlocks: {},
+
+    blocks: {},
+
     getTemplate: function (name) {
       throw new Error('no getTemplate function defined.')
     },
@@ -102,6 +106,9 @@
       this.plugins = {}
       this.ldelim = '{'
       this.rdelim = '}'
+      this.blocks = {}
+      this.outerBlocks = {}
+      this.usedExtends = false
     },
 
     // Parse the template and return the data.
@@ -120,14 +127,36 @@
       // Parse the template and get the output.
       tree = this.parse(template)
 
+      if (this.usedExtends > 0) {
+        var tmpTree = []
+        // Now in the tree remove anything other than block after extends
+        for (var i = 0; i < tree.length; i++) {
+          if (i < this.usedExtends) {
+            tmpTree.push(tree[i])
+          } else if (tree[i].type === 'build-in' && (tree[i].name === 'block')) {
+            tmpTree.push(tree[i])
+          }
+        }
+        tree = tmpTree
+      }
+
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
+
+      var blocks = this.blocks
+
+      var outerBlocks = this.outerBlocks
 
       this.clear()
       // Nope, we do not want to clear the cache.
       // Refactor to maintain cache. Until that keep commented.
       // this.files = {};
-      return {tree: tree, runTimePlugins: runTimePlugins}
+      return {
+        tree: tree,
+        runTimePlugins: runTimePlugins,
+        blocks: blocks,
+        outerBlocks: outerBlocks
+      }
     },
 
     // Parse the template and generate tree.
@@ -170,8 +199,7 @@
               }
               tree = tree.concat(buildIn.parse.call(this, params))
               if (name === 'extends') {
-                // TODO:: How to implement this?
-                // tree = []; Throw away further parsing except for {block}
+                this.usedExtends = tree.length
               }
             }
             tpl = tpl.replace(/^\n/, '')
@@ -1289,6 +1317,48 @@
         }
       },
 
+      block: {
+        type: 'block',
+        parse: function (params, content) {
+          params.append = findInArray(params, 'append') >= 0
+          params.prepend = findInArray(params, 'prepend') >= 0
+          params.hide = findInArray(params, 'hide') >= 0
+
+          var match
+          var tree = this.parse(content, [])
+          var blockName = trimAllQuotes(params.name ? params.name : params[0])
+          var location
+          if (!(blockName in this.blocks)) {
+            // This is block inside extends as it gets call first
+            // when the extends is processed?!
+            this.blocks[blockName] = []
+            this.blocks[blockName] = {tree: tree, params: params}
+            location = 'inner'
+            match = content.match(/smarty.block.child/)
+            params.needChild = false
+            if (match) {
+              params.needChild = true
+            }
+          } else {
+            // this.blocks has this block, means this outer block after extends
+            this.outerBlocks[blockName] = []
+            this.outerBlocks[blockName] = {tree: tree, params: params}
+            location = 'outer'
+            match = content.match(/smarty.block.parent/)
+            params.needParent = false
+            if (match) {
+              params.needParent = true
+            }
+          }
+          return {
+            type: 'build-in',
+            name: 'block',
+            params: params,
+            location: location
+          }
+        }
+      },
+
       strip: {
         type: 'block',
         parse: function (params, content) {
@@ -1384,6 +1454,10 @@
     // All filters for variable to run.
     variableFilters: [],
 
+    outerBlocks: {},
+
+    blocks: {},
+
     clear: function () {
       // Clean up config, specific for this processing.
       this.runTimePlugins = {}
@@ -1392,6 +1466,8 @@
       this.defaultModifiers = {}
       this.modifiers = {}
       this.plugins = {}
+      this.blocks = {}
+      this.outerBlocks = {}
     },
 
     // Process the tree and return the data.
@@ -2058,6 +2134,67 @@
         }
       },
 
+      block: {
+        process: function (node, data) {
+          var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
+          var innerBlock = this.blocks[blockName]
+          var innerBlockContent
+          var outerBlock = this.outerBlocks[blockName]
+          var outerBlockContent
+          var output
+
+          if (node.location === 'inner') {
+            if (innerBlock.params.needChild) {
+              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              if (typeof outerBlockContent.tpl !== 'undefined') {
+                outerBlockContent = outerBlockContent.tpl
+              }
+              data.smarty.block.child = outerBlockContent
+              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              if (typeof innerBlockContent.tpl !== 'undefined') {
+                innerBlockContent = innerBlockContent.tpl
+              }
+              output = innerBlockContent
+            } else if (outerBlock.params.needParent) {
+              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              if (typeof innerBlockContent.tpl !== 'undefined') {
+                innerBlockContent = innerBlockContent.tpl
+              }
+              data.smarty.block.parent = innerBlockContent
+              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              if (typeof outerBlockContent.tpl !== 'undefined') {
+                outerBlockContent = outerBlockContent.tpl
+              }
+              output = outerBlockContent
+            } else {
+              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              if (typeof outerBlockContent.tpl !== 'undefined') {
+                outerBlockContent = outerBlockContent.tpl
+              }
+              if (outerBlock.params.append) {
+                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                if (typeof innerBlockContent.tpl !== 'undefined') {
+                  innerBlockContent = innerBlockContent.tpl
+                }
+                output = outerBlockContent + innerBlockContent
+              } else if (outerBlock.params.prepend) {
+                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                if (typeof innerBlockContent.tpl !== 'undefined') {
+                  innerBlockContent = innerBlockContent.tpl
+                }
+                output = innerBlockContent + outerBlockContent
+              } else {
+                output = outerBlockContent
+              }
+            }
+            return output
+          }
+          // Outer block should not be printed it just used to
+          // capture the content
+          return ''
+        }
+      },
+
       'call': {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
@@ -2204,6 +2341,10 @@ var version = '3.0.0'
     // Currently disabled, will decide in future, what TODO.
     this.debugging = false
 
+    this.outerBlocks = {}
+
+    this.blocks = {}
+
     this.parse(template, options)
   }
 
@@ -2320,6 +2461,8 @@ var version = '3.0.0'
       parsedTemplate = jSmartParser.getParsed(template)
       this.tree = parsedTemplate.tree
       this.runTimePlugins = parsedTemplate.runTimePlugins
+      this.blocks = parsedTemplate.blocks
+      this.outerBlocks = parsedTemplate.outerBlocks
     },
 
     // Process the generated tree.
@@ -2348,6 +2491,8 @@ var version = '3.0.0'
       jSmartProcessor.escapeHtml = this.escapeHtml
       jSmartProcessor.variableFilters = this.globalAndDefaultFilters
       jSmartProcessor.runTimePlugins = this.runTimePlugins
+      jSmartProcessor.blocks = this.blocks
+      jSmartProcessor.outerBlocks = this.outerBlocks
 
       // Capture the output by processing the template.
       outputData = jSmartProcessor.getProcessed(this.tree, data, this.smarty)

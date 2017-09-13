@@ -1,4 +1,4 @@
-define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties', '../util/objectmerge'], function (findInArray, isEmptyObject, countProperties, objectMerge) {
+define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties', '../util/objectmerge', '../util/trimallquotes'], function (findInArray, isEmptyObject, countProperties, objectMerge, trimAllQuotes) {
   // Processor object. Plain object which just does processing.
   var jSmartProcessor = {
 
@@ -25,6 +25,10 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
     // All filters for variable to run.
     variableFilters: [],
 
+    outerBlocks: {},
+
+    blocks: {},
+
     clear: function () {
       // Clean up config, specific for this processing.
       this.runTimePlugins = {}
@@ -33,6 +37,8 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       this.defaultModifiers = {}
       this.modifiers = {}
       this.plugins = {}
+      this.blocks = {}
+      this.outerBlocks = {}
     },
 
     // Process the tree and return the data.
@@ -696,6 +702,67 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             tpl: '',
             data: data
           }
+        }
+      },
+
+      block: {
+        process: function (node, data) {
+          var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
+          var innerBlock = this.blocks[blockName]
+          var innerBlockContent
+          var outerBlock = this.outerBlocks[blockName]
+          var outerBlockContent
+          var output
+
+          if (node.location === 'inner') {
+            if (innerBlock.params.needChild) {
+              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              if (typeof outerBlockContent.tpl !== 'undefined') {
+                outerBlockContent = outerBlockContent.tpl
+              }
+              data.smarty.block.child = outerBlockContent
+              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              if (typeof innerBlockContent.tpl !== 'undefined') {
+                innerBlockContent = innerBlockContent.tpl
+              }
+              output = innerBlockContent
+            } else if (outerBlock.params.needParent) {
+              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              if (typeof innerBlockContent.tpl !== 'undefined') {
+                innerBlockContent = innerBlockContent.tpl
+              }
+              data.smarty.block.parent = innerBlockContent
+              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              if (typeof outerBlockContent.tpl !== 'undefined') {
+                outerBlockContent = outerBlockContent.tpl
+              }
+              output = outerBlockContent
+            } else {
+              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              if (typeof outerBlockContent.tpl !== 'undefined') {
+                outerBlockContent = outerBlockContent.tpl
+              }
+              if (outerBlock.params.append) {
+                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                if (typeof innerBlockContent.tpl !== 'undefined') {
+                  innerBlockContent = innerBlockContent.tpl
+                }
+                output = outerBlockContent + innerBlockContent
+              } else if (outerBlock.params.prepend) {
+                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                if (typeof innerBlockContent.tpl !== 'undefined') {
+                  innerBlockContent = innerBlockContent.tpl
+                }
+                output = innerBlockContent + outerBlockContent
+              } else {
+                output = outerBlockContent
+              }
+            }
+            return output
+          }
+          // Outer block should not be printed it just used to
+          // capture the content
+          return ''
         }
       },
 

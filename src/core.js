@@ -73,6 +73,10 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     // Currently disabled, will decide in future, what TODO.
     this.debugging = false
 
+    this.outerBlocks = {}
+
+    this.blocks = {}
+
     this.parse(template, options)
   }
 
@@ -189,6 +193,8 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       parsedTemplate = jSmartParser.getParsed(template)
       this.tree = parsedTemplate.tree
       this.runTimePlugins = parsedTemplate.runTimePlugins
+      this.blocks = parsedTemplate.blocks
+      this.outerBlocks = parsedTemplate.outerBlocks
     },
 
     // Process the generated tree.
@@ -217,6 +223,8 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       jSmartProcessor.escapeHtml = this.escapeHtml
       jSmartProcessor.variableFilters = this.globalAndDefaultFilters
       jSmartProcessor.runTimePlugins = this.runTimePlugins
+      jSmartProcessor.blocks = this.blocks
+      jSmartProcessor.outerBlocks = this.outerBlocks
 
       // Capture the output by processing the template.
       outputData = jSmartProcessor.getProcessed(this.tree, data, this.smarty)
