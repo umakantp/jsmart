@@ -99,6 +99,10 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 * Run lint, run test, build, compress, distribution package and update examples in one command.
   _grunt_
 
+### LICENSE
+
+[MIT](https://opensource.org/licenses/MIT)
+
 ### NOTICE
 
 Project originally was created by [miroshnikov](https://github.com/miroshnikov) and hosted at [Google code](http://code.google.com/p/jsmart/). Since author was not active on project very frequently. I have forked and planned on pushing further improvements and features on my own fork.
