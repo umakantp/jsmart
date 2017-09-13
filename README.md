@@ -1,9 +1,9 @@
 jSmart [![Build Status](https://travis-ci.org/umakantp/jsmart.png?branch=master)](https://travis-ci.org/umakantp/jsmart)
 ======
 
-jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functioens, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
+jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functions, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
 
-jSmart is written entirely in JavaScript, does not have any DOM/DHTML/browser or third-party JavaScript library dependencies and can be run in a web browser as well as a standalone JavaScript interpreter or [CommonJS](http://www.commonjs.org/) environments like [node.js](http://nodejs.org/).
+jSmart is written entirely in JavaScript, does not have any DOM/browser or third-party JavaScript library dependencies and can be run in a web browser as well as a standalone JavaScript interpreter or [CommonJS](http://www.commonjs.org/) environments like [node.js](https://nodejs.org/).
 
 jSmart supports plugin architecture, you can [extend it with custom plugins](https://github.com/umakantp/jsmart/wiki/Create-Plugin): functions, blocks and variable modifiers, [templates inclusion](https://github.com/umakantp/jsmart/wiki/Include-Templates), [templates inheritance](https://github.com/umakantp/jsmart/wiki/Template-Inheritance) and overriding, [caching](https://github.com/umakantp/jsmart/wiki/Caching), [escape HTML](https://github.com/umakantp/jsmart/wiki/escape_html).
 
@@ -21,29 +21,20 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
         Hello {$name}
 
 
-3. Now lets read the template and compile it. _jSmart_ object compiles the template.
+3. Now lets read the template and compile it. _jSmart_ object compiles the template. You can call _fetch_ function as many times with different data you would want to assign to template. 
 
-        var fs = require('fs');
-        require('jsmart');
-        var tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'});
-        var compiledTpl = new jSmart(tpl);
-
-4. Assign data to the template passing Javascript object to the _fetch_ function. Variable _compiledTpl_ has the compiled template. You can call _fetch_ function as many times with different data. 
-
-        var fs = require(fs);
-        require('jsmart');
-        var tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'});
-        var compiledTpl = new jSmart(tpl);
-        var output = compiledTpl.fetch({name: 'World'});
+        var fs = require('fs'),
+            jSmart = require('jsmart'),
+            tpl = fs.readFileSync('./demo.tpl', {encoding: 'utf-8'}),
+            compiledTemplate = new jSmart(tpl),
+            output = compiledTemplate.fetch({name: 'World'});
+            // output will be "Hello world"
+            
         console.log(output);
 
-5. Execute the file.
+4. Execute the file.
 
         $ node demo.js
-    
-6. Result would be.
-
-        Hello World
 
     
 ### How to use jSmart in browser
@@ -58,115 +49,57 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 2. Create template, use [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax). Put the template's text in _&lt;script&gt;_ with the _type="text/x-jsmart-tmpl"_ so a browser will not try to parse it and mess it up.
 
         <script id="test_tpl" type="text/x-jsmart-tmpl">
-
-            <h1>{$greeting}</h1>
-
-            {foreach $books as $i => $book}
-                <div style="background-color: {cycle values="cyan,yellow"};">
-                    [{$i+1}] {$book.title|upper} by {$book.author}
-                        {if $book.price}
-                            Price: <span style="color:red">${$book.price}</span>
-                        {/if}
-                </div>
-            {foreachelse}
-                No books
-            {/foreach}
-
-            Total: {$book@total}
-
+            Hello {$name}
         </script>
 
-3. Create JavaScript data object with variables to assign to the template
+3. Create new object of _jSmart_ class, passing the template's text as it's constructor's argument than call _fetch(data)_, where data is an JavaScript object with variables to assign to the template
 
         <script>
-            var data = {
-                greeting: 'Hi, there are some JScript books you may find interesting:',
-                books : [
-                    {
-                        title  : 'JavaScript: The Definitive Guide',
-                        author : 'David Flanagan',
-                        price  : '31.18'
-                    },
-                    {
-                        title  : 'Murach JavaScript and DOM Scripting',
-                        author : 'Ray Harris',
-                    },
-                    {
-                        title  : 'Head First JavaScript',
-                        author : 'Michael Morrison',
-                        price  : '29.54'
-                    }
-                ]
-            };
+            var content = document.getElementById('test_tpl').innerHTML;
+            var compiled = new jSmart(content);
+            var output = compiled.fetch({name: 'world'});
+            // output will be "Hello world"
         </script>
 
-4. Create new object of _jSmart_ class, passing the template's text as it's constructor's argument than call _fetch(data)_, where data is an JavaScript object with variables to assign to the template
+### How to use jSmart using Require.js
 
-        <script>
+1. If you have configured and installed Require.js it easy to load jSmart and use it. Load jSmart.js file in the browser/environment and it already makes use require js to define module, you got to just include it.
 
-            var tplText = document.getElementById('test_tpl').innerHTML;
+        define(['jSmart'], function (jSmart) {
+          var tplText = 'Hello {$name}';
+          var compiled = new jSmart(tplText);
+          var output = compiled.fetch({name: 'world'});
+          // output is "Hello world"
+        });
 
-            var tpl = new jSmart( tplText );
+2. You can also make use Require.js text plugin to load templates.
 
-            var res = tpl.fetch( data );
-
-            /*
-             or fetch straigth from JavaScript string
-            var res = document.getElementById('test_tpl').innerHTML.fetch(data);
-            */
-
-            document.write( res );
-
-        </script>
-
-5. The result would be
-
-        <h1>Hi, there are some JScript books you may find interesting:</h1>
-
-        <div style="background-color: cyan;">
-            [1] JAVASCRIPT: THE DEFINITIVE GUIDE by David Flanagan
-            <span style="color:red">$31.18</span>
-        </div>
-
-        <div style="background-color: yellow;">
-            [2] MURACH JAVASCRIPT AND DOM SCRIPTING by Ray Harris
-        </div>
-
-        <div style="background-color: cyan;">
-            [3] HEAD FIRST JAVASCRIPT by Michael Morrison
-            <span style="color:red">$29.54</span>
-        </div>
-
-        Total: 3
-
-6. The template's text is compiled in the _jSmart_ constructor, so it's fast to call _fetch()_ with different assigned variables many times.
-
-        var tpl = new jSmart( '{$greeting}, {$name}!' );
-
-        tpl.fetch( {greeting:'Hello', name:'John'} ); //returns: Hello, John!
-
-        tpl.fetch( {greeting:'Hi', name:'Jane'} );    //returns: Hi, Jane!
+        define(['jSmart', 'text!some/good/template.tpl'], function (jSmart, goodTpl) {
+          var compiled = new jSmart(goodTpl);
+          var output = compiled.fetch({name: 'world'});
+          // output is "Hello world"
+        });
 
 
 ### DOCUMENTATION
 
 [https://github.com/umakantp/jsmart/wiki](https://github.com/umakantp/jsmart/wiki)
 
-### TESTS
+### CONTRIBUTIONS & TESTS
 
-* Install [Node.js](http://nodejs.org/) and [PHP](http://www.php.net) in a folder.
-  e.g. Install them in directories _/home/user/jsmart/node_ and _/home/user/jsmart/php_ respectively.
+* Pull request
+  Best is open a issue first. Then send a pull request referencing the issue number. Before sending pull request make sure you add test case for the fix. Make sure all test cases are passing and eslint tests pass.
 
-* Clone jSmart repo in the same folder.
-  e.g. Clone at  _/home/user/jsmart_. So jsmart repo is in _/home/user/jsmart/jsmart_ folder.
+* Test cases.
+  _grunt karma_
 
-* Go to jSmart and run _make test_.
-  e.g. Go to _/home/user/jsmart/jsmart_ and run _make test_.
+* ES Lint tests
+  _grunt eslint_
 
-* You can modify _makefile_ and _test/js/test-common.js_ for changing path of node and php respectively as per your needs but never commit those changes in master repository.
+* Run lint, run test, build, compress, distribution package and update examples in one command.
+  _grunt_
 
 ### NOTICE
 
-This project was originally hosted at [Google code](http://code.google.com/p/jsmart/) and was started by [miroshnikov](https://github.com/miroshnikov).
-Since author was not active on project. I have forked and planned on pushing further improvements and features.
+Project originally was created by [miroshnikov](https://github.com/miroshnikov) and hosted at [Google code](http://code.google.com/p/jsmart/). Since author was not active on project very frequently. I have forked and planned on pushing further improvements and features on my own fork.
 
