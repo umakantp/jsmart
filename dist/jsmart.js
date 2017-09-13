@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-13T13:36Z
+ * Date: 2017-09-13T17:30Z
  */
 (function (factory) {
   'use strict'
@@ -96,6 +96,10 @@
 
     getTemplate: function (name) {
       throw new Error('no getTemplate function defined.')
+    },
+
+    getConfig: function () {
+      throw new Error('no getConfig function defined.')
     },
 
     clear: function () {
@@ -984,12 +988,13 @@
         // Regex for config variable.
         'regex': /^#(\w+)#/,
         parse: function (s, data) {
-          // TODO yet to be worked on
-          var e
-          var eVar = {token: '$smarty', tree: []}
-          this.parseVar('.config.' + RegExp.$1, eVar, 'smarty')
-          e.tree.push(eVar.tree[0])
-          this.parseModifiers(s, e)
+          var dataVar = this.parseVar('.config.' + RegExp.$1, 'smarty', '$smarty')
+          var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
+          if (dataMod) {
+            dataVar.value += dataMod.value
+            return dataMod
+          }
+          return dataVar
         }
       },
       {
@@ -1084,6 +1089,23 @@
             name: 'setfilter',
             params: params,
             subTree: this.parse(content)
+          }
+        }
+      },
+
+      config_load: {
+        'type': 'function',
+        parse: function (params) {
+          var file = trimAllQuotes(params.file ? params.file : params[0])
+          var content = this.getConfig(file)
+          var section = trimAllQuotes(params.section ? params.section : (params[1] ? params[1] : ''))
+
+          return {
+            type: 'build-in',
+            name: 'config_load',
+            params: params,
+            content: content,
+            section: section
           }
         }
       },
@@ -1566,6 +1588,36 @@
       return {tpl: res, data: data}
     },
 
+    configLoad: function (content, section, data) {
+      var s = content.replace(/\r\n/g, '\n').replace(/^\s+|\s+$/g, '')
+      var regex = /^\s*(?:\[([^\]]+)\]|(?:(\w+)[ \t]*=[ \t]*("""|'[^'\\\n]*(?:\\.[^'\\\n]*)*'|"[^"\\\n]*(?:\\.[^"\\\n]*)*"|[^\n]*)))/m
+      var triple
+      var currSect = ''
+      for (var f = s.match(regex); f; f = s.match(regex)) {
+        s = s.slice(f.index + f[0].length)
+        if (f[1]) {
+          currSect = f[1]
+        } else if ((!currSect || currSect === section) && currSect.substr(0, 1) !== '.') {
+          if (f[3] === '"""') {
+            triple = s.match(/"""/)
+            if (triple) {
+              data.smarty.config[f[2]] = s.slice(0, triple.index)
+              s = s.slice(triple.index + triple[0].length)
+            }
+          } else {
+            data.smarty.config[f[2]] = trimAllQuotes(f[3])
+          }
+        }
+        var newln = s.match(/\n+/)
+        if (newln) {
+          s = s.slice(newln.index + newln[0].length)
+        } else {
+          break
+        }
+      }
+      return data
+    },
+
     getActualParamValues: function (params, data) {
       var actualParams = []
       var v
@@ -1731,6 +1783,16 @@
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           return {tpl: '', data: this.assignVar(params.__get('var', null, 0), params.__get('value', null, 1), data)}
+        }
+      },
+
+      config_load: {
+        process: function (node, data) {
+          data = this.configLoad(node.content, node.section, data)
+          return {
+            tpl: '',
+            data: data
+          }
         }
       },
 
@@ -2341,8 +2403,10 @@ var version = '3.0.0'
     // Currently disabled, will decide in future, what TODO.
     this.debugging = false
 
+    // Store outer blocks below extends.
     this.outerBlocks = {}
 
+    // Stores inner blocks.
     this.blocks = {}
 
     this.parse(template, options)
@@ -2454,6 +2518,7 @@ var version = '3.0.0'
       jSmartParser.rdelim = this.smarty.rdelim
       jSmartParser.ldelim = this.smarty.ldelim
       jSmartParser.getTemplate = this.getTemplate
+      jSmartParser.getConfig = this.getConfig
       jSmartParser.autoLiteral = this.autoLiteral
       jSmartParser.plugins = this.plugins
       jSmartParser.preFilters = this.filtersGlobal.pre
@@ -2471,6 +2536,7 @@ var version = '3.0.0'
       if (!(typeof data === 'object')) {
         data = {}
       }
+
       // Define smarty inside data and copy smarty vars, so one can use $smarty
       // vars inside templates.
       data.smarty = {}

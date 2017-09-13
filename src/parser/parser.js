@@ -32,6 +32,10 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       throw new Error('no getTemplate function defined.')
     },
 
+    getConfig: function () {
+      throw new Error('no getConfig function defined.')
+    },
+
     clear: function () {
       // Clean up config, specific for this parsing.
       this.runTimePlugins = {}
@@ -918,12 +922,13 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         // Regex for config variable.
         'regex': /^#(\w+)#/,
         parse: function (s, data) {
-          // TODO yet to be worked on
-          var e
-          var eVar = {token: '$smarty', tree: []}
-          this.parseVar('.config.' + RegExp.$1, eVar, 'smarty')
-          e.tree.push(eVar.tree[0])
-          this.parseModifiers(s, e)
+          var dataVar = this.parseVar('.config.' + RegExp.$1, 'smarty', '$smarty')
+          var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
+          if (dataMod) {
+            dataVar.value += dataMod.value
+            return dataMod
+          }
+          return dataVar
         }
       },
       {
@@ -1018,6 +1023,23 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
             name: 'setfilter',
             params: params,
             subTree: this.parse(content)
+          }
+        }
+      },
+
+      config_load: {
+        'type': 'function',
+        parse: function (params) {
+          var file = trimAllQuotes(params.file ? params.file : params[0])
+          var content = this.getConfig(file)
+          var section = trimAllQuotes(params.section ? params.section : (params[1] ? params[1] : ''))
+
+          return {
+            type: 'build-in',
+            name: 'config_load',
+            params: params,
+            content: content,
+            section: section
           }
         }
       },

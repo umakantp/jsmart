@@ -137,6 +137,36 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       return {tpl: res, data: data}
     },
 
+    configLoad: function (content, section, data) {
+      var s = content.replace(/\r\n/g, '\n').replace(/^\s+|\s+$/g, '')
+      var regex = /^\s*(?:\[([^\]]+)\]|(?:(\w+)[ \t]*=[ \t]*("""|'[^'\\\n]*(?:\\.[^'\\\n]*)*'|"[^"\\\n]*(?:\\.[^"\\\n]*)*"|[^\n]*)))/m
+      var triple
+      var currSect = ''
+      for (var f = s.match(regex); f; f = s.match(regex)) {
+        s = s.slice(f.index + f[0].length)
+        if (f[1]) {
+          currSect = f[1]
+        } else if ((!currSect || currSect === section) && currSect.substr(0, 1) !== '.') {
+          if (f[3] === '"""') {
+            triple = s.match(/"""/)
+            if (triple) {
+              data.smarty.config[f[2]] = s.slice(0, triple.index)
+              s = s.slice(triple.index + triple[0].length)
+            }
+          } else {
+            data.smarty.config[f[2]] = trimAllQuotes(f[3])
+          }
+        }
+        var newln = s.match(/\n+/)
+        if (newln) {
+          s = s.slice(newln.index + newln[0].length)
+        } else {
+          break
+        }
+      }
+      return data
+    },
+
     getActualParamValues: function (params, data) {
       var actualParams = []
       var v
@@ -302,6 +332,16 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           return {tpl: '', data: this.assignVar(params.__get('var', null, 0), params.__get('value', null, 1), data)}
+        }
+      },
+
+      config_load: {
+        process: function (node, data) {
+          data = this.configLoad(node.content, node.section, data)
+          return {
+            tpl: '',
+            data: data
+          }
         }
       },
 

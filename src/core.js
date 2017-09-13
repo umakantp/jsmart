@@ -73,8 +73,10 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     // Currently disabled, will decide in future, what TODO.
     this.debugging = false
 
+    // Store outer blocks below extends.
     this.outerBlocks = {}
 
+    // Stores inner blocks.
     this.blocks = {}
 
     this.parse(template, options)
@@ -186,6 +188,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       jSmartParser.rdelim = this.smarty.rdelim
       jSmartParser.ldelim = this.smarty.ldelim
       jSmartParser.getTemplate = this.getTemplate
+      jSmartParser.getConfig = this.getConfig
       jSmartParser.autoLiteral = this.autoLiteral
       jSmartParser.plugins = this.plugins
       jSmartParser.preFilters = this.filtersGlobal.pre
@@ -203,6 +206,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       if (!(typeof data === 'object')) {
         data = {}
       }
+
       // Define smarty inside data and copy smarty vars, so one can use $smarty
       // vars inside templates.
       data.smarty = {}
