@@ -716,40 +716,40 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
           if (node.location === 'inner') {
             if (innerBlock.params.needChild) {
-              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              outerBlockContent = this.process(outerBlock.tree, data)
               if (typeof outerBlockContent.tpl !== 'undefined') {
                 outerBlockContent = outerBlockContent.tpl
               }
               data.smarty.block.child = outerBlockContent
-              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              innerBlockContent = this.process(innerBlock.tree, data)
               if (typeof innerBlockContent.tpl !== 'undefined') {
                 innerBlockContent = innerBlockContent.tpl
               }
               output = innerBlockContent
             } else if (outerBlock.params.needParent) {
-              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              innerBlockContent = this.process(innerBlock.tree, data)
               if (typeof innerBlockContent.tpl !== 'undefined') {
                 innerBlockContent = innerBlockContent.tpl
               }
               data.smarty.block.parent = innerBlockContent
-              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              outerBlockContent = this.process(outerBlock.tree, data)
               if (typeof outerBlockContent.tpl !== 'undefined') {
                 outerBlockContent = outerBlockContent.tpl
               }
               output = outerBlockContent
             } else {
-              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              outerBlockContent = this.process(outerBlock.tree, data)
               if (typeof outerBlockContent.tpl !== 'undefined') {
                 outerBlockContent = outerBlockContent.tpl
               }
               if (outerBlock.params.append) {
-                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                innerBlockContent = this.process(innerBlock.tree, data)
                 if (typeof innerBlockContent.tpl !== 'undefined') {
                   innerBlockContent = innerBlockContent.tpl
                 }
                 output = outerBlockContent + innerBlockContent
               } else if (outerBlock.params.prepend) {
-                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                innerBlockContent = this.process(innerBlock.tree, data)
                 if (typeof innerBlockContent.tpl !== 'undefined') {
                   innerBlockContent = innerBlockContent.tpl
                 }

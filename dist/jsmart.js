@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-13T11:00Z
+ * Date: 2017-09-13T13:36Z
  */
 (function (factory) {
   'use strict'
@@ -1313,7 +1313,7 @@
       'extends': {
         type: 'function',
         parse: function (params) {
-          return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])))
+          return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
         }
       },
 
@@ -2145,40 +2145,40 @@
 
           if (node.location === 'inner') {
             if (innerBlock.params.needChild) {
-              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              outerBlockContent = this.process(outerBlock.tree, data)
               if (typeof outerBlockContent.tpl !== 'undefined') {
                 outerBlockContent = outerBlockContent.tpl
               }
               data.smarty.block.child = outerBlockContent
-              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              innerBlockContent = this.process(innerBlock.tree, data)
               if (typeof innerBlockContent.tpl !== 'undefined') {
                 innerBlockContent = innerBlockContent.tpl
               }
               output = innerBlockContent
             } else if (outerBlock.params.needParent) {
-              innerBlockContent = this.process(this.blocks[blockName].tree, data)
+              innerBlockContent = this.process(innerBlock.tree, data)
               if (typeof innerBlockContent.tpl !== 'undefined') {
                 innerBlockContent = innerBlockContent.tpl
               }
               data.smarty.block.parent = innerBlockContent
-              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              outerBlockContent = this.process(outerBlock.tree, data)
               if (typeof outerBlockContent.tpl !== 'undefined') {
                 outerBlockContent = outerBlockContent.tpl
               }
               output = outerBlockContent
             } else {
-              outerBlockContent = this.process(this.outerBlocks[blockName].tree, data)
+              outerBlockContent = this.process(outerBlock.tree, data)
               if (typeof outerBlockContent.tpl !== 'undefined') {
                 outerBlockContent = outerBlockContent.tpl
               }
               if (outerBlock.params.append) {
-                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                innerBlockContent = this.process(innerBlock.tree, data)
                 if (typeof innerBlockContent.tpl !== 'undefined') {
                   innerBlockContent = innerBlockContent.tpl
                 }
                 output = outerBlockContent + innerBlockContent
               } else if (outerBlock.params.prepend) {
-                innerBlockContent = this.process(this.blocks[blockName].tree, data)
+                innerBlockContent = this.process(innerBlock.tree, data)
                 if (typeof innerBlockContent.tpl !== 'undefined') {
                   innerBlockContent = innerBlockContent.tpl
                 }

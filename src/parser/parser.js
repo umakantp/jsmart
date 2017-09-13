@@ -1247,7 +1247,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       'extends': {
         type: 'function',
         parse: function (params) {
-          return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])))
+          return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
         }
       },
 
