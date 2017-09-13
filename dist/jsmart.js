@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-01T17:31Z
+ * Date: 2017-09-13T07:49Z
  */
 (function (factory) {
   'use strict'
@@ -1082,6 +1082,28 @@
         }
       },
 
+      'break': {
+        'type': 'function',
+        parse: function (params) {
+          return {
+            type: 'build-in',
+            name: 'break',
+            params: params
+          }
+        }
+      },
+
+      'continue': {
+        'type': 'function',
+        parse: function (params) {
+          return {
+            type: 'build-in',
+            name: 'continue',
+            params: params
+          }
+        }
+      },
+
       'call': {
         'type': 'function',
         parse: function (params) {
@@ -1116,6 +1138,13 @@
             params: params,
             subTree: tree
           }
+        }
+      },
+
+      'eval': {
+        'type': 'function',
+        parse: function (params) {
+          return this.parsePluginFunc('eval', params)
         }
       },
 
@@ -1194,17 +1223,6 @@
         }
       },
 
-      counter: {
-        type: 'function',
-        parse: function (params) {
-          return {
-            type: 'build-in',
-            name: 'counter',
-            params: params
-          }
-        }
-      },
-
       'foreach': {
         type: 'block',
         parseParams: function (paramStr) {
@@ -1259,16 +1277,6 @@
             tree: tree,
             defaultParams: params
           }
-          // Do not take this in tree. Skip it.
-          return false
-        }
-      },
-
-      // If someone has used {php} tags, we ignore that tag.
-      // Do not want to post errors.
-      php: {
-        type: 'block',
-        parse: function (params, content) {
           // Do not take this in tree. Skip it.
           return false
         }
@@ -1443,9 +1451,24 @@
           } else {
             plugin = this.plugins[node.name]
             if (plugin.type === 'block') {
-              // TODO:: Add code to handle block level plugins.
+              var repeat = {value: true}
+              while (repeat.value) {
+                repeat.value = false
+                tmp = this.process(node.subTree, data)
+                if (typeof tmp.tpl !== 'undefined') {
+                  data = tmp.data
+                  tmp = tmp.tpl
+                }
+                s += plugin.process.call(
+                  this,
+                  this.getActualParamValues(node.params, data),
+                  tmp,
+                  data,
+                  repeat
+                )
+              }
             } else if (plugin.type === 'function') {
-              s = plugin.process(this.getActualParamValues(node.params, data), data)
+              s = plugin.process.call(this, this.getActualParamValues(node.params, data), data)
             }
           }
         }
@@ -1832,9 +1855,6 @@
 
           var count = 0
           var i = from
-          props.total = count
-          // ? - because it is so in Smarty
-          props.loop = count
 
           count = 0
           var s = ''
@@ -1849,6 +1869,9 @@
             props.index_prev = i - step
             props.index_next = i + step
             props.iteration = props.rownum = count + 1
+            props.total = count
+            // ? - because it is so in Smarty
+            props.loop = count
 
             var tmp = this.process(node.subTree, data)
             if (typeof tmp !== 'undefined') {
@@ -1857,6 +1880,10 @@
             }
             data.smarty.continue = false
           }
+          props.total = count
+          // ? - because it is so in Smarty
+          props.loop = count
+
           data.smarty.break = false
 
           if (count) {
@@ -2011,6 +2038,26 @@
         }
       },
 
+      'break': {
+        process: function (node, data) {
+          data.smarty.break = true
+          return {
+            tpl: '',
+            data: data
+          }
+        }
+      },
+
+      'continue': {
+        process: function (node, data) {
+          data.smarty.continue = true
+          return {
+            tpl: '',
+            data: data
+          }
+        }
+      },
+
       'call': {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
@@ -2044,47 +2091,6 @@
           } else {
             return content
           }
-        }
-      },
-
-      counter: {
-        process: function (node, data) {
-          var params = this.getActualParamValues(node.params, data)
-          var name = params.__get('name', 'default')
-          if (name in data.smarty.counter) {
-            var counter = data.smarty.counter[name]
-            if ('start' in params) {
-              counter.value = parseInt(params['start'], 10)
-            } else {
-              counter.value = parseInt(counter.value, 10)
-              counter.skip = parseInt(counter.skip, 10)
-              if (counter.direction === 'down') {
-                counter.value -= counter.skip
-              } else {
-                counter.value += counter.skip
-              }
-            }
-            counter.skip = params.__get('skip', counter.skip)
-            counter.direction = params.__get('direction', counter.direction)
-            counter.assign = params.__get('assign', counter.assign)
-            data.smarty.counter[name] = counter
-          } else {
-            data.smarty.counter[name] = {
-              value: parseInt(params.__get('start', 1), 10),
-              skip: parseInt(params.__get('skip', 1), 10),
-              direction: params.__get('direction', 'up'),
-              assign: params.__get('assign', false)
-            }
-          }
-          if (data.smarty.counter[name].assign) {
-            data[data.smarty.counter[name].assign] = data.smarty.counter[name].value
-            return {tpl: '', data: data}
-          }
-          if (params.__get('print', true)) {
-            return {tpl: data.smarty.counter[name].value, data: data}
-          }
-          // User didn't assign and also said, print false.
-          return {tpl: '', data: data}
         }
       },
 
@@ -2136,6 +2142,68 @@ var version = '3.0.0'
    jSmart object.
   */
   var jSmart = function (template, options) {
+    // Smarty object which has version, delimiters, config, current directory
+    // and all blocks like PHP Smarty.
+    this.smarty = {
+
+      // Blocks in the current smarty object.
+      block: {},
+
+      // TODO:: Yet to figure out, what it is.
+      'break': false,
+
+      // All the capture blocks in the current smarty object.
+      capture: {},
+
+      // TODO:: Yet to figure out, what it is.
+      'continue': false,
+
+      // Current counter information. Smarty like feature.
+      counter: {},
+
+      // TODO:: Yet to figure out, what it is.
+      cycle: {},
+
+      // All the foreach blocks in the current smarty object.
+      'foreach': {},
+
+      // All the section blocks in the current smarty object.
+      section: {},
+
+      // Current timestamp, when the object is created.
+      now: Math.floor(((new Date()).getTime() / 1000)),
+
+      // All the constants defined the current smarty object.
+      'const': {},
+
+      // Current configuration.
+      config: {},
+
+      // Current directory, underscored name as PHP Smarty does it.
+      current_dir: '/',
+
+      // Currrent template.
+      template: '',
+
+      // Left delimiter.
+      ldelim: '{',
+
+      // Right delimiter.
+      rdelim: '}',
+
+      // Current version of jSmart.
+      version: version
+    }
+
+    // Whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before.
+    this.autoLiteral = true
+
+    // Escape html??
+    this.escapeHtml = false
+
+    // Currently disabled, will decide in future, what TODO.
+    this.debugging = false
+
     this.parse(template, options)
   }
 
@@ -2185,71 +2253,9 @@ var version = '3.0.0'
     // Plugins of the functions.
     plugins: {},
 
-    // Whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before.
-    autoLiteral: true,
-
-    // Escape html??
-    escapeHtml: false,
-
-    // Currently disabled, will decide in future, what TODO.
-    debugging: false,
-
     // Store current runtime plugins. Generally used for
     // {function} tags.
     runTimePlugins: {},
-
-    // Smarty object which has version, delimiters, config, current directory
-    // and all blocks like PHP Smarty.
-    smarty: {
-
-      // Blocks in the current smarty object.
-      block: {},
-
-      // TODO:: Yet to figure out, what it is.
-      'break': false,
-
-      // All the capture blocks in the current smarty object.
-      capture: {},
-
-      // TODO:: Yet to figure out, what it is.
-      'continue': false,
-
-      // Current counter information. Smarty like feature.
-      counter: {},
-
-      // TODO:: Yet to figure out, what it is.
-      cycle: {},
-
-      // All the foreach blocks in the current smarty object.
-      'foreach': {},
-
-      // All the section blocks in the current smarty object.
-      section: {},
-
-      // Current timestamp, when the object is created.
-      now: Math.floor(((new Date()).getTime() / 1000)),
-
-      // All the constants defined the current smarty object.
-      'const': {},
-
-      // Current configuration.
-      config: {},
-
-      // Current directory, underscored name as PHP Smarty does it.
-      current_dir: '/',
-
-      // Currrent template.
-      template: '',
-
-      // Left delimiter.
-      ldelim: '{',
-
-      // Right delimiter.
-      rdelim: '}',
-
-      // Current version of jSmart.
-      version: version
-    },
 
     // Initialize, jSmart, set settings and parse the template.
     parse: function (template, options) {
@@ -2263,6 +2269,9 @@ var version = '3.0.0'
       } else if (jSmart.prototype.right_delimiter) {
         // Backward compatible. Old way to set via prototype.
         this.smarty.rdelim = jSmart.prototype.right_delimiter
+      } else {
+        // Otherwise default delimiters
+        this.smarty.rdelim = '}'
       }
       if (options.ldelim) {
         // If delimiters are passed locally take them.
@@ -2270,6 +2279,9 @@ var version = '3.0.0'
       } else if (jSmart.prototype.left_delimiter) {
         // Backward compatible. Old way to set via prototype.
         this.smarty.ldelim = jSmart.prototype.left_delimiter
+      } else {
+        // Otherwise default delimiters
+        this.smarty.ldelim = '{'
       }
       if (options.autoLiteral !== undefined) {
         // If autoLiteral is passed locally, take it.
@@ -2399,7 +2411,1072 @@ var version = '3.0.0'
       throw new Error('No config for ' + name)
     }
   }
-jSmart.prototype.registerPlugin(
+
+
+  // Copied from  http://locutus.io/php/get_html_translation_table/
+  function getHtmlTranslationTable (table, quoteStyle) {
+    var entities = {}
+    var hashMap = {}
+    var decimal
+    var constMappingTable = {}
+    var constMappingQuoteStyle = {}
+    var useTable = {}
+    var useQuoteStyle = {}
+
+    // Translate arguments
+    constMappingTable[0] = 'HTML_SPECIALCHARS'
+    constMappingTable[1] = 'HTML_ENTITIES'
+    constMappingQuoteStyle[0] = 'ENT_NOQUOTES'
+    constMappingQuoteStyle[2] = 'ENT_COMPAT'
+    constMappingQuoteStyle[3] = 'ENT_QUOTES'
+
+    useTable = !isNaN(table)
+      ? constMappingTable[table]
+      : table
+        ? table.toUpperCase()
+        : 'HTML_SPECIALCHARS'
+
+    useQuoteStyle = !isNaN(quoteStyle)
+      ? constMappingQuoteStyle[quoteStyle]
+      : quoteStyle
+        ? quoteStyle.toUpperCase()
+        : 'ENT_COMPAT'
+
+    if (useTable !== 'HTML_SPECIALCHARS' && useTable !== 'HTML_ENTITIES') {
+      throw new Error('Table: ' + useTable + ' not supported')
+    }
+
+    entities['38'] = '&amp;'
+    if (useTable === 'HTML_ENTITIES') {
+      entities['160'] = '&nbsp;'
+      entities['161'] = '&iexcl;'
+      entities['162'] = '&cent;'
+      entities['163'] = '&pound;'
+      entities['164'] = '&curren;'
+      entities['165'] = '&yen;'
+      entities['166'] = '&brvbar;'
+      entities['167'] = '&sect;'
+      entities['168'] = '&uml;'
+      entities['169'] = '&copy;'
+      entities['170'] = '&ordf;'
+      entities['171'] = '&laquo;'
+      entities['172'] = '&not;'
+      entities['173'] = '&shy;'
+      entities['174'] = '&reg;'
+      entities['175'] = '&macr;'
+      entities['176'] = '&deg;'
+      entities['177'] = '&plusmn;'
+      entities['178'] = '&sup2;'
+      entities['179'] = '&sup3;'
+      entities['180'] = '&acute;'
+      entities['181'] = '&micro;'
+      entities['182'] = '&para;'
+      entities['183'] = '&middot;'
+      entities['184'] = '&cedil;'
+      entities['185'] = '&sup1;'
+      entities['186'] = '&ordm;'
+      entities['187'] = '&raquo;'
+      entities['188'] = '&frac14;'
+      entities['189'] = '&frac12;'
+      entities['190'] = '&frac34;'
+      entities['191'] = '&iquest;'
+      entities['192'] = '&Agrave;'
+      entities['193'] = '&Aacute;'
+      entities['194'] = '&Acirc;'
+      entities['195'] = '&Atilde;'
+      entities['196'] = '&Auml;'
+      entities['197'] = '&Aring;'
+      entities['198'] = '&AElig;'
+      entities['199'] = '&Ccedil;'
+      entities['200'] = '&Egrave;'
+      entities['201'] = '&Eacute;'
+      entities['202'] = '&Ecirc;'
+      entities['203'] = '&Euml;'
+      entities['204'] = '&Igrave;'
+      entities['205'] = '&Iacute;'
+      entities['206'] = '&Icirc;'
+      entities['207'] = '&Iuml;'
+      entities['208'] = '&ETH;'
+      entities['209'] = '&Ntilde;'
+      entities['210'] = '&Ograve;'
+      entities['211'] = '&Oacute;'
+      entities['212'] = '&Ocirc;'
+      entities['213'] = '&Otilde;'
+      entities['214'] = '&Ouml;'
+      entities['215'] = '&times;'
+      entities['216'] = '&Oslash;'
+      entities['217'] = '&Ugrave;'
+      entities['218'] = '&Uacute;'
+      entities['219'] = '&Ucirc;'
+      entities['220'] = '&Uuml;'
+      entities['221'] = '&Yacute;'
+      entities['222'] = '&THORN;'
+      entities['223'] = '&szlig;'
+      entities['224'] = '&agrave;'
+      entities['225'] = '&aacute;'
+      entities['226'] = '&acirc;'
+      entities['227'] = '&atilde;'
+      entities['228'] = '&auml;'
+      entities['229'] = '&aring;'
+      entities['230'] = '&aelig;'
+      entities['231'] = '&ccedil;'
+      entities['232'] = '&egrave;'
+      entities['233'] = '&eacute;'
+      entities['234'] = '&ecirc;'
+      entities['235'] = '&euml;'
+      entities['236'] = '&igrave;'
+      entities['237'] = '&iacute;'
+      entities['238'] = '&icirc;'
+      entities['239'] = '&iuml;'
+      entities['240'] = '&eth;'
+      entities['241'] = '&ntilde;'
+      entities['242'] = '&ograve;'
+      entities['243'] = '&oacute;'
+      entities['244'] = '&ocirc;'
+      entities['245'] = '&otilde;'
+      entities['246'] = '&ouml;'
+      entities['247'] = '&divide;'
+      entities['248'] = '&oslash;'
+      entities['249'] = '&ugrave;'
+      entities['250'] = '&uacute;'
+      entities['251'] = '&ucirc;'
+      entities['252'] = '&uuml;'
+      entities['253'] = '&yacute;'
+      entities['254'] = '&thorn;'
+      entities['255'] = '&yuml;'
+      entities['8364'] = '&euro;'
+    }
+
+    if (useQuoteStyle !== 'ENT_NOQUOTES') {
+      entities['34'] = '&quot;'
+    }
+    if (useQuoteStyle === 'ENT_QUOTES') {
+      entities['39'] = '&#39;'
+    }
+    entities['60'] = '&lt;'
+    entities['62'] = '&gt;'
+
+    // ascii decimals to real symbols
+    for (decimal in entities) {
+      if (entities.hasOwnProperty(decimal)) {
+        hashMap[String.fromCharCode(decimal)] = entities[decimal]
+      }
+    }
+
+    return hashMap
+  }
+
+
+  var phpJs = {
+    // Copied from http://locutus.io/php/strings/ord/
+    ord: function (string) {
+      var str = string + ''
+      var code = str.charCodeAt(0)
+      if (code >= 0xD800 && code <= 0xDBFF) {
+        var hi = code
+        if (str.length === 1) {
+          return code
+        }
+        var low = str.charCodeAt(1)
+        return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000
+      }
+      if (code >= 0xDC00 && code <= 0xDFFF) {
+        return code
+      }
+      return code
+    },
+
+    // Copied from http://locutus.io/php/strings/bin2hex/
+    bin2Hex: function (s) {
+      var i
+      var l
+      var o = ''
+      var n
+      s += ''
+      for (i = 0, l = s.length; i < l; i++) {
+        n = s.charCodeAt(i).toString(16)
+        o += n.length < 2 ? '0' + n : n
+      }
+      return o
+    },
+
+    // Copied from http://locutus.io/php/strings/html_entity_decode/
+    htmlEntityDecode: function (string, quoteStyle) {
+      var tmpStr = string.toString()
+      var entity = ''
+      var symbol = ''
+      var hashMap = getHtmlTranslationTable('HTML_ENTITIES', quoteStyle)
+      if (hashMap === false) {
+        return false
+      }
+      delete (hashMap['&'])
+      hashMap['&'] = '&amp;'
+      for (symbol in hashMap) {
+        entity = hashMap[symbol]
+        tmpStr = tmpStr.split(entity).join(symbol)
+      }
+      tmpStr = tmpStr.split('&#039;').join("'")
+      return tmpStr
+    },
+
+    objectKeys: function (o) {
+      var k = []
+      var p
+      for (p in o) {
+        if (Object.prototype.hasOwnProperty.call(o, p)) {
+          k.push(p)
+        }
+      }
+      return k
+    },
+
+    htmlEntities: function (string, quoteStyle, charset, doubleEncode) {
+      var hashMap = getHtmlTranslationTable('HTML_ENTITIES', quoteStyle)
+      var keys
+      string = string === null ? '' : string + ''
+      if (!hashMap) {
+        return false
+      }
+
+      if (quoteStyle && quoteStyle === 'ENT_QUOTES') {
+        hashMap["'"] = '&#039;'
+      }
+      doubleEncode = doubleEncode === null || !!doubleEncode
+      keys = Object.keys ? Object.keys(hashMap) : phpJs.objectKeys(hashMap)
+      var regex = new RegExp('&(?:#\\d+|#x[\\da-f]+|[a-zA-Z][\\da-z]*);|[' +
+        keys.join('')
+          .replace(/([()[\]{}\-.*+?^$|/\\])/g, '\\$1') + ']', 'g')
+
+      return string.replace(regex, function (ent) {
+        if (ent.length > 1) {
+          return doubleEncode ? hashMap['&'] + ent.substr(1) : ent
+        }
+        return hashMap[ent]
+      })
+    },
+
+    rawUrlDecode: function (string) {
+      return decodeURIComponent((string + '').replace(/%(?![\da-f]{2})/gi, function () {
+        // PHP tolerates poorly formed escape sequences
+        return '%25'
+      }))
+    },
+
+    rawUrlEncode: function (string) {
+      string = (string + '')
+      return encodeURIComponent(string)
+        .replace(/!/g, '%21')
+        .replace(/'/g, '%27')
+        .replace(/\(/g, '%28')
+        .replace(/\)/g, '%29')
+        .replace(/\*/g, '%2A')
+    },
+
+    sprintf: function () {
+      var regex = /%%|%(\d+\$)?([-+'#0 ]*)(\*\d+\$|\*|\d+)?(?:\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g
+      var a = arguments
+      var i = 0
+      var format = a[i++]
+
+      var _pad = function (str, len, chr, leftJustify) {
+        if (!chr) {
+          chr = ' '
+        }
+        var padding = (str.length >= len) ? '' : new Array(1 + len - str.length >>> 0).join(chr)
+        return leftJustify ? str + padding : padding + str
+      }
+
+      var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+        var diff = minWidth - value.length
+        if (diff > 0) {
+          if (leftJustify || !zeroPad) {
+            value = _pad(value, minWidth, customPadChar, leftJustify)
+          } else {
+            value = [
+              value.slice(0, prefix.length),
+              _pad('', diff, '0', true),
+              value.slice(prefix.length)
+            ].join('')
+          }
+        }
+        return value
+      }
+
+      var _formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
+        // Note: casts negative numbers to positive ones
+        var number = value >>> 0
+        prefix = (prefix && number && {
+          '2': '0b',
+          '8': '0',
+          '16': '0x'
+        }[base]) || ''
+        value = prefix + _pad(number.toString(base), precision || 0, '0', false)
+        return justify(value, prefix, leftJustify, minWidth, zeroPad)
+      }
+
+      // _formatString()
+      var _formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
+        if (precision !== null && precision !== undefined) {
+          value = value.slice(0, precision)
+        }
+        return justify(value, '', leftJustify, minWidth, zeroPad, customPadChar)
+      }
+
+      // doFormat()
+      var doFormat = function (substring, valueIndex, flags, minWidth, precision, type) {
+        var number, prefix, method, textTransform, value
+
+        if (substring === '%%') {
+          return '%'
+        }
+
+        // parse flags
+        var leftJustify = false
+        var positivePrefix = ''
+        var zeroPad = false
+        var prefixBaseX = false
+        var customPadChar = ' '
+        var flagsl = flags.length
+        var j
+        for (j = 0; j < flagsl; j++) {
+          switch (flags.charAt(j)) {
+            case ' ':
+              positivePrefix = ' '
+              break
+            case '+':
+              positivePrefix = '+'
+              break
+            case '-':
+              leftJustify = true
+              break
+            case "'":
+              customPadChar = flags.charAt(j + 1)
+              break
+            case '0':
+              zeroPad = true
+              customPadChar = '0'
+              break
+            case '#':
+              prefixBaseX = true
+              break
+          }
+        }
+
+        // parameters may be null, undefined, empty-string or real valued
+        // we want to ignore null, undefined and empty-string values
+        if (!minWidth) {
+          minWidth = 0
+        } else if (minWidth === '*') {
+          minWidth = +a[i++]
+        } else if (minWidth.charAt(0) === '*') {
+          minWidth = +a[minWidth.slice(1, -1)]
+        } else {
+          minWidth = +minWidth
+        }
+
+        // Note: undocumented perl feature:
+        if (minWidth < 0) {
+          minWidth = -minWidth
+          leftJustify = true
+        }
+
+        if (!isFinite(minWidth)) {
+          throw new Error('sprintf: (minimum-)width must be finite')
+        }
+
+        if (!precision) {
+          precision = 'fFeE'.indexOf(type) > -1 ? 6 : (type === 'd') ? 0 : undefined
+        } else if (precision === '*') {
+          precision = +a[i++]
+        } else if (precision.charAt(0) === '*') {
+          precision = +a[precision.slice(1, -1)]
+        } else {
+          precision = +precision
+        }
+
+        // grab value using valueIndex if required?
+        value = valueIndex ? a[valueIndex.slice(0, -1)] : a[i++]
+
+        switch (type) {
+          case 's':
+            return _formatString(value + '', leftJustify, minWidth, precision, zeroPad, customPadChar)
+          case 'c':
+            return _formatString(String.fromCharCode(+value), leftJustify, minWidth, precision, zeroPad)
+          case 'b':
+            return _formatBaseX(value, 2, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'o':
+            return _formatBaseX(value, 8, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'x':
+            return _formatBaseX(value, 16, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'X':
+            return _formatBaseX(value, 16, prefixBaseX, leftJustify, minWidth, precision, zeroPad).toUpperCase()
+          case 'u':
+            return _formatBaseX(value, 10, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'i':
+          case 'd':
+            number = +value || 0
+            // Plain Math.round doesn't just truncate
+            number = Math.round(number - number % 1)
+            prefix = number < 0 ? '-' : positivePrefix
+            value = prefix + _pad(String(Math.abs(number)), precision, '0', false)
+            return justify(value, prefix, leftJustify, minWidth, zeroPad)
+          case 'e':
+          case 'E':
+          case 'f': // @todo: Should handle locales (as per setlocale)
+          case 'F':
+          case 'g':
+          case 'G':
+            number = +value
+            prefix = number < 0 ? '-' : positivePrefix
+            method = ['toExponential', 'toFixed', 'toPrecision']['efg'.indexOf(type.toLowerCase())]
+            textTransform = ['toString', 'toUpperCase']['eEfFgG'.indexOf(type) % 2]
+            value = prefix + Math.abs(number)[method](precision)
+            return phpJs.justify(value, prefix, leftJustify, minWidth, zeroPad)[textTransform]()
+          default:
+            return substring
+        }
+      }
+
+      return format.replace(regex, doFormat)
+    },
+
+    makeTimeStamp: function (s) {
+      if (!s) {
+        return Math.floor(new Date().getTime() / 1000)
+      }
+      if (isNaN(s)) {
+        var tm = phpJs.strtotime(s)
+        if (tm === -1 || tm === false) {
+          return Math.floor(new Date().getTime() / 1000)
+        }
+        return tm
+      }
+      s = s + ''
+      if (s.length === 14 && s.search(/^[\d]+$/g) !== -1) {
+        // it is mysql timestamp format of YYYYMMDDHHMMSS?
+        return phpJs.mktime(s.substr(8, 2), s.substr(10, 2), s.substr(12, 2), s.substr(4, 2), s.substr(6, 2), s.substr(0, 4))
+      }
+      return Number(s)
+    },
+
+    mktime: function () {
+      var d = new Date()
+      var r = arguments
+      var i = 0
+      var e = ['Hours', 'Minutes', 'Seconds', 'Month', 'Date', 'FullYear']
+
+      for (i = 0; i < e.length; i++) {
+        if (typeof r[i] === 'undefined') {
+          r[i] = d['get' + e[i]]()
+          // +1 to fix JS months.
+          r[i] += (i === 3)
+        } else {
+          r[i] = parseInt(r[i], 10)
+          if (isNaN(r[i])) {
+            return false
+          }
+        }
+      }
+
+      r[5] += (r[5] >= 0 ? (r[5] <= 69 ? 2e3 : (r[5] <= 100 ? 1900 : 0)) : 0)
+      d.setFullYear(r[5], r[3] - 1, r[4])
+      d.setHours(r[0], r[1], r[2])
+      var time = d.getTime()
+      return (time / 1e3 >> 0) - (time < 0)
+    },
+
+    _pad: function (str, len, chr, leftJustify) {
+      if (!chr) {
+        chr = ' '
+      }
+      var padding = (str.length >= len) ? '' : new Array(1 + len - str.length >>> 0).join(chr)
+      return leftJustify ? str + padding : padding + str
+    },
+
+    justify: function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+      var diff = minWidth - value.length
+      if (diff > 0) {
+        if (leftJustify || !zeroPad) {
+          value = phpJs._pad(value, minWidth, customPadChar, leftJustify)
+        } else {
+          value = [
+            value.slice(0, prefix.length),
+            phpJs._pad('', diff, '0', true),
+            value.slice(prefix.length)
+          ].join('')
+        }
+      }
+      return value
+    },
+
+    strtotime: function (text, now) {
+      var parsed
+      var match
+      var today
+      var year
+      var date
+      var days
+      var ranges
+      var len
+      var times
+      var regex
+      var i
+      var fail = false
+
+      if (!text) {
+        return fail
+      }
+
+      text = text.replace(/^\s+|\s+$/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/[\t\r\n]/g, '')
+        .toLowerCase()
+
+      var pattern = new RegExp([
+        '^(\\d{1,4})',
+        '([\\-\\.\\/:])',
+        '(\\d{1,2})',
+        '([\\-\\.\\/:])',
+        '(\\d{1,4})',
+        '(?:\\s(\\d{1,2}):(\\d{2})?:?(\\d{2})?)?',
+        '(?:\\s([A-Z]+)?)?$'
+      ].join(''))
+      match = text.match(pattern)
+
+      if (match && match[2] === match[4]) {
+        if (match[1] > 1901) {
+          switch (match[2]) {
+            case '-':
+              // YYYY-M-D
+              if (match[3] > 12 || match[5] > 31) {
+                return fail
+              }
+
+              return new Date(match[1], parseInt(match[3], 10) - 1, match[5],
+                match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+            case '.':
+              // YYYY.M.D is not parsed by strtotime()
+              return fail
+            case '/':
+              // YYYY/M/D
+              if (match[3] > 12 || match[5] > 31) {
+                return fail
+              }
+
+              return new Date(match[1], parseInt(match[3], 10) - 1, match[5],
+                match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+          }
+        } else if (match[5] > 1901) {
+          switch (match[2]) {
+            case '-':
+              // D-M-YYYY
+              if (match[3] > 12 || match[1] > 31) {
+                return fail
+              }
+
+              return new Date(match[5], parseInt(match[3], 10) - 1, match[1],
+                match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+            case '.':
+              // D.M.YYYY
+              if (match[3] > 12 || match[1] > 31) {
+                return fail
+              }
+
+              return new Date(match[5], parseInt(match[3], 10) - 1, match[1],
+                match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+            case '/':
+              // M/D/YYYY
+              if (match[1] > 12 || match[3] > 31) {
+                return fail
+              }
+
+              return new Date(match[5], parseInt(match[1], 10) - 1, match[3],
+                match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+          }
+        } else {
+          switch (match[2]) {
+            case '-':
+              // YY-M-D
+              if (match[3] > 12 || match[5] > 31 || (match[1] < 70 && match[1] > 38)) {
+                return fail
+              }
+
+              year = match[1] >= 0 && match[1] <= 38 ? +match[1] + 2000 : match[1]
+              return new Date(year, parseInt(match[3], 10) - 1, match[5],
+                match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+            case '.':
+              // D.M.YY or H.MM.SS
+              if (match[5] >= 70) {
+                // D.M.YY
+                if (match[3] > 12 || match[1] > 31) {
+                  return fail
+                }
+
+                return new Date(match[5], parseInt(match[3], 10) - 1, match[1],
+                  match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+              }
+              if (match[5] < 60 && !match[6]) {
+                // H.MM.SS
+                if (match[1] > 23 || match[3] > 59) {
+                  return fail
+                }
+
+                today = new Date()
+                return new Date(today.getFullYear(), today.getMonth(), today.getDate(),
+                  match[1] || 0, match[3] || 0, match[5] || 0, match[9] || 0) / 1000
+              }
+
+              // invalid format, cannot be parsed
+              return fail
+            case '/':
+              // M/D/YY
+              if (match[1] > 12 || match[3] > 31 || (match[5] < 70 && match[5] > 38)) {
+                return fail
+              }
+
+              year = match[5] >= 0 && match[5] <= 38 ? +match[5] + 2000 : match[5]
+              return new Date(year, parseInt(match[1], 10) - 1, match[3],
+                match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
+            case ':':
+              // HH:MM:SS
+              if (match[1] > 23 || match[3] > 59 || match[5] > 59) {
+                return fail
+              }
+
+              today = new Date()
+              return new Date(today.getFullYear(), today.getMonth(), today.getDate(),
+                match[1] || 0, match[3] || 0, match[5] || 0) / 1000
+          }
+        }
+      }
+
+      if (text === 'now') {
+        return now === null || isNaN(now)
+          ? new Date().getTime() / 1000 | 0
+          : now | 0
+      }
+
+      if (!isNaN(parsed = Date.parse(text))) {
+        return parsed / 1000 | 0
+      }
+
+      pattern = new RegExp([
+        '^([0-9]{4}-[0-9]{2}-[0-9]{2})',
+        '[ t]',
+        '([0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?)',
+        '([\\+-][0-9]{2}(:[0-9]{2})?|z)'
+      ].join(''))
+      match = text.match(pattern)
+      if (match) {
+        // @todo: time zone information
+        if (match[4] === 'z') {
+          match[4] = 'Z'
+        } else if (match[4].match(/^([+-][0-9]{2})$/)) {
+          match[4] = match[4] + ':00'
+        }
+
+        if (!isNaN(parsed = Date.parse(match[1] + 'T' + match[2] + match[4]))) {
+          return parsed / 1000 | 0
+        }
+      }
+
+      date = now ? new Date(now * 1000) : new Date()
+      days = {
+        'sun': 0,
+        'mon': 1,
+        'tue': 2,
+        'wed': 3,
+        'thu': 4,
+        'fri': 5,
+        'sat': 6
+      }
+      ranges = {
+        'yea': 'FullYear',
+        'mon': 'Month',
+        'day': 'Date',
+        'hou': 'Hours',
+        'min': 'Minutes',
+        'sec': 'Seconds'
+      }
+
+      function lastNext (type, range, modifier) {
+        var diff
+        var day = days[range]
+
+        if (typeof day !== 'undefined') {
+          diff = day - date.getDay()
+
+          if (diff === 0) {
+            diff = 7 * modifier
+          } else if (diff > 0 && type === 'last') {
+            diff -= 7
+          } else if (diff < 0 && type === 'next') {
+            diff += 7
+          }
+
+          date.setDate(date.getDate() + diff)
+        }
+      }
+
+      function process (val) {
+        var splt = val.split(' ')
+        var type = splt[0]
+        var range = splt[1].substring(0, 3)
+        var typeIsNumber = /\d+/.test(type)
+        var ago = splt[2] === 'ago'
+        var num = (type === 'last' ? -1 : 1) * (ago ? -1 : 1)
+
+        if (typeIsNumber) {
+          num *= parseInt(type, 10)
+        }
+
+        if (ranges.hasOwnProperty(range) && !splt[1].match(/^mon(day|\.)?$/i)) {
+          return date['set' + ranges[range]](date['get' + ranges[range]]() + num)
+        }
+
+        if (range === 'wee') {
+          return date.setDate(date.getDate() + (num * 7))
+        }
+
+        if (type === 'next' || type === 'last') {
+          lastNext(type, range, num)
+        } else if (!typeIsNumber) {
+          return false
+        }
+
+        return true
+      }
+
+      times = '(years?|months?|weeks?|days?|hours?|minutes?|min|seconds?|sec' +
+        '|sunday|sun\\.?|monday|mon\\.?|tuesday|tue\\.?|wednesday|wed\\.?' +
+        '|thursday|thu\\.?|friday|fri\\.?|saturday|sat\\.?)'
+      regex = '([+-]?\\d+\\s' + times + '|' + '(last|next)\\s' + times + ')(\\sago)?'
+
+      match = text.match(new RegExp(regex, 'gi'))
+      if (!match) {
+        return fail
+      }
+
+      for (i = 0, len = match.length; i < len; i++) {
+        if (!process(match[i])) {
+          return fail
+        }
+      }
+
+      return (date.getTime() / 1000)
+    },
+
+    strftime: function (fmt, timestamp) {
+      var _xPad = function (x, pad, r) {
+        if (typeof r === 'undefined') {
+          r = 10
+        }
+        for (; parseInt(x, 10) < r && r > 1; r /= 10) {
+          x = pad.toString() + x
+        }
+        return x.toString()
+      }
+
+      // Only english
+      var lcTime = {
+        a: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        // ABDAY_
+        A: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        // DAY_
+        b: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        // ABMON_
+        B: ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+          'August', 'September', 'October',
+          'November', 'December'
+        ],
+        // MON_
+        c: '%a %d %b %Y %r %Z',
+        // D_T_FMT // changed %T to %r per results
+        p: ['AM', 'PM'],
+        // AM_STR/PM_STR
+        P: ['am', 'pm'],
+        // Not available in nl_langinfo()
+        r: '%I:%M:%S %p',
+        // T_FMT_AMPM (Fixed for all locales)
+        x: '%m/%d/%Y',
+        // D_FMT // switched order of %m and %d; changed %y to %Y (C uses %y)
+        X: '%r',
+        // T_FMT // changed from %T to %r  (%T is default for C, not English US)
+        // Following are from nl_langinfo() or http://www.cptec.inpe.br/sx4/sx4man2/g1ab02e/strftime.4.html
+        alt_digits: '',
+        // e.g., ordinal
+        ERA: '',
+        ERA_YEAR: '',
+        ERA_D_T_FMT: '',
+        ERA_D_FMT: '',
+        ERA_T_FMT: ''
+      }
+
+      var _formats = {
+        a: function (d) {
+          return lcTime.a[d.getDay()]
+        },
+        A: function (d) {
+          return lcTime.A[d.getDay()]
+        },
+        b: function (d) {
+          return lcTime.b[d.getMonth()]
+        },
+        B: function (d) {
+          return lcTime.B[d.getMonth()]
+        },
+        C: function (d) {
+          return _xPad(parseInt(d.getFullYear() / 100, 10), 0)
+        },
+        d: ['getDate', '0'],
+        e: ['getDate', ' '],
+        g: function (d) {
+          return _xPad(parseInt(this.G(d) / 100, 10), 0) // eslint-disable-line new-cap
+        },
+        G: function (d) {
+          var y = d.getFullYear()
+          var V = parseInt(_formats.V(d), 10) // eslint-disable-line new-cap
+          var W = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
+
+          if (W > V) {
+            y++
+          } else if (W === 0 && V >= 52) {
+            y--
+          }
+
+          return y
+        },
+        H: ['getHours', '0'],
+        I: function (d) {
+          var I = d.getHours() % 12
+          return _xPad(I === 0 ? 12 : I, 0)
+        },
+        j: function (d) {
+          var ms = d - new Date('' + d.getFullYear() + '/1/1 GMT')
+          // Line differs from Yahoo implementation which would be
+          // equivalent to replacing it here with:
+          ms += d.getTimezoneOffset() * 60000
+          var doy = parseInt(ms / 60000 / 60 / 24, 10) + 1
+          return _xPad(doy, 0, 100)
+        },
+        k: ['getHours', '0'],
+        // not in PHP, but implemented here (as in Yahoo)
+        l: function (d) {
+          var l = d.getHours() % 12
+          return _xPad(l === 0 ? 12 : l, ' ')
+        },
+        m: function (d) {
+          return _xPad(d.getMonth() + 1, 0)
+        },
+        M: ['getMinutes', '0'],
+        p: function (d) {
+          return lcTime.p[d.getHours() >= 12 ? 1 : 0]
+        },
+        P: function (d) {
+          return lcTime.P[d.getHours() >= 12 ? 1 : 0]
+        },
+        s: function (d) {
+          // Yahoo uses return parseInt(d.getTime()/1000, 10);
+          return Date.parse(d) / 1000
+        },
+        S: ['getSeconds', '0'],
+        u: function (d) {
+          var dow = d.getDay()
+          return ((dow === 0) ? 7 : dow)
+        },
+        U: function (d) {
+          var doy = parseInt(_formats.j(d), 10)
+          var rdow = 6 - d.getDay()
+          var woy = parseInt((doy + rdow) / 7, 10)
+          return _xPad(woy, 0)
+        },
+        V: function (d) {
+          var woy = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
+          var dow11 = (new Date('' + d.getFullYear() + '/1/1')).getDay()
+          // First week is 01 and not 00 as in the case of %U and %W,
+          // so we add 1 to the final result except if day 1 of the year
+          // is a Monday (then %W returns 01).
+          // We also need to subtract 1 if the day 1 of the year is
+          // Friday-Sunday, so the resulting equation becomes:
+          var idow = woy + (dow11 > 4 || dow11 <= 1 ? 0 : 1)
+          if (idow === 53 && (new Date('' + d.getFullYear() + '/12/31')).getDay() < 4) {
+            idow = 1
+          } else if (idow === 0) {
+            idow = _formats.V(new Date('' + (d.getFullYear() - 1) + '/12/31')) // eslint-disable-line new-cap
+          }
+          return _xPad(idow, 0)
+        },
+        w: 'getDay',
+        W: function (d) {
+          var doy = parseInt(_formats.j(d), 10)
+          var rdow = 7 - _formats.u(d)
+          var woy = parseInt((doy + rdow) / 7, 10)
+          return _xPad(woy, 0, 10)
+        },
+        y: function (d) {
+          return _xPad(d.getFullYear() % 100, 0)
+        },
+        Y: 'getFullYear',
+        z: function (d) {
+          var o = d.getTimezoneOffset()
+          var H = _xPad(parseInt(Math.abs(o / 60), 10), 0)
+          var M = _xPad(o % 60, 0)
+          return (o > 0 ? '-' : '+') + H + M
+        },
+        Z: function (d) {
+          return d.toString().replace(/^.*\(([^)]+)\)$/, '$1')
+        },
+        '%': function (d) {
+          return '%'
+        }
+      }
+
+      var _date = (typeof timestamp === 'undefined')
+        ? new Date()
+        : (timestamp instanceof Date)
+          ? new Date(timestamp)
+          : new Date(timestamp * 1000)
+
+      var _aggregates = {
+        c: 'locale',
+        D: '%m/%d/%y',
+        F: '%y-%m-%d',
+        h: '%b',
+        n: '\n',
+        r: 'locale',
+        R: '%H:%M',
+        t: '\t',
+        T: '%H:%M:%S',
+        x: 'locale',
+        X: 'locale'
+      }
+
+      // First replace aggregates (run in a loop because an agg may be made up of other aggs)
+      while (fmt.match(/%[cDFhnrRtTxX]/)) {
+        fmt = fmt.replace(/%([cDFhnrRtTxX])/g, function (m0, m1) {
+          var f = _aggregates[m1]
+          return (f === 'locale' ? lcTime[m1] : f)
+        })
+      }
+
+      // Now replace formats - we need a closure so that the date object gets passed through
+      var str = fmt.replace(/%([aAbBCdegGHIjklmMpPsSuUVwWyYzZ%])/g, function (m0, m1) {
+        var f = _formats[m1]
+        if (typeof f === 'string') {
+          return _date[f]()
+        } else if (typeof f === 'function') {
+          return f(_date)
+        } else if (typeof f === 'object' && typeof f[0] === 'string') {
+          return _xPad(_date[f[0]](), f[1])
+        } else {
+          // Shouldn't reach here
+          return m1
+        }
+      })
+
+      return str
+    }
+  }
+
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'capitalize',
+    function (s, upDigits, lcRest) {
+      if (typeof s !== 'string') {
+        return s
+      }
+      var re = new RegExp(upDigits ? '[^a-zA-Z_\u00E0-\u00FC]+' : '[^a-zA-Z0-9_\u00E0-\u00FC]')
+      var found = null
+      var res = ''
+      if (lcRest) {
+        s = s.toLowerCase()
+      }
+      var word
+      for (found = s.match(re); found; found = s.match(re)) {
+        word = s.slice(0, found.index)
+        if (word.match(/\d/)) {
+          res += word
+        } else {
+          res += word.charAt(0).toUpperCase() + word.slice(1)
+        }
+        res += s.slice(found.index, found.index + found[0].length)
+        s = s.slice(found.index + found[0].length)
+      }
+      if (s.match(/\d/)) {
+        return res + s
+      }
+      return res + s.charAt(0).toUpperCase() + s.slice(1)
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'cat',
+    function (s, value) {
+      value = value ? value : ''
+      return String(s) + value
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'count_characters',
+    function (s, includeWhitespaces) {
+      s = String(s)
+      return includeWhitespaces ? s.length : s.replace(/\s/g, '').length
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'count_paragraphs',
+    function (s) {
+      var found = String(s).match(/\n+/g)
+      if (found) {
+        return found.length + 1
+      }
+      return 1
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'count_sentences',
+    function (s) {
+      if (typeof s === 'string') {
+        var found = s.match(/\w[.?!](\W|$)/g)
+        if (found) {
+          return found.length
+        }
+      }
+      return 0
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'count_words',
+    function (s) {
+      if (typeof s === 'string') {
+        var found = s.match(/\w+/g)
+        if (found) {
+          return found.length
+        }
+      }
+      return 0
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'date_format',
+    function (s, fmt, defaultDate) {
+      return phpJs.strftime(fmt ? fmt : '%b %e, %Y', phpJs.makeTimeStamp(s ? s : defaultDate))
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
     'modifier',
     'defaultValue',
     function (s, value) {
@@ -2410,9 +3487,102 @@ jSmart.prototype.registerPlugin(
 
   jSmart.prototype.registerPlugin(
     'modifier',
-    'upper',
+    'escape',
+    function (s, escType, charSet, doubleEncode) {
+      s = String(s)
+      escType = escType || 'html'
+      charSet = charSet || 'UTF-8'
+      doubleEncode = (typeof doubleEncode !== 'undefined') ? Boolean(doubleEncode) : true
+      var res = ''
+      var i
+
+      switch (escType) {
+        case 'html': {
+          if (doubleEncode) {
+            s = s.replace(/&/g, '&amp;')
+          }
+          return s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#039;').replace(/"/g, '&quot;')
+        }
+        case 'htmlall': {
+          return phpJs.htmlEntities(s, 3, charSet)
+        }
+        case 'url': {
+          return phpJs.rawUrlEncode(s)
+        }
+        case 'urlpathinfo': {
+          return phpJs.rawUrlEncode(s).replace(/%2F/g, '/')
+        }
+        case 'quotes': {
+          return s.replace(/(^|[^\\])'/g, "$1\\'")
+        }
+        case 'hex': {
+          res = ''
+          for (i = 0; i < s.length; ++i) {
+            res += '%' + phpJs.bin2Hex(s.substr(i, 1)).toLowerCase()
+          }
+          return res
+        }
+        case 'hexentity': {
+          res = ''
+          for (i = 0; i < s.length; ++i) {
+            res += '&#x' + phpJs.bin2Hex(s.substr(i, 1)) + ';'
+          }
+          return res
+        }
+        case 'decentity': {
+          res = ''
+          for (i = 0; i < s.length; ++i) {
+            res += '&#' + phpJs.ord(s.substr(i, 1)) + ';'
+          }
+          return res
+        }
+        case 'mail': {
+          return s.replace(/@/g, ' [AT] ').replace(/[.]/g, ' [DOT] ')
+        }
+        case 'nonstd': {
+          res = ''
+          for (i = 0; i < s.length; ++i) {
+            var _ord = phpJs.ord(s.substr(i, 1))
+            if (_ord >= 126) {
+              res += '&#' + _ord + ';'
+            } else {
+              res += s.substr(i, 1)
+            }
+          }
+          return res
+        }
+        case 'javascript': {
+          return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/<\//g, '</')
+        }
+      }
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'from_charset',
     function (s) {
-      return (String(s)).toUpperCase()
+      // No implementation in JS. But modifier should not fail hencce this.
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'indent',
+    function (s, repeat, indentWith) {
+      s = String(s)
+      repeat = repeat ? repeat : 4
+      indentWith = indentWith ? indentWith : ' '
+
+      var indentStr = ''
+      while (repeat--) {
+        indentStr += indentWith
+      }
+
+      var tail = s.match(/\n+$/)
+      return indentStr + s.replace(/\n+$/, '').replace(/\n/g, '\n' + indentStr) + (tail ? tail[0] : '')
     }
   )
 
@@ -2421,6 +3591,25 @@ jSmart.prototype.registerPlugin(
     'lower',
     function (s) {
       return (String(s)).toLowerCase()
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'nl2br',
+    function (s) {
+      return String(s).replace(/\n/g, '<br />')
+    }
+  )
+
+  // only modifiers (flags) 'i' and 'm' are supported
+  // backslashes should be escaped e.g. \\s
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'regex_replace',
+    function (s, re, replaceWith) {
+      var pattern = re.match(/^ *\/(.*)\/(.*) *$/)
+      return String(s).replace(new RegExp(pattern[1], 'g' + (pattern.length > 1 ? pattern[2] : '')), replaceWith)
     }
   )
 
@@ -2447,10 +3636,160 @@ jSmart.prototype.registerPlugin(
 
   jSmart.prototype.registerPlugin(
     'modifier',
-    'count_characters',
-    function (s, includeWhitespaces) {
+    'spacify',
+    function (s, space) {
+      if (!space) {
+        space = ' '
+      }
+      return String(s).replace(/(\n|.)(?!$)/g, '$1' + space)
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'string_format',
+    function (s, fmt) {
+      return phpJs.sprintf(fmt, s)
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'strip',
+    function (s, replaceWith) {
+      replaceWith = replaceWith ? replaceWith : ' '
+      return String(s).replace(/[\s]+/g, replaceWith)
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'strip_tags',
+    function (s, addSpaceOrTagsToExclude, tagsToExclude) {
+      if (addSpaceOrTagsToExclude === null) {
+        addSpaceOrTagsToExclude = true
+      }
+      if (!tagsToExclude) {
+        if (addSpaceOrTagsToExclude !== true && addSpaceOrTagsToExclude !== false && ((addSpaceOrTagsToExclude + '').length > 0)) {
+          tagsToExclude = addSpaceOrTagsToExclude
+          addSpaceOrTagsToExclude = true
+        }
+      }
+      if (tagsToExclude) {
+        var filters = tagsToExclude.split('>')
+        filters.splice(-1, 1)
+        s = String(s).replace(/<[^>]*?>/g, function (match, offset, contents) {
+          var tagName = match.match(/\w+/)
+          for (var i = 0; i < filters.length; i++) {
+            var tagName2 = (filters[i] + '>').match(/\w+/)
+            if (tagName[0] === tagName2[0]) {
+              return match
+            }
+          }
+          return addSpaceOrTagsToExclude ? ' ' : ''
+        })
+        return s
+      }
+      return String(s).replace(/<[^>]*?>/g, addSpaceOrTagsToExclude ? ' ' : '')
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'to_charset',
+    function (s) {
+      // No implementation in JS. But modifier should not fail hencce this.
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'truncate',
+    function (s, length, etc, breakWords, middle) {
       s = String(s)
-      return includeWhitespaces ? s.length : s.replace(/\s/g, '').length
+      length = length ? length : 80
+      etc = (etc != null) ? etc : '...'
+
+      if (s.length <= length) {
+        return s
+      }
+
+      length -= Math.min(length, etc.length)
+      if (middle) {
+        // one of floor()'s should be replaced with ceil() but it so in Smarty
+        return s.slice(0, Math.floor(length / 2)) + etc + s.slice(s.length - Math.floor(length / 2))
+      }
+
+      if (!breakWords) {
+        s = s.slice(0, length + 1).replace(/\s+?(\S+)?$/, '')
+      }
+
+      return s.slice(0, length) + etc
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'unescape',
+    function (s, escType, charSet) {
+      s = String(s)
+      escType = escType || 'html'
+      charSet = charSet || 'UTF-8'
+
+      switch (escType) {
+        case 'html': {
+          return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#039;/g, "'").replace(/&quot;/g, '"')
+        }
+        case 'entity': {
+          return phpJs.htmlEntityDecode(s, 1)
+        }
+        case 'htmlall': {
+          return phpJs.htmlEntityDecode(s, 1)
+        }
+        case 'url': {
+          return phpJs.rawUrlDecode(s)
+        }
+      }
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'upper',
+    function (s) {
+      return (String(s)).toUpperCase()
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'wordwrap',
+    function (s, width, wrapWith, breakWords) {
+      width = width || 80
+      wrapWith = wrapWith || '\n'
+
+      var lines = String(s).split('\n')
+      for (var i = 0; i < lines.length; ++i) {
+        var line = lines[i]
+        var parts = ''
+        while (line.length > width) {
+          var pos = 0
+          var found = line.slice(pos).match(/\s+/)
+          for (; found && (pos + found.index) <= width; found = line.slice(pos).match(/\s+/)) {
+            pos += found.index + found[0].length
+          }
+          pos = pos || (breakWords ? width : (found ? found.index + found[0].length : line.length))
+          parts += line.slice(0, pos).replace(/\s+$/, '') // + wrapWith;
+          if (pos < line.length) {
+            parts += wrapWith
+          }
+          line = line.slice(pos)
+        }
+        lines[i] = parts + line
+      }
+      return lines.join('\n')
     }
   )
 jSmart.prototype.registerPlugin(
@@ -2519,6 +3858,569 @@ jSmart.prototype.registerPlugin(
         // something went wrong.
         return ''
       }
+    }
+  )
+// All built in but custom functions
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'counter',
+    function (params, data) {
+      var name = params.__get('name', 'default')
+      if (name in data.smarty.counter) {
+        var counter = data.smarty.counter[name]
+        if ('start' in params) {
+          counter.value = parseInt(params['start'], 10)
+        } else {
+          counter.value = parseInt(counter.value, 10)
+          counter.skip = parseInt(counter.skip, 10)
+          if (counter.direction === 'down') {
+            counter.value -= counter.skip
+          } else {
+            counter.value += counter.skip
+          }
+        }
+        counter.skip = params.__get('skip', counter.skip)
+        counter.direction = params.__get('direction', counter.direction)
+        counter.assign = params.__get('assign', counter.assign)
+        data.smarty.counter[name] = counter
+      } else {
+        data.smarty.counter[name] = {
+          value: parseInt(params.__get('start', 1), 10),
+          skip: parseInt(params.__get('skip', 1), 10),
+          direction: params.__get('direction', 'up'),
+          assign: params.__get('assign', false)
+        }
+      }
+      if (data.smarty.counter[name].assign) {
+        data[data.smarty.counter[name].assign] = data.smarty.counter[name].value
+        return ''
+      }
+      if (params.__get('print', true)) {
+        return data.smarty.counter[name].value
+      }
+      // User didn't assign and also said, print false.
+      return ''
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'cycle',
+    function (params, data) {
+      var name = params.__get('name', 'default')
+      var reset = params.__get('reset', false)
+      if (!(name in data.smarty.cycle)) {
+        data.smarty.cycle[name] = {arr: [''], delimiter: params.__get('delimiter', ','), index: 0}
+        reset = true
+      }
+
+      if (params.__get('delimiter', false)) {
+        data.smarty.cycle[name].delimiter = params.delimiter
+      }
+      var values = params.__get('values', false)
+      if (values) {
+        var arr = []
+        if (values instanceof Object) {
+          for (var nm in values) {
+            arr.push(values[nm])
+          }
+        } else {
+          arr = values.split(data.smarty.cycle[name].delimiter)
+        }
+
+        if (arr.length !== data.smarty.cycle[name].arr.length || arr[0] !== data.smarty.cycle[name].arr[0]) {
+          data.smarty.cycle[name].arr = arr
+          data.smarty.cycle[name].index = 0
+          reset = true
+        }
+      }
+
+      if (params.__get('advance', 'true')) {
+        data.smarty.cycle[name].index += 1
+      }
+      if (data.smarty.cycle[name].index >= data.smarty.cycle[name].arr.length || reset) {
+        data.smarty.cycle[name].index = 0
+      }
+
+      if (params.__get('assign', false)) {
+        this.assignVar(params.assign, data.smarty.cycle[name].arr[data.smarty.cycle[name].index], data)
+        return ''
+      }
+
+      if (params.__get('print', true)) {
+        return data.smarty.cycle[name].arr[data.smarty.cycle[name].index]
+      }
+
+      return ''
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'eval',
+    function (params, data) {
+      var s = params.var
+      if ('assign' in params) {
+        this.assignVar(params.assign, s, data)
+        return ''
+      }
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'fetch',
+    function (params, data) {
+      var s = jSmart.prototype.getFile(params.__get('file', null, 0))
+      if ('assign' in params) {
+        this.assignVar(params.assign, s, data)
+        return ''
+      }
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'html_checkboxes',
+    function (params, data) {
+      var type = params.__get('type', 'checkbox')
+      var name = params.__get('name', type)
+      var realName = name
+      var values = params.__get('values', params.options)
+      var output = params.__get('options', [])
+      var useName = ('options' in params)
+      var selected = params.__get('selected', false)
+      var separator = params.__get('separator', '')
+      var labels = Boolean(params.__get('labels', true))
+      var labelIds = Boolean(params.__get('label_ids', false))
+      var p
+      var res = []
+      var i = 0
+      var s = ''
+      var value
+      var id
+
+      if (type === 'checkbox') {
+        name += '[]'
+      }
+
+      if (!useName) {
+        for (p in params.output) {
+          output.push(params.output[p])
+        }
+      }
+
+      for (p in values) {
+        if (values.hasOwnProperty(p)) {
+          value = (useName ? p : values[p])
+          id = realName + '_' + value
+          s = (labels ? (labelIds ? '<label for="' + id + '">' : '<label>') : '')
+          s += '<input type="' + type + '" name="' + name + '" value="' + value + '" '
+          if (labelIds) {
+            s += 'id="' + id + '" '
+          }
+          if (selected == (useName ? p : values[p])) { // eslint-disable-line eqeqeq
+            s += 'checked="checked" '
+          }
+          s += '/>' + output[useName ? p : i++]
+          s += (labels ? '</label>' : '')
+          s += separator
+          res.push(s)
+        }
+      }
+
+      if ('assign' in params) {
+        this.assignVar(params.assign, res, data)
+        return ''
+      }
+      return res.join('\n')
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'html_image',
+    function (params, data) {
+      var url = params.__get('file', null)
+      var width = params.__get('width', false)
+      var height = params.__get('height', false)
+      var alt = params.__get('alt', '')
+      var href = params.__get('href', params.__get('link', false))
+      var pathPrefix = params.__get('path_prefix', '')
+      var paramNames = {file: 1, width: 1, height: 1, alt: 1, href: 1, basedir: 1, pathPrefix: 1, link: 1}
+      var s = '<img src="' + pathPrefix + url + '"' + ' alt="' + alt + '"' + (width ? ' width="' + width + '"' : '') + (height ? ' height="' + height + '"' : '')
+      var p
+
+      for (p in params) {
+        if (params.hasOwnProperty(p) && typeof params[p] === 'string') {
+          if (!(p in paramNames)) {
+            s += ' ' + p + '="' + params[p] + '"'
+          }
+        }
+      }
+      s += ' />'
+      return href ? '<a href="' + href + '">' + s + '</a>' : s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'html_options',
+    function (params, data) {
+      var values = params.__get('values', params.options)
+      var output = params.__get('options', [])
+      var useName = ('options' in params)
+      var p
+      if (!useName) {
+        for (p in params.output) {
+          output.push(params.output[p])
+        }
+      }
+      var selected = params.__get('selected', false)
+      var res = []
+      var s = ''
+      var i = 0
+      var j
+      if (selected instanceof Array) {
+        // We convert each value of array to string because values
+        // is array of string. Otherwise comparision fails.
+        for (j in selected) {
+          if (selected.hasOwnProperty(j)) {
+            selected[j] = selected[j] + ''
+          }
+        }
+      } else if (typeof selected !== 'boolean') {
+        selected = [selected + '']
+      }
+
+      for (p in values) {
+        if (values.hasOwnProperty(p)) {
+          s = '<option value="' + (useName ? p : values[p]) + '"'
+          if (selected && selected.indexOf((useName ? p : values[p])) !== -1) {
+            s += ' selected="selected"'
+          }
+          s += '>' + output[useName ? p : i++] + '</option>'
+          res.push(s)
+        }
+      }
+      var name = params.__get('name', false)
+      return (name ? ('<select name="' + name + '">\n' + res.join('\n') + '\n</select>') : res.join('\n')) + '\n'
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'html_radios',
+    function (params, data) {
+      params.type = 'radio'
+      return this.plugins.html_checkboxes.process(params, data)
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'html_select_date',
+    function (params, data) {
+      var prefix = params.__get('prefix', 'Date_')
+      var d = new Date()
+      var startYear = Number(params.__get('start_year', d.getFullYear()))
+      var endYear = Number(params.__get('end_year', startYear))
+      var displayDays = params.__get('display_days', true)
+      var displayMonths = params.__get('display_months', true)
+      var displayYears = params.__get('display_years', true)
+      var reverseYears = params.__get('reverse_years', false)
+      var months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+      var s = '<select name="' + prefix + 'Month">\n'
+      var i = 0
+      var selected
+
+      if ((startYear > endYear && !reverseYears) || (startYear < endYear && reverseYears)) {
+        var temp = endYear
+        endYear = startYear
+        startYear = temp
+      }
+
+      if (displayMonths) {
+        for (i = 1; i < months.length; ++i) {
+          selected = (i === (d.getMonth() + 1)) ? ' selected="selected"' : ''
+          s += '<option value="' + i + '"' + selected + '>' + months[i] + '</option>\n'
+        }
+        s += '</select>\n'
+      }
+
+      if (displayDays) {
+        s += '<select name="' + prefix + 'Day">\n'
+        for (i = 1; i <= 31; ++i) {
+          selected = (i === d.getDate()) ? ' selected="selected"' : ''
+          s += '<option value="' + i + '"' + selected + '>' + i + '</option>\n'
+        }
+        s += '</select>\n'
+      }
+
+      if (displayYears) {
+        var op = startYear > endYear ? -1 : 1
+        s += '<select name="' + prefix + 'Year">\n'
+        for (i = startYear; ((op > 0) ? (i <= endYear) : (i >= endYear)); i += op) {
+          selected = (i === d.getFullYear()) ? ' selected="selected"' : ''
+          s += '<option value="' + i + '"' + selected + '>' + i + '</option>\n'
+        }
+        s += '</select>\n'
+      }
+
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'html_table',
+    function (params, data) {
+      var rows = params.__get('rows', false)
+      var cols = params.__get('cols', false)
+      var inner = params.__get('inner', 'cols')
+      var caption = params.__get('caption', '')
+      var tableAttr = params.__get('table_attr', 'border="1"')
+      var thAttr = params.__get('th_attr', false)
+      var trAttr = params.__get('tr_attr', false)
+      var tdAttr = params.__get('td_attr', false)
+      var trailpad = params.__get('trailpad', '&nbsp;')
+      var hdir = params.__get('hdir', 'right')
+      var vdir = params.__get('vdir', 'down')
+      var loop = []
+      var p
+      if (params.loop instanceof Array) {
+        loop = params.loop
+      } else {
+        for (p in params.loop) {
+          if (params.loop.hasOwnProperty(p)) {
+            loop.push(params.loop[p])
+          }
+        }
+      }
+
+      if (!cols) {
+        cols = rows ? Math.ceil(loop.length / rows) : 3
+      }
+      var colNames = []
+      if (isNaN(cols)) {
+        if (typeof cols === 'object') {
+          for (p in cols) {
+            if (cols.hasOwnProperty(p)) {
+              colNames.push(cols[p])
+            }
+          }
+        } else {
+          colNames = cols.split(/\s*,\s*/)
+        }
+        cols = colNames.length
+      }
+      rows = rows ? rows : Math.ceil(loop.length / cols)
+
+      if (thAttr && typeof thAttr !== 'object') {
+        thAttr = [thAttr]
+      }
+
+      if (trAttr && typeof trAttr !== 'object') {
+        trAttr = [trAttr]
+      }
+
+      if (tdAttr && typeof tdAttr !== 'object') {
+        tdAttr = [tdAttr]
+      }
+
+      var s = ''
+      var idx
+      for (var row = 0; row < rows; ++row) {
+        s += '<tr' + (trAttr ? ' ' + trAttr[row % trAttr.length] : '') + '>\n'
+        for (var col = 0; col < cols; ++col) {
+          idx = (inner === 'cols') ? ((vdir === 'down' ? row : rows - 1 - row) * cols + (hdir === 'right' ? col : cols - 1 - col)) : ((hdir === 'right' ? col : cols - 1 - col) * rows + (vdir === 'down' ? row : rows - 1 - row))
+          s += '<td' + (tdAttr ? ' ' + tdAttr[col % tdAttr.length] : '') + '>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n'
+        }
+        s += '</tr>\n'
+      }
+
+      var sHead = ''
+      if (colNames.length) {
+        sHead = '\n<thead><tr>'
+        for (var i = 0; i < colNames.length; ++i) {
+          sHead += '\n<th' + (thAttr ? ' ' + thAttr[i % thAttr.length] : '') + '>' + colNames[hdir === 'right' ? i : colNames.length - 1 - i] + '</th>'
+        }
+        sHead += '\n</tr></thead>'
+      }
+
+      return '<table ' + tableAttr + '>' + (caption ? '\n<caption>' + caption + '</caption>' : '') + sHead + '\n<tbody>\n' + s + '</tbody>\n</table>\n'
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'mailto',
+    function (params, data) {
+      var address = params.__get('address', null)
+      var encode = params.__get('encode', 'none')
+      var text = params.__get('text', address)
+      var cc = phpJs.rawUrlEncode(params.__get('cc', '')).replace('%40', '@')
+      var bcc = phpJs.rawUrlEncode(params.__get('bcc', '')).replace('%40', '@')
+      var followupto = phpJs.rawUrlEncode(params.__get('followupto', '')).replace('%40', '@')
+      var subject = phpJs.rawUrlEncode(params.__get('subject', ''))
+      var newsgroups = phpJs.rawUrlEncode(params.__get('newsgroups', ''))
+      var extra = params.__get('extra', '')
+      var s
+      var i
+
+      address += (cc ? '?cc=' + cc : '')
+      address += (bcc ? (cc ? '&' : '?') + 'bcc=' + bcc : '')
+      address += (subject ? ((cc || bcc) ? '&' : '?') + 'subject=' + subject : '')
+      address += (newsgroups ? ((cc || bcc || subject) ? '&' : '?') + 'newsgroups=' + newsgroups : '')
+      address += (followupto ? ((cc || bcc || subject || newsgroups) ? '&' : '?') + 'followupto=' + followupto : '')
+
+      s = '<a href="mailto:' + address + '" ' + extra + '>' + text + '</a>'
+
+      if (encode === 'javascript') {
+        s = "document.write('" + s + "');"
+        var sEncoded = ''
+        for (i = 0; i < s.length; ++i) {
+          sEncoded += '%' + phpJs.bin2Hex(s.substr(i, 1))
+        }
+        return '<script type="text/javascript">eval(unescape(\'' + sEncoded + "'))</script>"
+      } else if (encode === 'javascript_charcode') {
+        var codes = []
+        for (i = 0; i < s.length; ++i) {
+          codes.push(phpJs.ord(s.substr(i, 1)))
+        }
+        return '<script type="text/javascript" language="javascript">\n<!--\n{document.write(String.fromCharCode(' + codes.join(',') + '))}\n//-->\n</script>\n'
+      } else if (encode === 'hex') {
+        if (address.match(/^.+\?.+$/)) {
+          throw new Error('mailto: hex encoding does not work with extra attributes. Try javascript.')
+        }
+        var aEncoded = ''
+        for (i = 0; i < address.length; ++i) {
+          if (address.substr(i, 1).match(/\w/)) {
+            aEncoded += '%' + phpJs.bin2Hex(address.substr(i, 1))
+          } else {
+            aEncoded += address.substr(i, 1)
+          }
+        }
+        aEncoded = aEncoded.toLowerCase()
+        var tEncoded = ''
+        for (i = 0; i < text.length; ++i) {
+          tEncoded += '&#x' + phpJs.bin2Hex(text.substr(i, 1)) + ';'
+        }
+        tEncoded = tEncoded.toLowerCase()
+        return '<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;' + aEncoded + '" ' + extra + '>' + tEncoded + '</a>'
+      }
+      return s
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
+    'math',
+    function (params, data) {
+      var equation = params.__get('equation', null).replace(/pi\(\s*\)/g, 'PI')
+      equation = equation.replace(/ceil/g, 'Math.ceil')
+        .replace(/abs/g, 'Math.abs')
+        .replace(/cos/g, 'Math.cos')
+        .replace(/exp/g, 'Math.exp')
+        .replace(/floor/g, 'Math.floor')
+        .replace(/log/g, 'Math.log')
+        .replace(/max/g, 'Math.max')
+        .replace(/min/g, 'Math.min')
+        .replace(/PI/g, 'Math.PI')
+        .replace(/pow/g, 'Math.pow')
+        .replace(/rand/g, 'Math.rand')
+        .replace(/round/g, 'Math.round')
+        .replace(/sin/g, 'Math.sin')
+        .replace(/sqrt/g, 'Math.sqrt')
+        .replace(/srans/g, 'Math.srans')
+        .replace(/tan/g, 'Math.tan')
+
+      var words = equation.match(/\w+/g)
+      var i
+      var j
+      var tmp
+      var banned = ['ceil', 'abs', 'cos', 'exp', 'floor', 'log10', 'log',
+        'max', 'min', 'pi', 'pow', 'rand', 'round', 'sin', 'sqrt', 'srans', 'tan']
+
+      for (i = 0; i < words.length; i++) {
+        for (j = 0; j < (words.length - 1); j++) {
+          if ((words[j] + '').length > (words[j + 1] + '').length) {
+            tmp = words[j]
+            words[j] = words[j + 1]
+            words[j + 1] = tmp
+          }
+        }
+      }
+
+      for (i = 0; i < words.length; i++) {
+        if (words[i] in params && banned.indexOf(words[i]) === -1) {
+          equation = equation.replace(words[i], params[words[i]])
+        }
+      }
+      var res = eval(equation) // eslint-disable-line no-eval
+
+      if ('format' in params) {
+        res = Number(phpJs.sprintf(params.format, res))
+      }
+
+      if ('assign' in params) {
+        this.assignVar(params.assign, res, data)
+        return ''
+      }
+      return res
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'block',
+    'textformat',
+    function (params, content, data, repeat) {
+      if (!content) {
+        return ''
+      }
+
+      content = String(content)
+
+      var wrap = params.__get('wrap', 80)
+      var wrapChar = params.__get('wrap_char', '\n')
+      var wrapCut = params.__get('wrap_cut', false)
+      var indentChar = params.__get('indent_char', ' ')
+      var indent = params.__get('indent', 0)
+      var indentStr = (new Array(indent + 1)).join(indentChar)
+      var indentFirst = params.__get('indent_first', 0)
+      var indentFirstStr = (new Array(indentFirst + 1)).join(indentChar)
+
+      var style = params.__get('style', '')
+
+      if (style === 'email') {
+        wrap = 72
+      }
+
+      var paragraphs = content.split(/[\r\n]{2}/)
+      for (var i = 0; i < paragraphs.length; ++i) {
+        var p = paragraphs[i]
+        if (!p) {
+          continue
+        }
+        p = p.replace(/^\s+|\s+$/, '').replace(/\s+/g, ' ')
+        if (indentFirst > 0) {
+          p = indentFirstStr + p
+        }
+        p = this.modifiers.wordwrap(p, wrap - indent, wrapChar, wrapCut)
+        if (indent > 0) {
+          p = p.replace(/^/mg, indentStr)
+        }
+        paragraphs[i] = p
+      }
+      var s = paragraphs.join(wrapChar + wrapChar)
+      if ('assign' in params) {
+        this.assignVar(params.assign, s, data)
+        return ''
+      }
+      return s
     }
   )
 
