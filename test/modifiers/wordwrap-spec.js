@@ -19,15 +19,12 @@ define(['jSmart'], function (jSmart) {
       t = new jSmart(tpl)
       expect(t.fetch({words: 'Blind woman gets new kidney from dad she hasn\'t seen in years.'})).toBe(output)
 
-      /*
-      TODO:: Fix this
       tpl = '{$words|wordwrap:26:"<br />\\n":true}'
       output = 'Blind woman gets new kidn<br />\n'
       output += 'ey from dad she hasn\'t se<br />\n'
       output += 'en in years.'
       t = new jSmart(tpl)
       expect(t.fetch({words: 'Blind woman gets new kidney from dad she hasn\'t seen in years.'})).toBe(output)
-      */
     })
   })
 })

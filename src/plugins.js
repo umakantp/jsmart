@@ -402,8 +402,8 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
           for (; found && (pos + found.index) <= width; found = line.slice(pos).match(/\s+/)) {
             pos += found.index + found[0].length
           }
-          pos = pos || (breakWords ? width : (found ? found.index + found[0].length : line.length))
-          parts += line.slice(0, pos).replace(/\s+$/, '') // + wrapWith;
+          pos = (breakWords ? (width - 1) : (pos || (found ? found.index + found[0].length : line.length)))
+          parts += line.slice(0, pos).replace(/\s+$/, '')
           if (pos < line.length) {
             parts += wrapWith
           }
