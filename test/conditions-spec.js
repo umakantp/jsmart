@@ -67,7 +67,6 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (
 
       expect(t.fetch({x: true, y: 0})).toBe(output)
 
-      // TODO:: Make {if (2*3) or (1*5)} work correctly.
       tpl = "{if 'what'}"
       tpl += 'insideWhat-'
       tpl += '{if $z.a.b}'

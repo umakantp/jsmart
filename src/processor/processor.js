@@ -299,7 +299,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
               // Write in global scope __t() function is called, it works.
               // TODO:: Refactor this code.
               window.__t = function () { return res }
-              res = this.process(this.tplModifiers, data)
+              res = this.process(this.tplModifiers[this.tplModifiers.length - 1], data)
               if (typeof res !== 'undefined') {
                 data = res.data
                 res = res.tpl
@@ -582,13 +582,13 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
       setfilter: {
         process: function (node, data) {
-          this.tplModifiers = node.params
+          this.tplModifiers.push(node.params)
           var s = this.process(node.subTree, data)
           if (typeof s !== 'undefined') {
             data = s.data
             s = s.tpl
           }
-          this.tplModifiers = []
+          this.tplModifiers.pop()
           return {tpl: s, data: data}
         }
       },

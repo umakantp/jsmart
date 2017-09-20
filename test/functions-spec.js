@@ -28,7 +28,6 @@ define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl
     }
     window.strayNoArgs = strayNoArgs
 
-    // TODO:: None of these are working. Currrently skipped.
     it('test inline functions', function () {
       var tpl = "{function 'sayHello' to=''}Hello {$to}!{/function}"
       tpl += '\n'
