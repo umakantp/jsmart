@@ -1,0 +1,10 @@
+.eslintrc.json
+
+/.editorconfig
+/.gitattributes
+/.travis.yml
+
+/build
+/test
+/Gruntfile.js
+/karma.conf.js
