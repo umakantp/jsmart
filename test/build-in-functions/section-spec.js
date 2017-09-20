@@ -146,8 +146,6 @@ define(['jSmart'], function (jSmart) {
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
     })
 
-    /*
-    TODO:: Fix it
     it('test nested section', function () {
       tpl = '{section name=person loop=$ids}'
       tpl += '----------------\\n'
@@ -160,20 +158,20 @@ define(['jSmart'], function (jSmart) {
 
       output = '----------------\\n'
       output += 'id: 1\\n'
-      output += 'Uma\\n'
+      output += 'data1\\n'
+      output += 'data2\\n'
       output += '----------------\\n'
       output += '----------------\\n'
       output += 'id: 2\\n'
-      output += 'Pallavi\\n'
+      output += 'data3\\n'
+      output += 'data4\\n'
       output += '----------------\\n'
       output += '----------------\\n'
       output += 'id: 3\\n'
-      output += 'Kasturi\\n'
       output += '----------------\\n'
 
       t = new jSmart(tpl)
-      expect(t.fetch({id: [1, 2, 3], names: [['Uma', 'Pallavi', 'Kasturi']]})).toBe(output)
+      expect(t.fetch({ids: [1, 2, 3], names: [['data1', 'data2'], ['data3', 'data4']]})).toBe(output)
     })
-    */
   })
 })

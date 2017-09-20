@@ -16,7 +16,7 @@ define(['jSmart'], function (jSmart) {
       expect(t.fetch()).toBe(output)
 
       /*
-      big strins to test
+      big strings to test
       tpl = '{mailto address="me@example.com" encode="javascript"}'
       output = '<script type="text/javascript" language="javascript">'
       output += "eval(unescape('%64%6f% ... snipped ...%61%3e%27%29%3b'))"
@@ -34,11 +34,10 @@ define(['jSmart'], function (jSmart) {
       t = new jSmart(tpl)
       expect(t.fetch()).toBe(output)
 
-      /* TODO fix.
       tpl = '{mailto address="me@example.com" cc="you@example.com,they@example.com"}'
       output = '<a href="mailto:me@example.com?cc=you@example.com,they@example.com" >me@example.com</a>'
       t = new jSmart(tpl)
-      expect(t.fetch()).toBe(output) */
+      expect(t.fetch()).toBe(output)
 
       tpl = '{mailto address="me@example.com" extra=\'class="email"\'}'
       output = '<a href="mailto:me@example.com" class="email">me@example.com</a>'

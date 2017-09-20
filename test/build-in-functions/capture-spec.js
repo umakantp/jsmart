@@ -1,10 +1,10 @@
 define(['jSmart'], function (jSmart) {
   describe('Test build-in function:: capture', function () {
-    it('test simple capture', function () {
-      var tpl
-      var output
-      var t
+    var tpl
+    var output
+    var t
 
+    it('test simple capture', function () {
       // Simple
       tpl = "{capture name='simple'}"
       tpl += 'captured it'
@@ -25,10 +25,6 @@ define(['jSmart'], function (jSmart) {
     })
 
     it('test assigned capture', function () {
-      var tpl
-      var output
-      var t
-
       // Assigned
       tpl = "{capture name='simple' assign='simple'}"
       tpl += 'captured it'
@@ -40,10 +36,6 @@ define(['jSmart'], function (jSmart) {
     })
 
     it('test default capture', function () {
-      var tpl
-      var output
-      var t
-
       // with no name
       tpl = '{capture}'
       tpl += 'captured it for default'
@@ -54,8 +46,17 @@ define(['jSmart'], function (jSmart) {
       expect(t.fetch()).toBe(output)
     })
 
-    // it('test nested capture', function () {
-    // It currently breaks. TODO::.
-    // })
+    it('test nested capture', function () {
+      // with no name
+      tpl = '{capture name="t2"}'
+      tpl += 't2'
+      tpl += '{capture name="t3"}'
+      tpl += 't3 {/capture}'
+      tpl += '{/capture}'
+      tpl += '{$smarty.capture.t2} {$smarty.capture.t3}'
+      output = 't2 t3 '
+      t = new jSmart(tpl)
+      expect(t.fetch()).toBe(output)
+    })
   })
 })
