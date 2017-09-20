@@ -194,8 +194,8 @@ err
 OK
 {/if}
 
-{if nullVar XOR false}
-err  //TODO fix. this should be OK.
+{if $nullVar XOR false}
+err
 {else}
 OK
 {/if}
