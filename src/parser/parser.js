@@ -570,8 +570,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
             }
           }
         } else if ((!!newTree) && (newTree.constructor === Object)) {
-          // TODO :: figure out, how we would we get this done by
-          // only getting tree (no value should be needed.)
           value += newTree.value
           newTree = newTree.tree
           tree = tree.concat(newTree)

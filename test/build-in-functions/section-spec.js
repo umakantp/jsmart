@@ -149,7 +149,7 @@ define(['jSmart'], function (jSmart) {
     it('test nested section', function () {
       tpl = '{section name=person loop=$ids}'
       tpl += '----------------\\n'
-      tpl += 'id: {$ids[person]}\\n';
+      tpl += 'id: {$ids[person]}\\n'
       tpl += '{section name=name loop=$names[person]}'
       tpl += '{$names[person][name]}\\n'
       tpl += '{/section}'

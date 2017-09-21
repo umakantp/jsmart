@@ -297,8 +297,12 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             res = this.applyFilters(this.variableFilters, res)
             if (this.tplModifiers.length) {
               // Write in global scope __t() function is called, it works.
-              // TODO:: Refactor this code.
-              window.__t = function () { return res }
+              if (window && window.document) {
+                window.__t = function () { return res }
+              } else {
+                // Node.js like environment?!
+                global['__t'] = function () { return res }
+              }
               res = this.process(this.tplModifiers[this.tplModifiers.length - 1], data)
               if (typeof res !== 'undefined') {
                 data = res.data
@@ -383,9 +387,10 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           if (node.optype === 'binary') {
             arg2 = params[1]
             if (node.op === '=') {
-              // TODO:: why do not we return the var value?
+              // Var value is returned, but also set inside data.
+              // we use the data and override ours.
               this.getVarValue(node.params.__parsed[0], data, arg2)
-              return ''
+              return {tpl: '', data: data}
             } else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/)) {
               arg1 = this.getVarValue(node.params.__parsed[0], data)
               switch (node.op) {

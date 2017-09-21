@@ -18,19 +18,19 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       // Blocks in the current smarty object.
       block: {},
 
-      // TODO:: Yet to figure out, what it is.
+      // Used to store state of break;
       'break': false,
 
       // All the capture blocks in the current smarty object.
       capture: {},
 
-      // TODO:: Yet to figure out, what it is.
+      // Used to store state of continue
       'continue': false,
 
       // Current counter information. Smarty like feature.
       counter: {},
 
-      // TODO:: Yet to figure out, what it is.
+      // Use by {cycle} custom function to store array and cycle info.
       cycle: {},
 
       // All the foreach blocks in the current smarty object.

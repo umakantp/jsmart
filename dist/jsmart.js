@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-13T17:30Z
+ * Date: 2017-09-21T08:56Z
  */
 (function (factory) {
   'use strict'
@@ -636,8 +636,6 @@
             }
           }
         } else if ((!!newTree) && (newTree.constructor === Object)) {
-          // TODO :: figure out, how we would we get this done by
-          // only getting tree (no value should be needed.)
           value += newTree.value
           newTree = newTree.tree
           tree = tree.concat(newTree)
@@ -1748,9 +1746,13 @@
             res = this.applyFilters(this.variableFilters, res)
             if (this.tplModifiers.length) {
               // Write in global scope __t() function is called, it works.
-              // TODO:: Refactor this code.
-              window.__t = function () { return res }
-              res = this.process(this.tplModifiers, data)
+              if (window && window.document) {
+                window.__t = function () { return res }
+              } else {
+                // Node.js like environment?!
+                global['__t'] = function () { return res }
+              }
+              res = this.process(this.tplModifiers[this.tplModifiers.length - 1], data)
               if (typeof res !== 'undefined') {
                 data = res.data
                 res = res.tpl
@@ -1834,9 +1836,10 @@
           if (node.optype === 'binary') {
             arg2 = params[1]
             if (node.op === '=') {
-              // TODO:: why do not we return the var value?
+              // Var value is returned, but also set inside data.
+              // we use the data and override ours.
               this.getVarValue(node.params.__parsed[0], data, arg2)
-              return ''
+              return {tpl: '', data: data}
             } else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/)) {
               arg1 = this.getVarValue(node.params.__parsed[0], data)
               switch (node.op) {
@@ -2033,13 +2036,13 @@
 
       setfilter: {
         process: function (node, data) {
-          this.tplModifiers = node.params
+          this.tplModifiers.push(node.params)
           var s = this.process(node.subTree, data)
           if (typeof s !== 'undefined') {
             data = s.data
             s = s.tpl
           }
-          this.tplModifiers = []
+          this.tplModifiers.pop()
           return {tpl: s, data: data}
         }
       },
@@ -2348,19 +2351,19 @@ var version = '3.0.0'
       // Blocks in the current smarty object.
       block: {},
 
-      // TODO:: Yet to figure out, what it is.
+      // Used to store state of break;
       'break': false,
 
       // All the capture blocks in the current smarty object.
       capture: {},
 
-      // TODO:: Yet to figure out, what it is.
+      // Used to store state of continue
       'continue': false,
 
       // Current counter information. Smarty like feature.
       counter: {},
 
-      // TODO:: Yet to figure out, what it is.
+      // Use by {cycle} custom function to store array and cycle info.
       cycle: {},
 
       // All the foreach blocks in the current smarty object.
@@ -3991,8 +3994,8 @@ var version = '3.0.0'
           for (; found && (pos + found.index) <= width; found = line.slice(pos).match(/\s+/)) {
             pos += found.index + found[0].length
           }
-          pos = pos || (breakWords ? width : (found ? found.index + found[0].length : line.length))
-          parts += line.slice(0, pos).replace(/\s+$/, '') // + wrapWith;
+          pos = (breakWords ? (width - 1) : (pos || (found ? found.index + found[0].length : line.length)))
+          parts += line.slice(0, pos).replace(/\s+$/, '')
           if (pos < line.length) {
             parts += wrapWith
           }
@@ -4058,6 +4061,8 @@ jSmart.prototype.registerPlugin(
         } else {
           if (window && window.document) {
             func = window[fname]
+          } else if (global) {
+            func = global[fname]
           }
         }
 
@@ -4473,9 +4478,9 @@ jSmart.prototype.registerPlugin(
       var address = params.__get('address', null)
       var encode = params.__get('encode', 'none')
       var text = params.__get('text', address)
-      var cc = phpJs.rawUrlEncode(params.__get('cc', '')).replace('%40', '@')
-      var bcc = phpJs.rawUrlEncode(params.__get('bcc', '')).replace('%40', '@')
-      var followupto = phpJs.rawUrlEncode(params.__get('followupto', '')).replace('%40', '@')
+      var cc = phpJs.rawUrlEncode(params.__get('cc', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
+      var bcc = phpJs.rawUrlEncode(params.__get('bcc', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
+      var followupto = phpJs.rawUrlEncode(params.__get('followupto', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
       var subject = phpJs.rawUrlEncode(params.__get('subject', ''))
       var newsgroups = phpJs.rawUrlEncode(params.__get('newsgroups', ''))
       var extra = params.__get('extra', '')

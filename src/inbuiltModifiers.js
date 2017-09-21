@@ -54,6 +54,8 @@ define(['./core'], function (jSmart) {
         } else {
           if (window && window.document) {
             func = window[fname]
+          } else if (global) {
+            func = global[fname]
           }
         }
 
