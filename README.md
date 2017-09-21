@@ -15,11 +15,11 @@ jSmart supports plugin architecture, you can [extend it with custom plugins](htt
 jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty-template-in-javascript), for both PHP and Javascript.
 
 ### Using jSmart with CDN
-##### Latest version (don't use in production)
+##### Always latest version (don't use in production)
 ```
 https://cdn.jsdelivr.net/npm/jsmart/dist/jsmart.min.js
 ```
-##### Current version
+##### Current latest version (3.0.1)
 ```
 https://cdn.jsdelivr.net/npm/jsmart@3.0.1/dist/jsmart.min.js
 ```
