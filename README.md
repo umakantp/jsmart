@@ -1,5 +1,10 @@
-jSmart - Smarty template engine in JavaScript [![Build Status](https://travis-ci.org/umakantp/jsmart.png?branch=master)](https://travis-ci.org/umakantp/jsmart)
+jSmart - Smarty template engine in JavaScript 
 ======
+[![Build Status](https://travis-ci.org/umakantp/jsmart.png?branch=master)](https://travis-ci.org/umakantp/jsmart)
+[![npm version](https://img.shields.io/npm/v/jsmart.svg)](https://www.npmjs.com/package/jsmart)
+[![David](https://img.shields.io/david/dev/umakantp/jsmart.svg)](https://www.npmjs.com/package/jsmart)
+[![npm](https://img.shields.io/npm/dw/jsmart.svg)](https://www.npmjs.com/package/jsmart)
+[![npm](https://img.shields.io/npm/l/jsmart.svg)](https://github.com/umakantp/jsmart/blob/master/LICENSE)
 
 jSmart is a port of the Smarty Template Engine to Javascript, a JavaScript template library that supports the template [syntax](https://github.com/umakantp/jsmart/wiki/syntax) and all the features (functions, variable modifiers, etc.) of the well-known PHP template engine [Smarty](http://www.smarty.net/).
 
@@ -8,6 +13,16 @@ jSmart is written entirely in JavaScript, does not have any DOM/browser or third
 jSmart supports plugin architecture, you can [extend it with custom plugins](https://github.com/umakantp/jsmart/wiki/Create-Plugin): functions, blocks and variable modifiers, [templates inclusion](https://github.com/umakantp/jsmart/wiki/Include-Templates), [templates inheritance](https://github.com/umakantp/jsmart/wiki/Template-Inheritance) and overriding, [caching](https://github.com/umakantp/jsmart/wiki/Caching), [escape HTML](https://github.com/umakantp/jsmart/wiki/escape_html).
 
 jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty-template-in-javascript), for both PHP and Javascript.
+
+### Using jSmart with CDN
+##### Latest version (don't use in production)
+```
+https://cdn.jsdelivr.net/npm/jsmart/dist/jsmart.min.js
+```
+##### Current version
+```
+https://cdn.jsdelivr.net/npm/jsmart@3.0.1/dist/jsmart.min.js
+```
 
 ### How to use jSmart in Node.js
 
