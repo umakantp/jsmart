@@ -2,82 +2,17 @@
 <html>
 <head>
 	<title>jSmart example</title>
-	<!--<script type="text/javascript" src="../../jsmart_old.js"></script>-->
-	<script type="text/javascript" src="../../dist/jsmart.js"></script>
-
+	<script type="text/javascript" src="jsmart.min.js"></script>
 </head>
 <body>
-
-
-  <script id="parent" type="text/x-jsmart-tmpl">
-    Parent template.<br>
-  </script>
-  <script id="child" type="text/x-jsmart-tmpl">
-	{function name="testFunc6"}- {$par.name.last} -{/function} //param is an Object
-	{testFunc6 par="$first"}
+  <script id="hello" type="text/x-jsmart-tmpl">
+    Hello {$name}
   </script>
 
   <script type="text/javascript">
-    jSmart.prototype.getTemplate = function (name) {
-      return document.getElementById(name).innerHTML;
-    };
-
-	jSmart.prototype.registerPlugin(
-		'function',
-		'sayHello',
-		function(params, data) {
-		  return 'Hello '+params.to;
-		}
-	);
-
-    var Person = function() {
-        this.name = {
-            first: 'Umakant',
-            last: 'Patil'
-        };
-        this.age = 31;
-    };
-
-
-    Person.prototype.getName = function(nameType) {
-      return nameType=='last' ? this.name.last : this.name.first;
-    }
-
-	var hello = function (to) {
-        return 'Hello '+to;
-      };
-
-    var data = {
-      a: [0,1,2,3,4,5,6,7],
-	  x: 10,
-	  cd: 'Y',
-	  foo: 'bar',
-      name: 'umakant',
-      fname: {
-        name: {
-        }
-      },
-	  helloAgain: function (name) {
-          return hello(name) + ' again';
-        },
-      human: new Person(),
-      person: {
-        'favorite gadget': 'mobile'
-      },
-      first: {
-        name: {
-          last: 'uma'
-        }
-      },
-      f: 6,
-      e: 2
-    };
-
-    var tpl = new jSmart(document.getElementById('child').innerHTML);
-    var res = tpl.fetch(data);
-    document.write( '<pre>'+res+'</pre>' );
+    var tpl = new jSmart(document.getElementById('hello').innerHTML);
+    var res = tpl.fetch({name: 'world'});
+    document.write(res);
   </script>
-
-
 </body>
 </html>

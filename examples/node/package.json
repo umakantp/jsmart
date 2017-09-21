@@ -5,6 +5,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "jsmart": "2.15.1"
+    "jsmart": "3.0.1"
   }
 }

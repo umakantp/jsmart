@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v3.0.0)
+ * jSmart JavaScript template engine (v3.0.1)
  * https://github.com/umakantp/jsmart
  *
  * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-21T08:56Z
+ * Date: 2017-09-21T10:54Z
  */
 (function (factory) {
   'use strict'
@@ -25,6 +25,7 @@
       define('jSmart', [], factory)
     }
   }
+
 // Pass this if window is not defined yet
 })(function () {
   'use strict'
@@ -2332,7 +2333,7 @@
       }
     }
   }
-var version = '3.0.0'
+var version = '3.0.1'
 
   /*
    Define jsmart constructor. jSmart object just stores,
@@ -4641,6 +4642,11 @@ jSmart.prototype.registerPlugin(
   )
 
 
+
+  String.prototype.fetch = function (data) { // eslint-disable-line no-extend-native
+    var template = new jSmart(this)
+    return template.fetch(data)
+  }
 
   return jSmart
 })

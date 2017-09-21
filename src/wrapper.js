@@ -25,11 +25,17 @@
       define('jSmart', [], factory)
     }
   }
+
 // Pass this if window is not defined yet
 })(function () {
   'use strict'
 
   // @CODE
+
+  String.prototype.fetch = function (data) { // eslint-disable-line no-extend-native
+    var template = new jSmart(this)
+    return template.fetch(data)
+  }
 
   return jSmart
 })
