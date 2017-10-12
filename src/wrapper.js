@@ -15,7 +15,7 @@
     // Node.js like environment. Export jSmart
     module.exports = factory()
   } else {
-    if (window && window.document) {
+    if (typeof window === 'object' && window.document) {
       // Assign to browser window if window is present.
       window.jSmart = factory()
     }

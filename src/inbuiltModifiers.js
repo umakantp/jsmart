@@ -52,7 +52,7 @@ define(['./core'], function (jSmart) {
         if (typeof module === 'object' && module && typeof module.exports === 'object') {
           func = global[fname]
         } else {
-          if (window && window.document) {
+          if (typeof window === 'object' && window.document) {
             func = window[fname]
           } else if (global) {
             func = global[fname]
