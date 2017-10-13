@@ -1,10 +1,10 @@
 {
   "name": "jsmart-example",
   "title": "jSmart-Example",
-  "description": "Demonstrate jsmart exmaple.",
+  "description": "Demo jsmart example.",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "jsmart": "3.0.1"
+    "jsmart": "3.0.2"
   }
 }

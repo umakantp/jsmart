@@ -1,4 +1,4 @@
-jSmart - Smarty template engine in JavaScript 
+jSmart - Smarty template engine in JavaScript
 ======
 [![Build Status](https://travis-ci.org/umakantp/jsmart.png?branch=master)](https://travis-ci.org/umakantp/jsmart)
 [![npm version](https://img.shields.io/npm/v/jsmart.svg)](https://www.npmjs.com/package/jsmart)
@@ -19,9 +19,9 @@ jSmart has some limited support of the [PHP Smarty syntax](https://github.com/um
 ```
 https://cdn.jsdelivr.net/npm/jsmart/dist/jsmart.min.js
 ```
-##### Current latest version (3.0.1)
+##### Current latest version (3.0.2)
 ```
-https://cdn.jsdelivr.net/npm/jsmart@3.0.1/dist/jsmart.min.js
+https://cdn.jsdelivr.net/npm/jsmart@3.0.2/dist/jsmart.min.js
 ```
 
 ### How to use jSmart in Node.js
