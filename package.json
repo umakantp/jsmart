@@ -3,7 +3,7 @@
   "title": "jSmart",
   "description": "jSmart is a port of the Smarty Template Engine to Javascript.",
   "main": "dist/jsmart.js",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "url": "https://github.com/umakantp/jsmart/",
   "keywords": [
     "jsmart",
