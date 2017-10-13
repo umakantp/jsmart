@@ -14,6 +14,8 @@ jSmart supports plugin architecture, you can [extend it with custom plugins](htt
 
 jSmart has some limited support of the [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax) and allows you to [use the same Smarty templates on both server and client side](https://github.com/umakantp/jsmart/wiki/Smarty-template-in-javascript), for both PHP and Javascript.
 
+Play with JsFiddle [demo page](https://jsfiddle.net/8p8xua0k/1/)
+
 ### Using jSmart with CDN
 ##### Always latest version (don't use in production)
 ```
