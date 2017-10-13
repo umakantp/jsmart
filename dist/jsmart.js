@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v3.0.1)
+ * jSmart JavaScript template engine (v3.0.2)
  * https://github.com/umakantp/jsmart
  *
  * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-09-21T10:54Z
+ * Date: 2017-10-13T06:47Z
  */
 (function (factory) {
   'use strict'
@@ -15,7 +15,7 @@
     // Node.js like environment. Export jSmart
     module.exports = factory()
   } else {
-    if (window && window.document) {
+    if (typeof window === 'object' && window.document) {
       // Assign to browser window if window is present.
       window.jSmart = factory()
     }
@@ -1747,7 +1747,7 @@
             res = this.applyFilters(this.variableFilters, res)
             if (this.tplModifiers.length) {
               // Write in global scope __t() function is called, it works.
-              if (window && window.document) {
+              if (typeof window === 'object' && window.document) {
                 window.__t = function () { return res }
               } else {
                 // Node.js like environment?!
@@ -2333,7 +2333,7 @@
       }
     }
   }
-var version = '3.0.1'
+var version = '3.0.2'
 
   /*
    Define jsmart constructor. jSmart object just stores,
@@ -4060,7 +4060,7 @@ jSmart.prototype.registerPlugin(
         if (typeof module === 'object' && module && typeof module.exports === 'object') {
           func = global[fname]
         } else {
-          if (window && window.document) {
+          if (typeof window === 'object' && window.document) {
             func = window[fname]
           } else if (global) {
             func = global[fname]
