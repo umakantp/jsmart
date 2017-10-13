@@ -3,7 +3,7 @@ define(['jSmart'], function (jSmart) {
     var tpl
     var output
     var t
-    var allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Nov', 'Dec']
+    var allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     var d = new Date()
     var month = allMonths[d.getMonth()]
 

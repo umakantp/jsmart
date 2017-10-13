@@ -297,7 +297,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             res = this.applyFilters(this.variableFilters, res)
             if (this.tplModifiers.length) {
               // Write in global scope __t() function is called, it works.
-              if (window && window.document) {
+              if (typeof window === 'object' && window.document) {
                 window.__t = function () { return res }
               } else {
                 // Node.js like environment?!
