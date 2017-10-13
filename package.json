@@ -51,8 +51,8 @@
   },
   "scripts": {
     "build": "npm install && grunt",
-    "test": "grunt && grunt karma",
-    "precommit": "grunt lint",
+    "test": "grunt karma",
+    "precommit": "grunt lint && grunt karma",
     "doc": "https://github.com/umakantp/jsmart/wiki"
   },
   "repository": {
