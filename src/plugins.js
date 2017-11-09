@@ -36,7 +36,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     'modifier',
     'cat',
     function (s, value) {
-      value = value ? value : ''
+      value = value || ''
       return String(s) + value
     }
   )
@@ -94,7 +94,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     'modifier',
     'date_format',
     function (s, fmt, defaultDate) {
-      return phpJs.strftime(fmt ? fmt : '%b %e, %Y', phpJs.makeTimeStamp(s ? s : defaultDate))
+      return phpJs.strftime((fmt || '%b %e, %Y'), phpJs.makeTimeStamp((s || defaultDate)))
     }
   )
 
@@ -195,8 +195,8 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     'indent',
     function (s, repeat, indentWith) {
       s = String(s)
-      repeat = repeat ? repeat : 4
-      indentWith = indentWith ? indentWith : ' '
+      repeat = repeat || 4
+      indentWith = indentWith || ' '
 
       var indentStr = ''
       while (repeat--) {
@@ -279,7 +279,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     'modifier',
     'strip',
     function (s, replaceWith) {
-      replaceWith = replaceWith ? replaceWith : ' '
+      replaceWith = replaceWith || ' '
       return String(s).replace(/[\s]+/g, replaceWith)
     }
   )
@@ -330,7 +330,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     'truncate',
     function (s, length, etc, breakWords, middle) {
       s = String(s)
-      length = length ? length : 80
+      length = length || 80
       etc = (etc != null) ? etc : '...'
 
       if (s.length <= length) {

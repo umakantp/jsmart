@@ -356,7 +356,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         }
         cols = colNames.length
       }
-      rows = rows ? rows : Math.ceil(loop.length / cols)
+      rows = rows || Math.ceil(loop.length / cols)
 
       if (thAttr && typeof thAttr !== 'object') {
         thAttr = [thAttr]
