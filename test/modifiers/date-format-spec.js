@@ -9,8 +9,11 @@ define(['jSmart'], function (jSmart) {
 
     it('test date_format', function () {
       tpl = '{$smarty.now|date_format}'
-
-      output = month + ' ' + d.getDate() + ', ' + d.getFullYear()
+      var da = d.getDate()
+      if ((da + '').length < 2) {
+        da = ' ' + da
+      }
+      output = month + ' ' + da + ', ' + d.getFullYear()
 
       t = new jSmart(tpl)
       expect(t.fetch()).toBe(output)
@@ -23,7 +26,11 @@ define(['jSmart'], function (jSmart) {
       if ((m + '').length < 2) {
         m = '0' + m
       }
-      output = m + '/' + d.getDate() + '/' + ((d.getFullYear() + '').substr(2))
+      var da = d.getDate()
+      if ((da + '').length < 2) {
+        da = '0' + da
+      }
+      output = m + '/' + da + '/' + ((d.getFullYear() + '').substr(2))
 
       t = new jSmart(tpl)
       expect(t.fetch()).toBe(output)
