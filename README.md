@@ -25,12 +25,17 @@ https://cdn.jsdelivr.net/npm/jsmart/dist/jsmart.min.js
 ```
 https://cdn.jsdelivr.net/npm/jsmart@3.0.2/dist/jsmart.min.js
 ```
+### jSmart with other tools
+
+1. Webpack:- [https://www.npmjs.com/package/jsmart-loader](https://www.npmjs.com/package/jsmart-loader)
+2. Grunt:- [https://www.npmjs.com/package/grunt-jsmart](https://www.npmjs.com/package/grunt-jsmart)
+3. Express Js :- [https://www.npmjs.com/package/jsmart-express](https://www.npmjs.com/package/jsmart-express)
 
 ### How to use jSmart in Node.js
 
 1. Install jSmart from NPM Registry
 ```
-$ npm install jsmart
+$ npm install jsmart --save
 ```
 
 2. Create template, use [PHP Smarty syntax](https://github.com/umakantp/jsmart/wiki/syntax).  Say demo.tpl
