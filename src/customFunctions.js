@@ -110,6 +110,73 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
 
   jSmart.prototype.registerPlugin(
     'function',
+    'debug',
+    function (params, data) {
+      // Determining environment first. If its node, we do console.logs
+      // else we open new windows for browsers.
+      var env = ''
+      if (typeof module === 'object' && module && typeof module.exports === 'object') {
+        env = 'node'
+      } else if (typeof window === 'object' && window.document) {
+        env = 'browser'
+      }
+      if (env === '') {
+        // We do not know env.
+        return ''
+      }
+      if (env === 'browser') {
+        if (window.jsmartDebug) {
+          window.jsmartDebug.close()
+        }
+        window.jsmartDebug = window.open('', '', 'width=680, height=600,resizable,scrollbars=yes')
+        var includedTemplates = ''
+        var assignedVars = ''
+        var i = 0
+        for (var j in data.includedTemplates) {
+          includedTemplates += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>' + data.includedTemplates[j] + '</td></tr>'
+        }
+        if (includedTemplates !== '') {
+          includedTemplates = '<h2>included templates</h2><table>' + includedTemplates + '</table><br>'
+        }
+        i = 0
+        for (var name in data.assignedVars) {
+          assignedVars += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>[' + name + ']</td><td>' + jSmart.prototype.printR(data.assignedVars[name]) + '</td></tr>'
+        }
+        if (assignedVars !== '') {
+          assignedVars = '<h2>assigned template variables</h2><table>' + assignedVars + '<table>'
+        }
+        var html = '<!DOCTYPE html>' +
+        '<html>' +
+          '<head>' +
+            '<title>jSmart Debug Console</title>' +
+            '<style type=\'text/css\'>' +
+              'table {width: 100%;}' +
+              'td {vertical-align:top;}' +
+              '.odd td {background-color: #eee;}' +
+              '.even td {background-color: #dadada;}' +
+            '</style>' +
+          '</head>' +
+          '<body>' +
+            '<h1>jSmart Debug Console</h1><br><pre>' +
+            includedTemplates +
+            assignedVars +
+          '</pre></body>' +
+        '</html>'
+        window.jsmartDebug.document.write(html)
+      } else {
+        // env is node.
+        // we stringify because tools show updated version of object in console.
+        if (typeof console !== 'undefined') {
+          console.log('included templates:- ' + JSON.stringify(includedTemplates))
+          console.log('assigned template variables:- ' + JSON.stringify(assignedVars))
+        }
+      }
+      return ''
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
     'fetch',
     function (params, data) {
       var s = jSmart.prototype.getFile(params.__get('file', null, 0))

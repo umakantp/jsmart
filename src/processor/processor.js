@@ -29,6 +29,9 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
     blocks: {},
 
+    // If user wants to debug.
+    debugging: false,
+
     clear: function () {
       // Clean up config, specific for this processing.
       this.runTimePlugins = {}
@@ -39,12 +42,20 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       this.plugins = {}
       this.blocks = {}
       this.outerBlocks = {}
+      this.debugging = false
+      this.includedTemplates = []
     },
 
     // Process the tree and return the data.
     getProcessed: function (tree, data) {
       // Process the tree and get the output.
       var output = this.process(tree, data)
+      if (this.debugging) {
+        this.plugins.debug.process([], {
+          includedTemplates: this.includedTemplates,
+          assignedVars: data
+        })
+      }
       this.clear()
 
       return {
@@ -830,6 +841,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var file = params.__get('file', null, 0)
+          this.includedTemplates.push(file)
           var incData = objectMerge({}, data, params)
           incData.smarty.template = file
           var content = this.process(node.subTree, incData)

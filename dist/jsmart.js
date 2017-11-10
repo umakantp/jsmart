@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-10-13T06:47Z
+ * Date: 2017-11-10T07:24Z
  */
 (function (factory) {
   'use strict'
@@ -1479,6 +1479,9 @@
 
     blocks: {},
 
+    // If user wants to debug.
+    debugging: false,
+
     clear: function () {
       // Clean up config, specific for this processing.
       this.runTimePlugins = {}
@@ -1489,12 +1492,20 @@
       this.plugins = {}
       this.blocks = {}
       this.outerBlocks = {}
+      this.debugging = false
+      this.includedTemplates = []
     },
 
     // Process the tree and return the data.
     getProcessed: function (tree, data) {
       // Process the tree and get the output.
       var output = this.process(tree, data)
+      if (this.debugging) {
+        this.plugins.debug.process([], {
+          includedTemplates: this.includedTemplates,
+          assignedVars: data
+        })
+      }
       this.clear()
 
       return {
@@ -2280,6 +2291,7 @@
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var file = params.__get('file', null, 0)
+          this.includedTemplates.push(file)
           var incData = objectMerge({}, data, params)
           incData.smarty.template = file
           var content = this.process(node.subTree, incData)
@@ -2404,7 +2416,7 @@ var version = '3.0.2'
     // Escape html??
     this.escapeHtml = false
 
-    // Currently disabled, will decide in future, what TODO.
+    // If user wants debug to be enabled.
     this.debugging = false
 
     // Store outer blocks below extends.
@@ -2503,6 +2515,9 @@ var version = '3.0.2'
       if (options.debugging !== undefined) {
         // If debugging is passed locally, take it.
         this.debugging = options.debugging
+      } else if (jSmart.prototype.debugging !== undefined) {
+        // Backward compatible. Old way to set via prototype.
+        this.debugging = jSmart.prototype.debugging
       }
 
       if (options.escapeHtml !== undefined) {
@@ -2563,6 +2578,7 @@ var version = '3.0.2'
       jSmartProcessor.runTimePlugins = this.runTimePlugins
       jSmartProcessor.blocks = this.blocks
       jSmartProcessor.outerBlocks = this.outerBlocks
+      jSmartProcessor.debugging = this.debugging
 
       // Capture the output by processing the template.
       outputData = jSmartProcessor.getProcessed(this.tree, data, this.smarty)
@@ -2579,6 +2595,45 @@ var version = '3.0.2'
         tpl = filters[i](tpl)
       }
       return tpl
+    },
+
+    // Print the object.
+    printR: function (toPrint, indent, indentEnd) {
+      if (!indent) {
+        indent = '&nbsp;&nbsp;'
+      }
+      if (!indentEnd) {
+        indentEnd = ''
+      }
+      var s = ''
+      var name
+      if (toPrint instanceof Object) {
+        s = 'Object (\n'
+        for (name in toPrint) {
+          if (toPrint.hasOwnProperty(name)) {
+            s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
+          }
+        }
+        s += indentEnd + ')\n'
+        return s
+      } else if (toPrint instanceof Array) {
+        s = 'Array (\n'
+        for (name in toPrint) {
+          if (toPrint.hasOwnProperty(name)) {
+            s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
+          }
+        }
+        s += indentEnd + ')\n'
+        return s
+      } else if (toPrint instanceof Boolean) {
+        var bool = 'false'
+        if (bool === true) {
+          bool = 'true'
+        }
+        return bool + '\n'
+      } else {
+        return (toPrint + '\n')
+      }
     },
 
     // Register a plugin.
@@ -3629,7 +3684,7 @@ var version = '3.0.2'
     'modifier',
     'cat',
     function (s, value) {
-      value = value ? value : ''
+      value = value || ''
       return String(s) + value
     }
   )
@@ -3687,7 +3742,7 @@ var version = '3.0.2'
     'modifier',
     'date_format',
     function (s, fmt, defaultDate) {
-      return phpJs.strftime(fmt ? fmt : '%b %e, %Y', phpJs.makeTimeStamp(s ? s : defaultDate))
+      return phpJs.strftime((fmt || '%b %e, %Y'), phpJs.makeTimeStamp((s || defaultDate)))
     }
   )
 
@@ -3788,8 +3843,8 @@ var version = '3.0.2'
     'indent',
     function (s, repeat, indentWith) {
       s = String(s)
-      repeat = repeat ? repeat : 4
-      indentWith = indentWith ? indentWith : ' '
+      repeat = repeat || 4
+      indentWith = indentWith || ' '
 
       var indentStr = ''
       while (repeat--) {
@@ -3872,7 +3927,7 @@ var version = '3.0.2'
     'modifier',
     'strip',
     function (s, replaceWith) {
-      replaceWith = replaceWith ? replaceWith : ' '
+      replaceWith = replaceWith || ' '
       return String(s).replace(/[\s]+/g, replaceWith)
     }
   )
@@ -3923,7 +3978,7 @@ var version = '3.0.2'
     'truncate',
     function (s, length, etc, breakWords, middle) {
       s = String(s)
-      length = length ? length : 80
+      length = length || 80
       etc = (etc != null) ? etc : '...'
 
       if (s.length <= length) {
@@ -4188,6 +4243,73 @@ jSmart.prototype.registerPlugin(
 
   jSmart.prototype.registerPlugin(
     'function',
+    'debug',
+    function (params, data) {
+      // Determining environment first. If its node, we do console.logs
+      // else we open new windows for browsers.
+      var env = ''
+      if (typeof module === 'object' && module && typeof module.exports === 'object') {
+        env = 'node'
+      } else if (typeof window === 'object' && window.document) {
+        env = 'browser'
+      }
+      if (env === '') {
+        // We do not know env.
+        return ''
+      }
+      if (env === 'browser') {
+        if (window.jsmartDebug) {
+          window.jsmartDebug.close()
+        }
+        window.jsmartDebug = window.open('', '', 'width=680, height=600,resizable,scrollbars=yes')
+        var includedTemplates = ''
+        var assignedVars = ''
+        var i = 0
+        for (var j in data.includedTemplates) {
+          includedTemplates += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>' + data.includedTemplates[j] + '</td></tr>'
+        }
+        if (includedTemplates !== '') {
+          includedTemplates = '<h2>included templates</h2><table>' + includedTemplates + '</table><br>'
+        }
+        i = 0
+        for (var name in data.assignedVars) {
+          assignedVars += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>[' + name + ']</td><td>' + jSmart.prototype.printR(data.assignedVars[name]) + '</td></tr>'
+        }
+        if (assignedVars !== '') {
+          assignedVars = '<h2>assigned template variables</h2><table>' + assignedVars + '<table>'
+        }
+        var html = '<!DOCTYPE html>' +
+        '<html>' +
+          '<head>' +
+            '<title>jSmart Debug Console</title>' +
+            '<style type=\'text/css\'>' +
+              'table {width: 100%;}' +
+              'td {vertical-align:top;}' +
+              '.odd td {background-color: #eee;}' +
+              '.even td {background-color: #dadada;}' +
+            '</style>' +
+          '</head>' +
+          '<body>' +
+            '<h1>jSmart Debug Console</h1><br><pre>' +
+            includedTemplates +
+            assignedVars +
+          '</pre></body>' +
+        '</html>'
+        window.jsmartDebug.document.write(html)
+      } else {
+        // env is node.
+        // we stringify because tools show updated version of object in console.
+        if (typeof console !== 'undefined') {
+          console.log('included templates:- ' + JSON.stringify(includedTemplates))
+          console.log('assigned template variables:- ' + JSON.stringify(assignedVars))
+        }
+      }
+      return ''
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'function',
     'fetch',
     function (params, data) {
       var s = jSmart.prototype.getFile(params.__get('file', null, 0))
@@ -4434,7 +4556,7 @@ jSmart.prototype.registerPlugin(
         }
         cols = colNames.length
       }
-      rows = rows ? rows : Math.ceil(loop.length / cols)
+      rows = rows || Math.ceil(loop.length / cols)
 
       if (thAttr && typeof thAttr !== 'object') {
         thAttr = [thAttr]

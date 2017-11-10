@@ -70,7 +70,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     // Escape html??
     this.escapeHtml = false
 
-    // Currently disabled, will decide in future, what TODO.
+    // If user wants debug to be enabled.
     this.debugging = false
 
     // Store outer blocks below extends.
@@ -169,6 +169,9 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       if (options.debugging !== undefined) {
         // If debugging is passed locally, take it.
         this.debugging = options.debugging
+      } else if (jSmart.prototype.debugging !== undefined) {
+        // Backward compatible. Old way to set via prototype.
+        this.debugging = jSmart.prototype.debugging
       }
 
       if (options.escapeHtml !== undefined) {
@@ -229,6 +232,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       jSmartProcessor.runTimePlugins = this.runTimePlugins
       jSmartProcessor.blocks = this.blocks
       jSmartProcessor.outerBlocks = this.outerBlocks
+      jSmartProcessor.debugging = this.debugging
 
       // Capture the output by processing the template.
       outputData = jSmartProcessor.getProcessed(this.tree, data, this.smarty)
@@ -245,6 +249,45 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
         tpl = filters[i](tpl)
       }
       return tpl
+    },
+
+    // Print the object.
+    printR: function (toPrint, indent, indentEnd) {
+      if (!indent) {
+        indent = '&nbsp;&nbsp;'
+      }
+      if (!indentEnd) {
+        indentEnd = ''
+      }
+      var s = ''
+      var name
+      if (toPrint instanceof Object) {
+        s = 'Object (\n'
+        for (name in toPrint) {
+          if (toPrint.hasOwnProperty(name)) {
+            s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
+          }
+        }
+        s += indentEnd + ')\n'
+        return s
+      } else if (toPrint instanceof Array) {
+        s = 'Array (\n'
+        for (name in toPrint) {
+          if (toPrint.hasOwnProperty(name)) {
+            s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
+          }
+        }
+        s += indentEnd + ')\n'
+        return s
+      } else if (toPrint instanceof Boolean) {
+        var bool = 'false'
+        if (bool === true) {
+          bool = 'true'
+        }
+        return bool + '\n'
+      } else {
+        return (toPrint + '\n')
+      }
     },
 
     // Register a plugin.
