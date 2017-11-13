@@ -46,13 +46,10 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       this.rdelim = '}'
       this.blocks = {}
       this.outerBlocks = {}
-      this.usedExtends = false
     },
 
-    // Parse the template and return the data.
-    getParsed: function (template) {
-      var tree = []
-      var runTimePlugins
+    getTree: function (template) {
+      var tree
       // Remove comments, we never want them.
       template = this.removeComments(template)
       // Make use of linux new comments. It will be consistent across all templates.
@@ -65,11 +62,11 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       // Parse the template and get the output.
       tree = this.parse(template)
 
-      if (this.usedExtends > 0) {
+      if (tree.usedExtends > 0) {
         var tmpTree = []
         // Now in the tree remove anything other than block after extends
         for (var i = 0; i < tree.length; i++) {
-          if (i < this.usedExtends) {
+          if (i < tree.usedExtends) {
             tmpTree.push(tree[i])
           } else if (tree[i].type === 'build-in' && (tree[i].name === 'block')) {
             tmpTree.push(tree[i])
@@ -77,6 +74,14 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         }
         tree = tmpTree
       }
+
+      return tree
+    },
+
+    // Parse the template and return the data.
+    getParsed: function (template) {
+      var tree = this.getTree(template)
+      var runTimePlugins
 
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
@@ -106,6 +111,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       var paramStr
       var node
       var closeTag
+      var usedExtends = 0
 
       for (openTag = this.findTag('', tpl); openTag; openTag = this.findTag('', tpl)) {
         if (openTag.index) {
@@ -137,7 +143,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
               }
               tree = tree.concat(buildIn.parse.call(this, params))
               if (name === 'extends') {
-                this.usedExtends = tree.length
+                usedExtends = tree.length
               }
             }
             tpl = tpl.replace(/^\n/, '')
@@ -173,6 +179,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       if (tpl) {
         tree = tree.concat(this.parseText(tpl))
       }
+      tree.usedExtends = usedExtends
       return tree
     },
 
@@ -638,10 +645,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         if (typeof tpl !== 'string') {
           throw new Error('No template for ' + name)
         }
-        // TODO:: Duplicate code like getParsed. Refactor.
-        tpl = this.removeComments(tpl.replace(/\r\n/g, '\n'))
-        tpl = this.applyFilters(this.preFilters, tpl)
-        tree = this.parse(tpl)
+        tree = this.getTree(tpl)
         this.files[name] = tree
       } else {
         tree = this.files[name]
