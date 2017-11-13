@@ -100,6 +100,31 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
 
   jSmart.prototype.registerPlugin(
     'modifier',
+    'debug_print_var',
+    function (s) {
+      console.log(s + '--')
+      // Determining environment first. If its node, we do console.logs
+      // else we open new windows for browsers.
+      var env = ''
+      if (typeof module === 'object' && module && typeof module.exports === 'object') {
+        env = 'node'
+      } else if (typeof window === 'object' && window.document) {
+        env = 'browser'
+      }
+      if (env === '') {
+        // We do not know env.
+        return ''
+      }
+      if (env === 'browser') {
+        return jSmart.prototype.printR(s)
+      } else {
+        console.log(s)
+      }
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
     'defaultValue',
     function (s, value) {
       value = value || ''

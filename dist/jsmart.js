@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-11-10T07:24Z
+ * Date: 2017-11-13T06:16Z
  */
 (function (factory) {
   'use strict'
@@ -3743,6 +3743,31 @@ var version = '3.0.2'
     'date_format',
     function (s, fmt, defaultDate) {
       return phpJs.strftime((fmt || '%b %e, %Y'), phpJs.makeTimeStamp((s || defaultDate)))
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'debug_print_var',
+    function (s) {
+      console.log(s + '--')
+      // Determining environment first. If its node, we do console.logs
+      // else we open new windows for browsers.
+      var env = ''
+      if (typeof module === 'object' && module && typeof module.exports === 'object') {
+        env = 'node'
+      } else if (typeof window === 'object' && window.document) {
+        env = 'browser'
+      }
+      if (env === '') {
+        // We do not know env.
+        return ''
+      }
+      if (env === 'browser') {
+        return jSmart.prototype.printR(s)
+      } else {
+        console.log(s)
+      }
     }
   )
 
