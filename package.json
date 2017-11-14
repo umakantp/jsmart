@@ -1,16 +1,17 @@
 {
   "name": "jsmart",
   "title": "jSmart",
-  "description": "jSmart is a port of the Smarty Template Engine to Javascript.",
+  "description": "jSmart is javascript templating engine based on PHP Smarty Template Engine.",
   "main": "dist/jsmart.js",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "url": "https://github.com/umakantp/jsmart/",
   "keywords": [
     "jsmart",
     "smarty",
     "javascript",
     "template",
-    "templates"
+    "templates",
+    "engine"
   ],
   "author": "Umakant Patil <me@umakantpatil.com>",
   "contributors": [
@@ -27,23 +28,23 @@
   "dependencies": {},
   "devDependencies": {
     "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-node": "^5.1.1",
-    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
     "grunt": "^1.0.1",
     "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify": "^3.0.1",
-    "grunt-eslint": "^20.0.0",
+    "grunt-contrib-uglify": "^3.1.0",
+    "grunt-eslint": "^20.1.0",
     "grunt-karma": "^2.0.0",
-    "jasmine-core": "^2.7.0",
-    "karma": "^0.13.13",
+    "jasmine-core": "^2.8.0",
+    "karma": "^1.7.1",
     "karma-jasmine": "^1.1.0",
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-requirejs": "^1.1.0",
     "karma-spec-reporter": "0.0.31",
     "load-grunt-tasks": "^3.5.2",
-    "requirejs": "^2.3.4",
+    "requirejs": "^2.3.5",
     "requirejs-text": "^2.0.15"
   },
   "bugs": {
