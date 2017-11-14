@@ -21,9 +21,9 @@ Play with JsFiddle [demo page](https://jsfiddle.net/8p8xua0k/1/)
 ```
 https://cdn.jsdelivr.net/npm/jsmart/dist/jsmart.min.js
 ```
-##### Current latest version (3.0.2)
+##### Current latest version (3.0.3)
 ```
-https://cdn.jsdelivr.net/npm/jsmart@3.0.2/dist/jsmart.min.js
+https://cdn.jsdelivr.net/npm/jsmart@3.0.3/dist/jsmart.min.js
 ```
 ### jSmart with other tools
 
@@ -131,8 +131,8 @@ define(['jSmart', 'text!some/good/template.tpl'], function (jSmart, goodTpl) {
 
 ### LICENSE
 
-[MIT](https://raw.githubusercontent.com/umakantp/jsmart/rewrite/LICENSE.txt)
+[MIT](https://raw.githubusercontent.com/umakantp/jsmart/master/LICENSE)
 
 ### NOTICE
 
-Project originally was created by [miroshnikov](https://github.com/miroshnikov) and hosted at [Google code](http://code.google.com/p/jsmart/). Since author was not active on project very frequently. I have forked and planned on pushing further improvements and features on my own fork.
+Project originally was created by [miroshnikov](https://github.com/miroshnikov). Since author was not active on project very frequently. I have forked and planned on pushing further improvements and features on my own fork.
