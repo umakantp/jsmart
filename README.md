@@ -132,7 +132,3 @@ define(['jSmart', 'text!some/good/template.tpl'], function (jSmart, goodTpl) {
 ### LICENSE
 
 [MIT](https://raw.githubusercontent.com/umakantp/jsmart/master/LICENSE)
-
-### NOTICE
-
-Project originally was created by [miroshnikov](https://github.com/miroshnikov). Since author was not active on project very frequently. I have forked and planned on pushing further improvements and features on my own fork.
