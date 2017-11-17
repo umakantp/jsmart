@@ -1,307 +1,164 @@
-define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (jSmartParser, jSmartProcessor, objectMerge) {
+define(['template', 'parser/parser', 'processor/processor', 'util/objectmerge'], function (Template, jSmartParser, jSmartProcessor, objectMerge) {
+  'use strict'
+
   var version = '@VERSION'
 
   /*
-   Define jsmart constructor. jSmart object just stores,
-   tree, $smarty block and some intialization methods.
-   We keep jSmart object light weight as one page or program
-   might contain to many jSmart objects.
-   Keep parser and processor outside of jSmart objects, help
-   us not to store, same parser and processor methods in all
-   jSmart object.
+   Define jsmart constructor. jSmart object just stores the config value.
+   Parsing of template has to be done by Template class.
   */
   var jSmart = function (template, options) {
-    // Smarty object which has version, delimiters, config, current directory
-    // and all blocks like PHP Smarty.
-    this.smarty = {
-
-      // Blocks in the current smarty object.
-      block: {},
-
-      // Used to store state of break;
-      'break': false,
-
-      // All the capture blocks in the current smarty object.
-      capture: {},
-
-      // Used to store state of continue
-      'continue': false,
-
-      // Current counter information. Smarty like feature.
-      counter: {},
-
-      // Use by {cycle} custom function to store array and cycle info.
-      cycle: {},
-
-      // All the foreach blocks in the current smarty object.
-      'foreach': {},
-
-      // All the section blocks in the current smarty object.
-      section: {},
-
-      // Current timestamp, when the object is created.
-      now: Math.floor(((new Date()).getTime() / 1000)),
-
-      // All the constants defined the current smarty object.
-      'const': {},
-
-      // Current configuration.
-      config: {},
-
-      // Current directory, underscored name as PHP Smarty does it.
-      current_dir: '/',
-
-      // Currrent template.
-      template: '',
-
-      // Left delimiter.
-      ldelim: '{',
-
-      // Right delimiter.
-      rdelim: '}',
-
-      // Current version of jSmart.
-      version: version
-    }
-
     // Whether to skip tags in open brace { followed by white space(s) and close brace } with white space(s) before.
     this.autoLiteral = true
 
-    // Escape html??
+    // Escape html while printing.
     this.escapeHtml = false
 
     // If user wants debug to be enabled.
     this.debugging = false
 
-    // Store outer blocks below extends.
-    this.outerBlocks = {}
+    // Default left delimiter.
+    this.leftDelimiter = '{'
 
-    // Stores inner blocks.
-    this.blocks = {}
+    // Default right delimiter.
+    this.rightDelimiter = '}'
 
-    this.parse(template, options)
+    if (typeof options !== 'object') {
+      options = {}
+    }
+    this.setConfig(options)
+
+    if (typeof template === 'string') {
+      this.fetch(template, true)
+    }
   }
 
   // Add more properties to jSmart core.
   jSmart.prototype = {
     constructor: jSmart,
 
+    // Current version of jSmart.
+    version: version,
+
+    // Store previous parsed object.
+    // For backward compatibility.
+    t: null,
+
     // Current tree structure.
+    // For backward compatibility.
     tree: [],
 
-    // Current javascript files loaded via include_javascript.
-    scripts: {},
+    // Current data for the template.
+    data: {},
 
     // List of all modifiers present in the app.
-    modifiers: {},
+    registeredModifiers: {},
 
-    // All the modifiers to apply by default to all variables.
+    // Plugins registered
+    registeredPlugins: {},
+
+    // Pre, post, output and variable. All of them.
+    registeredFilters: {
+      pre: [],
+      variable: [],
+      post: [],
+      output: []
+    },
+
+    // Modifiers to be use on all tags.
+    // var j = jSmart();
+    // j.addDefaultModifier(...);
+    // j.display('index.tpl');
     defaultModifiers: [],
 
-    // Global modifiers which which can be used in all instances.
-    defaultModifiersGlobal: [],
-
-    // Cache for global and default modifiers merged version to apply.
-    globalAndDefaultModifiers: [],
-
-    // Filters which are applied to all variables are in 'variable'.
-    // Filters which are applied after processing whole template are in 'post'.
-    filters: {
-      'variable': [],
-      'post': []
+    // Assign the data.
+    assign: function (variable, value) {
+      this.data[variable] = value
     },
 
-    // Global filters. pre, post and variable. All of them.
-    filtersGlobal: {
-      'pre': [],
-      'variable': [],
-      'post': []
-    },
-
-    // Cached value for all default and global variable filters.
-    // Only for variable.
-    globalAndDefaultFilters: [],
-
-    // Build in functions of the smarty.
-    buildInFunctions: {},
-
-    // Plugins of the functions.
-    plugins: {},
-
-    // Store current runtime plugins. Generally used for
-    // {function} tags.
-    runTimePlugins: {},
-
-    // Initialize, jSmart, set settings and parse the template.
-    parse: function (template, options) {
-      var parsedTemplate
-      if (!options) {
-        options = {}
+    // New api, loads the template and parses
+    // Old api, process the data and processes template.
+    fetch: function (pathOrData, isTemplate) {
+      if (pathOrData === 'string') {
+        // This is path or template.
+        if (isTemplate) {
+          // This is template string
+          this.t = new Template(pathOrData, this)
+        } else {
+          // This is file path. Lets load the files and get the data.
+          var data = this.getTemplate(pathOrData)
+          this.t = new Template(data, this)
+        }
+        this.process(this.t, this)
+      } else {
+        // They are assigning the data. Lets assign data and processor.
+        // For backward compatibility
+        if (pathOrData === 'object') {
+          for (var i in pathOrData) {
+            if (pathOrData.hasOwnProperty(i)) {
+              this.assign(i, pathOrData[i])
+            }
+          }
+        }
+        this.process(this.t, this)
       }
-      if (options.rdelim) {
-        // If delimiters are passed locally take them.
-        this.smarty.rdelim = options.rdelim
+    },
+
+    display: function (path) {
+      this.fetch(path)
+    },
+
+    // Set config for this instance
+    setConfig: function (configObj) {
+      if (configObj.rdelim) {
+        this.rightDelimiter = configObj.rdelim
       } else if (jSmart.prototype.right_delimiter) {
         // Backward compatible. Old way to set via prototype.
-        this.smarty.rdelim = jSmart.prototype.right_delimiter
-      } else {
-        // Otherwise default delimiters
-        this.smarty.rdelim = '}'
+        this.rightDelimiter = jSmart.prototype.right_delimiter
       }
-      if (options.ldelim) {
+
+      if (configObj.ldelim) {
         // If delimiters are passed locally take them.
-        this.smarty.ldelim = options.ldelim
+        this.leftDelimiter = configObj.ldelim
       } else if (jSmart.prototype.left_delimiter) {
         // Backward compatible. Old way to set via prototype.
-        this.smarty.ldelim = jSmart.prototype.left_delimiter
-      } else {
-        // Otherwise default delimiters
-        this.smarty.ldelim = '{'
+        this.leftDelimiter = jSmart.prototype.left_delimiter
       }
-      if (options.autoLiteral !== undefined) {
+
+      if (configObj.autoLiteral !== undefined) {
         // If autoLiteral is passed locally, take it.
-        this.autoLiteral = options.autoLiteral
+        this.autoLiteral = configObj.autoLiteral
       } else if (jSmart.prototype.auto_literal !== undefined) {
         // Backward compatible. Old way to set via prototype.
         this.autoLiteral = jSmart.prototype.auto_literal
       }
 
-      if (options.debugging !== undefined) {
+      if (configObj.debugging !== undefined) {
         // If debugging is passed locally, take it.
-        this.debugging = options.debugging
-      } else if (jSmart.prototype.debugging !== undefined) {
-        // Backward compatible. Old way to set via prototype.
-        this.debugging = jSmart.prototype.debugging
+        this.debugging = configObj.debugging
       }
 
-      if (options.escapeHtml !== undefined) {
+      if (configObj.escapeHtml !== undefined) {
         // If escapeHtml is passed locally, take it.
-        this.escapeHtml = options.escapeHtml
+        this.escapeHtml = configObj.escapeHtml
       } else if (jSmart.prototype.escape_html !== undefined) {
         // Backward compatible. Old way to set via prototype.
         this.escapeHtml = jSmart.prototype.escape_html
-      }
-
-      // Is template string or at least defined?!
-      template = String(template || '')
-
-      // Generate the tree. We pass delimiters and many config values
-      // which are needed by parser to parse like delimiters.
-      jSmartParser.clear()
-      jSmartParser.rdelim = this.smarty.rdelim
-      jSmartParser.ldelim = this.smarty.ldelim
-      jSmartParser.getTemplate = this.getTemplate
-      jSmartParser.getConfig = this.getConfig
-      jSmartParser.autoLiteral = this.autoLiteral
-      jSmartParser.plugins = this.plugins
-      jSmartParser.preFilters = this.filtersGlobal.pre
-      // Above parser config are set, lets parse.
-      parsedTemplate = jSmartParser.getParsed(template)
-      this.tree = parsedTemplate.tree
-      this.runTimePlugins = parsedTemplate.runTimePlugins
-      this.blocks = parsedTemplate.blocks
-      this.outerBlocks = parsedTemplate.outerBlocks
-    },
-
-    // Process the generated tree.
-    fetch: function (data) {
-      var outputData = ''
-      if (!(typeof data === 'object')) {
-        data = {}
-      }
-
-      // Define smarty inside data and copy smarty vars, so one can use $smarty
-      // vars inside templates.
-      data.smarty = {}
-      objectMerge(data.smarty, this.smarty)
-
-      // Take default global modifiers, add with local default modifiers.
-      // Merge them and keep them cached.
-      this.globalAndDefaultModifiers = jSmart.prototype.defaultModifiersGlobal.concat(this.defaultModifiers)
-
-      // Take default global filters, add with local default filters.
-      // Merge them and keep them cached.
-      this.globalAndDefaultFilters = jSmart.prototype.filtersGlobal.variable.concat(this.filters.variable)
-
-      jSmartProcessor.clear()
-      jSmartProcessor.plugins = this.plugins
-      jSmartProcessor.modifiers = this.modifiers
-      jSmartProcessor.defaultModifiers = this.defaultModifiers
-      jSmartProcessor.escapeHtml = this.escapeHtml
-      jSmartProcessor.variableFilters = this.globalAndDefaultFilters
-      jSmartProcessor.runTimePlugins = this.runTimePlugins
-      jSmartProcessor.blocks = this.blocks
-      jSmartProcessor.outerBlocks = this.outerBlocks
-      jSmartProcessor.debugging = this.debugging
-
-      // Capture the output by processing the template.
-      outputData = jSmartProcessor.getProcessed(this.tree, data, this.smarty)
-
-      // Merge back smarty data returned by process to original object.
-      objectMerge(this.smarty, outputData.smarty)
-      // Apply post filters to output and return the template data.
-      return this.applyFilters(jSmart.prototype.filtersGlobal.post.concat(this.filters.post), outputData.output)
-    },
-
-    // Apply the filters to template.
-    applyFilters: function (filters, tpl) {
-      for (var i = 0; i < filters.length; ++i) {
-        tpl = filters[i](tpl)
-      }
-      return tpl
-    },
-
-    // Print the object.
-    printR: function (toPrint, indent, indentEnd) {
-      if (!indent) {
-        indent = '&nbsp;&nbsp;'
-      }
-      if (!indentEnd) {
-        indentEnd = ''
-      }
-      var s = ''
-      var name
-      if (toPrint instanceof Object) {
-        s = 'Object (\n'
-        for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
-            s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
-          }
-        }
-        s += indentEnd + ')\n'
-        return s
-      } else if (toPrint instanceof Array) {
-        s = 'Array (\n'
-        for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
-            s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
-          }
-        }
-        s += indentEnd + ')\n'
-        return s
-      } else if (toPrint instanceof Boolean) {
-        var bool = 'false'
-        if (bool === true) {
-          bool = 'true'
-        }
-        return bool + '\n'
-      } else {
-        return (toPrint + '\n')
       }
     },
 
     // Register a plugin.
     registerPlugin: function (type, name, callback) {
       if (type === 'modifier') {
-        this.modifiers[name] = callback
+        this.registeredModifiers[name] = callback
       } else {
-        this.plugins[name] = {'type': type, 'process': callback}
+        this.registeredPlugins[name] = {'type': type, 'process': callback}
       }
     },
 
     // Register a filter.
     registerFilter: function (type, callback) {
-      (this.tree ? this.filters : jSmart.prototype.filtersGlobal)[((type === 'output') ? 'post' : type)].push(callback)
+      this.registeredFilters[type].push(callback)
     },
 
     addDefaultModifier: function (modifiers) {
@@ -310,27 +167,27 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       }
 
       for (var i = 0; i < modifiers.length; ++i) {
+        // TODO, remove parser from here.
         var data = jSmartParser.parseModifiers('|' + modifiers[i], [0])
-        if (this.tree) {
-          this.defaultModifiers.push(data.tree[0])
-        } else {
-          this.defaultModifiersGlobal.push(data.tree[0])
-        }
+        this.defaultModifiers.push(data.tree[0])
       }
     },
 
+    // @override
+    // Reads & returns the template data in sync
     getTemplate: function (name) {
       throw new Error('No template for ' + name)
     },
 
+    // @override
+    // Reads & returns data for {fetch} tag file.
     getFile: function (name) {
       throw new Error('No file for ' + name)
     },
 
-    getJavascript: function (name) {
-      throw new Error('No Javascript for ' + name)
-    },
-
+    // @override
+    // Reads & returns config file for {config_load} tag.
+    // Mostly same as getTemplate.
     getConfig: function (name) {
       throw new Error('No config for ' + name)
     }
