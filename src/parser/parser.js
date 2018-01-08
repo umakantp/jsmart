@@ -659,7 +659,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       var rdelim = new RegExp('\\*' + this.rdelim)
       var newTpl = ''
 
-      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(rdelim)) {
+      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim)) {
         newTpl += tpl.slice(0, openTag.index)
         tpl = tpl.slice(openTag.index + openTag[0].length)
         var closeTag = tpl.match(rdelim)

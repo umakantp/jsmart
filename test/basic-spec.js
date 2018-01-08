@@ -39,6 +39,11 @@ define(['jSmart', 'text!./templates/var.tpl', 'text!./output/var.tpl'], function
       expect(t.fetch()).toBe('Testing , does it work?')
     })
 
+    it('test comments', function () {
+      var t = new jSmart('Testing {* testing *}, does it {* multiple comments *}work?')
+      expect(t.fetch()).toBe('Testing , does it work?')
+    })
+
     it('test assigning variable', function () {
       var t = new jSmart("{$foo = 'bar'} print foo {$foo}")
       expect(t.fetch()).toBe(' print foo bar')
