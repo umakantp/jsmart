@@ -133,7 +133,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         if (typeof s === 'boolean' && tree.length !== 1) {
           s = s ? '1' : ''
         }
-        if (s === null) {
+        if (s === null || s === undefined) {
           s = ''
         }
         if (tree.length === 1) {

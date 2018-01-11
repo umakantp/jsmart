@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2017-11-15T04:27Z
+ * Date: 2018-01-11T12:58Z
  */
 (function (factory) {
   'use strict'
@@ -726,7 +726,7 @@
       var rdelim = new RegExp('\\*' + this.rdelim)
       var newTpl = ''
 
-      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(rdelim)) {
+      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim)) {
         newTpl += tpl.slice(0, openTag.index)
         tpl = tpl.slice(openTag.index + openTag[0].length)
         var closeTag = tpl.match(rdelim)
@@ -1587,7 +1587,7 @@
         if (typeof s === 'boolean' && tree.length !== 1) {
           s = s ? '1' : ''
         }
-        if (s === null) {
+        if (s === null || s === undefined) {
           s = ''
         }
         if (tree.length === 1) {

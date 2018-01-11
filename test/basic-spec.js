@@ -20,6 +20,11 @@ define(['jSmart', 'text!./templates/var.tpl', 'text!./output/var.tpl'], function
       expect(t.fetch({name: 'world'})).toBe('Hello world, how are you?')
     })
 
+    it('test undefined variable', function () {
+      var t = new jSmart('Hello {$name}, how are you?')
+      expect(t.fetch()).toBe('Hello , how are you?')
+    })
+
     it('test array/object variable', function () {
       // Objects.
       var t = new jSmart('1. Hello {$user.name.first}, how are you?')
