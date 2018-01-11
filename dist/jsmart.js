@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2018-01-11T12:58Z
+ * Date: 2018-01-11T13:18Z
  */
 (function (factory) {
   'use strict'
@@ -3690,6 +3690,29 @@ var version = '3.0.3'
     function (s, value) {
       value = value || ''
       return String(s) + value
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
+    'count',
+    function (a) {
+      if (a instanceof Array) {
+        return a.length
+      } else if (typeof a === 'object') {
+        if (Object.keys) {
+          return Object.keys(a).length
+        } else {
+          var l = 0
+          for (var k in a) {
+            if (a.hasOwnProperty(k)) {
+              ++l
+            }
+          }
+          return l
+        }
+      }
+      return 0
     }
   )
 

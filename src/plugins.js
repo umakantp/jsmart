@@ -43,6 +43,29 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
 
   jSmart.prototype.registerPlugin(
     'modifier',
+    'count',
+    function (a) {
+      if (a instanceof Array) {
+        return a.length
+      } else if (typeof a === 'object') {
+        if (Object.keys) {
+          return Object.keys(a).length
+        } else {
+          var l = 0
+          for (var k in a) {
+            if (a.hasOwnProperty(k)) {
+              ++l
+            }
+          }
+          return l
+        }
+      }
+      return 0
+    }
+  )
+
+  jSmart.prototype.registerPlugin(
+    'modifier',
     'count_characters',
     function (s, includeWhitespaces) {
       s = String(s)
