@@ -69,7 +69,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/foreach}'
       output = '1 2 3 '
       t = new jSmart(tpl)
-      expect(t.fetch({ items: [1,2,3] })).toBe(output)
+      expect(t.fetch({ items: [1, 2, 3] })).toBe(output)
     })
   })
 })
