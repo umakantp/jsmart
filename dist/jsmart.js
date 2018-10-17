@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v3.0.3)
+ * jSmart JavaScript template engine (v3.1.0)
  * https://github.com/umakantp/jsmart
  *
  * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2018-01-11T13:18Z
+ * Date: 2018-10-17T13:13Z
  */
 (function (factory) {
   'use strict'
@@ -1817,7 +1817,6 @@
       capture: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
-          node.name = ('cap-' + node.params.name)
           var content = this.process(node.subTree, data)
           if (typeof content !== 'undefined') {
             data = content.data
@@ -2349,7 +2348,7 @@
       }
     }
   }
-var version = '3.0.3'
+var version = '3.1.0'
 
   /*
    Define jsmart constructor. jSmart object just stores,
