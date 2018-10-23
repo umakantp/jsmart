@@ -363,7 +363,6 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       capture: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
-          node.name = ('cap-' + node.params.name)
           var content = this.process(node.subTree, data)
           if (typeof content !== 'undefined') {
             data = content.data

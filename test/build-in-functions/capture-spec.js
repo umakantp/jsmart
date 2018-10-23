@@ -58,5 +58,18 @@ define(['jSmart'], function (jSmart) {
       t = new jSmart(tpl)
       expect(t.fetch()).toBe(output)
     })
+
+    it('test multiple capture', function () {
+      // with no name
+      tpl = '{foreach $items as $item}'
+      tpl += '{capture name="t1"}'
+      tpl += '{$item} '
+      tpl += '{/capture}'
+      tpl += '{$smarty.capture.t1}'
+      tpl += '{/foreach}'
+      output = '1 2 3 '
+      t = new jSmart(tpl)
+      expect(t.fetch({ items: [1, 2, 3] })).toBe(output)
+    })
   })
 })
