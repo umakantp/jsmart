@@ -125,7 +125,6 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     'modifier',
     'debug_print_var',
     function (s) {
-      console.log(s + '--')
       // Determining environment first. If its node, we do console.logs
       // else we open new windows for browsers.
       var env = ''
@@ -139,6 +138,9 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         return ''
       }
       if (env === 'browser') {
+        if (console && console.log) {
+          console.log(s)
+        }
         return jSmart.prototype.printR(s)
       } else {
         console.log(s)
