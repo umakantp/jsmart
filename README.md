@@ -21,7 +21,7 @@ Play with JsFiddle [demo page](https://jsfiddle.net/8p8xua0k/1/)
 ```
 https://cdn.jsdelivr.net/npm/jsmart/dist/jsmart.min.js
 ```
-##### Current latest version (3.1.0)
+##### Current latest version (4.0.0)
 ```
 https://cdn.jsdelivr.net/npm/jsmart@3.1.0/dist/jsmart.min.js
 ```

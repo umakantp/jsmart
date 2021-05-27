@@ -2,7 +2,7 @@
  * jSmart JavaScript template engine (v@VERSION)
  * https://github.com/umakantp/jsmart
  *
- * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
+ * Copyright 2011-2021, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
