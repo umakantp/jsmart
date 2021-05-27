@@ -19,13 +19,13 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       block: {},
 
       // Used to store state of break;
-      'break': false,
+      break: false,
 
       // All the capture blocks in the current smarty object.
       capture: {},
 
       // Used to store state of continue
-      'continue': false,
+      continue: false,
 
       // Current counter information. Smarty like feature.
       counter: {},
@@ -34,7 +34,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       cycle: {},
 
       // All the foreach blocks in the current smarty object.
-      'foreach': {},
+      foreach: {},
 
       // All the section blocks in the current smarty object.
       section: {},
@@ -43,7 +43,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       now: Math.floor(((new Date()).getTime() / 1000)),
 
       // All the constants defined the current smarty object.
-      'const': {},
+      const: {},
 
       // Current configuration.
       config: {},
@@ -107,15 +107,15 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     // Filters which are applied to all variables are in 'variable'.
     // Filters which are applied after processing whole template are in 'post'.
     filters: {
-      'variable': [],
-      'post': []
+      variable: [],
+      post: []
     },
 
     // Global filters. pre, post and variable. All of them.
     filtersGlobal: {
-      'pre': [],
-      'variable': [],
-      'post': []
+      pre: [],
+      variable: [],
+      post: []
     },
 
     // Cached value for all default and global variable filters.
@@ -264,7 +264,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       if (toPrint instanceof Object) {
         s = 'Object (\n'
         for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
+          if (Object.prototype.hasOwnProperty.call(toPrint, name)) {
             s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
           }
         }
@@ -273,7 +273,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       } else if (toPrint instanceof Array) {
         s = 'Array (\n'
         for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
+          if (Object.prototype.hasOwnProperty.call(toPrint, name)) {
             s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
           }
         }
@@ -295,7 +295,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       if (type === 'modifier') {
         this.modifiers[name] = callback
       } else {
-        this.plugins[name] = {'type': type, 'process': callback}
+        this.plugins[name] = {type: type, process: callback}
       }
     },
 

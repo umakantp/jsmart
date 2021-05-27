@@ -1,10 +1,12 @@
+// eslint-disable-next-line no-unused-vars
 const my = function (x) {
   return 'my'
 }
 
+// eslint-disable-next-line no-unused-vars
 const myEnv = function (val) {
   if (val) {
-    return 'my';
+    return 'my'
   }
   return 'your'
 }
@@ -28,8 +30,8 @@ define(['jSmart'], function (jSmart) {
     it('test env(php/js) function :: func-with-args', function () {
       // Simple
       tpl = 'hello-{myEnv($val)}-world'
-      output1 = 'hello-my-world'
-      output2 = 'hello-your-world'
+      var output1 = 'hello-my-world'
+      var output2 = 'hello-your-world'
       t = new jSmart(tpl)
       expect(t.fetch({val: true})).toBe(output1)
       expect(t.fetch({val: false})).toBe(output2)

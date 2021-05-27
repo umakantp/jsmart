@@ -10,7 +10,7 @@ define(function () {
    */
   function isEmptyObject (hash) {
     for (var i in hash) {
-      if (hash.hasOwnProperty(i)) {
+      if (Object.prototype.hasOwnProperty.call(hash, i)) {
         return false
       }
     }

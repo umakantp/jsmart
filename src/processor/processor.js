@@ -96,7 +96,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         } else if (node.type === 'plugin') {
           if (this.runTimePlugins[node.name]) {
             // Thats call for {function}.
-            tmp = this.buildInFunctions['function'].process.call(this, node, data)
+            tmp = this.buildInFunctions.function.process.call(this, node, data)
             if (typeof tmp.tpl !== 'undefined') {
               // If tmp is object, which means it has modified, data also
               // so copy it back to data.
@@ -182,7 +182,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       var actualParams = []
       var v
       for (var name in params.__parsed) {
-        if (params.__parsed.hasOwnProperty(name)) {
+        if (Object.prototype.hasOwnProperty.call(params.__parsed, name)) {
           v = this.process([params.__parsed[name]], data)
           if (typeof v !== 'undefined') {
             data = v.data
@@ -312,7 +312,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
                 window.__t = function () { return res }
               } else {
                 // Node.js like environment?!
-                global['__t'] = function () { return res }
+                global.__t = function () { return res }
               }
               res = this.process(this.tplModifiers[this.tplModifiers.length - 1], data)
               if (typeof res !== 'undefined') {
@@ -608,7 +608,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'for': {
+      for: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var from = parseInt(params.__get('from'), 10)
@@ -651,7 +651,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'if': {
+      if: {
         process: function (node, data) {
           var value = this.getActualParamValues(node.params, data)[0]
           // Zero length arrays or empty associative arrays are false in PHP.
@@ -671,7 +671,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'foreach': {
+      foreach: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var a = params.from
@@ -693,7 +693,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           var s = ''
           var i = 0
           for (var key in a) {
-            if (!a.hasOwnProperty(key)) {
+            if (!Object.prototype.hasOwnProperty.call(a, key)) {
               continue
             }
 
@@ -740,7 +740,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'break': {
+      break: {
         process: function (node, data) {
           data.smarty.break = true
           return {
@@ -750,7 +750,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'continue': {
+      continue: {
         process: function (node, data) {
           data.smarty.continue = true
           return {
@@ -821,12 +821,12 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'call': {
+      call: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var name = params.__get('name') ? params.__get('name') : params.__get('0')
           var newNode = {name: name, params: node.params}
-          var s = this.buildInFunctions['function'].process.call(this, newNode, data)
+          var s = this.buildInFunctions.function.process.call(this, newNode, data)
           var assignTo = params.__get('assign', false)
           if (assignTo) {
             return {tpl: '', data: this.assignVar(assignTo, s, data)}
@@ -858,7 +858,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'function': {
+      function: {
         process: function (node, data) {
           var funcData = this.runTimePlugins[node.name]
           var defaults = this.getActualParamValues(funcData.defaultParams, data)
@@ -874,7 +874,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
-      'while': {
+      while: {
         process: function (node, data) {
           var s = ''
           while (this.getActualParamValues(node.params, data)[0]) {

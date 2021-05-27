@@ -4,7 +4,7 @@ define(function () {
   function countProperties (ob) {
     var count = 0
     for (var name in ob) {
-      if (ob.hasOwnProperty(name)) {
+      if (Object.prototype.hasOwnProperty.call(ob, name)) {
         count++
       }
     }

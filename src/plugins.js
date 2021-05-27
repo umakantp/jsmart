@@ -53,7 +53,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         } else {
           var l = 0
           for (var k in a) {
-            if (a.hasOwnProperty(k)) {
+            if (Object.prototype.hasOwnProperty.call(a, k)) {
               ++l
             }
           }

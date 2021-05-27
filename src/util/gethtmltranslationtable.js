@@ -146,7 +146,7 @@ define(function () {
 
     // ascii decimals to real symbols
     for (decimal in entities) {
-      if (entities.hasOwnProperty(decimal)) {
+      if (Object.prototype.hasOwnProperty.call(entities, decimal)) {
         hashMap[String.fromCharCode(decimal)] = entities[decimal]
       }
     }

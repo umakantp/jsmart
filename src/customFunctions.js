@@ -9,7 +9,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
       if (name in data.smarty.counter) {
         var counter = data.smarty.counter[name]
         if ('start' in params) {
-          counter.value = parseInt(params['start'], 10)
+          counter.value = parseInt(params.start, 10)
         } else {
           counter.value = parseInt(counter.value, 10)
           counter.skip = parseInt(counter.skip, 10)
@@ -220,7 +220,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
       }
 
       for (p in values) {
-        if (values.hasOwnProperty(p)) {
+        if (Object.prototype.hasOwnProperty.call(values, p)) {
           value = (useName ? p : values[p])
           id = realName + '_' + value
           s = (labels ? (labelIds ? '<label for="' + id + '">' : '<label>') : '')
@@ -261,7 +261,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
       var p
 
       for (p in params) {
-        if (params.hasOwnProperty(p) && typeof params[p] === 'string') {
+        if (Object.prototype.hasOwnProperty.call(params, p) && typeof params[p] === 'string') {
           if (!(p in paramNames)) {
             s += ' ' + p + '="' + params[p] + '"'
           }
@@ -294,7 +294,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         // We convert each value of array to string because values
         // is array of string. Otherwise comparision fails.
         for (j in selected) {
-          if (selected.hasOwnProperty(j)) {
+          if (Object.prototype.hasOwnProperty.call(selected, j)) {
             selected[j] = selected[j] + ''
           }
         }
@@ -303,7 +303,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
       }
 
       for (p in values) {
-        if (values.hasOwnProperty(p)) {
+        if (Object.prototype.hasOwnProperty.call(values, p)) {
           s = '<option value="' + (useName ? p : values[p]) + '"'
           if (selected && selected.indexOf((useName ? p : values[p])) !== -1) {
             s += ' selected="selected"'
@@ -401,7 +401,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         loop = params.loop
       } else {
         for (p in params.loop) {
-          if (params.loop.hasOwnProperty(p)) {
+          if (Object.prototype.hasOwnProperty.call(params.loop, p)) {
             loop.push(params.loop[p])
           }
         }
@@ -414,7 +414,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
       if (isNaN(cols)) {
         if (typeof cols === 'object') {
           for (p in cols) {
-            if (cols.hasOwnProperty(p)) {
+            if (Object.prototype.hasOwnProperty.call(cols, p)) {
               colNames.push(cols[p])
             }
           }

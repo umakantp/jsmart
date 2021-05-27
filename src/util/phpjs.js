@@ -140,8 +140,11 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         // Note: casts negative numbers to positive ones
         var number = value >>> 0
         prefix = (prefix && number && {
+          // eslint-disable-next-line quote-props
           '2': '0b',
+          // eslint-disable-next-line quote-props
           '8': '0',
+          // eslint-disable-next-line quote-props
           '16': '0x'
         }[base]) || ''
         value = prefix + _pad(number.toString(base), precision || 0, '0', false)
@@ -516,21 +519,21 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
 
       date = now ? new Date(now * 1000) : new Date()
       days = {
-        'sun': 0,
-        'mon': 1,
-        'tue': 2,
-        'wed': 3,
-        'thu': 4,
-        'fri': 5,
-        'sat': 6
+        sun: 0,
+        mon: 1,
+        tue: 2,
+        wed: 3,
+        thu: 4,
+        fri: 5,
+        sat: 6
       }
       ranges = {
-        'yea': 'FullYear',
-        'mon': 'Month',
-        'day': 'Date',
-        'hou': 'Hours',
-        'min': 'Minutes',
-        'sec': 'Seconds'
+        yea: 'FullYear',
+        mon: 'Month',
+        day: 'Date',
+        hou: 'Hours',
+        min: 'Minutes',
+        sec: 'Seconds'
       }
 
       function lastNext (type, range, modifier) {
@@ -564,7 +567,7 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
           num *= parseInt(type, 10)
         }
 
-        if (ranges.hasOwnProperty(range) && !splt[1].match(/^mon(day|\.)?$/i)) {
+        if (Object.prototype.hasOwnProperty.call(ranges, range) && !splt[1].match(/^mon(day|\.)?$/i)) {
           return date['set' + ranges[range]](date['get' + ranges[range]]() + num)
         }
 
@@ -768,8 +771,8 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       var _date = (typeof timestamp === 'undefined')
         ? new Date()
         : (timestamp instanceof Date)
-          ? new Date(timestamp)
-          : new Date(timestamp * 1000)
+            ? new Date(timestamp)
+            : new Date(timestamp * 1000)
 
       var _aggregates = {
         c: 'locale',

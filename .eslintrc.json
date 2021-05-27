@@ -11,6 +11,8 @@
     "jSmart": true
   },
   "rules": {
-    "new-cap": ["error", { "newIsCapExceptions": ["jSmart"] }]
+    "new-cap": ["error", { "newIsCapExceptions": ["jSmart"] }],
+    "object-curly-spacing": ["error", "never"],
+    "no-var": "off"
   }
 }

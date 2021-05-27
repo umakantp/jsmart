@@ -14,7 +14,7 @@ define(['./core'], function (jSmart) {
     function (params, data) {
       var a = []
       for (var name in params) {
-        if (params.hasOwnProperty(name) && params[name] && typeof params[name] !== 'function') {
+        if (Object.prototype.hasOwnProperty.call(params, name) && params[name] && typeof params[name] !== 'function') {
           a[name] = params[name]
         }
       }
@@ -36,14 +36,14 @@ define(['./core'], function (jSmart) {
       }
 
       if (('__owner' in data && params.name in data.__owner)) {
-        fname = data['__owner']
+        fname = data.__owner
         if (params.length) {
           return fname[params.name].apply(fname, params)
         } else {
           // When function doesn't has arguments.
           return fname[params.name].apply(fname)
         }
-      } else if (jSmart.prototype.modifiers.hasOwnProperty(params.name)) {
+      } else if (Object.prototype.hasOwnProperty.call(jSmart.prototype.modifiers, params.name)) {
         fname = jSmart.prototype.modifiers[params.name]
         return fname.apply(fname, paramData)
       } else {

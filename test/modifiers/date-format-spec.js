@@ -25,7 +25,6 @@ define(['jSmart'], function (jSmart) {
       var output
       var t
       var d = new Date()
-      var month = allMonths[d.getMonth()]
 
       tpl = '{$smarty.now|date_format:"%D"}'
       var m = d.getMonth()
@@ -48,7 +47,6 @@ define(['jSmart'], function (jSmart) {
       var output
       var t
       var d = new Date()
-      var month = allMonths[d.getMonth()]
 
       tpl = '{$yesterday|date_format}'
 

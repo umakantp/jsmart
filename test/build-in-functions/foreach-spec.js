@@ -121,11 +121,13 @@ define(['jSmart'], function (jSmart) {
       output += '----------------\\n'
 
       t = new jSmart(tpl)
-      expect(t.fetch({people: [
-        {name: 'Uma', email: 'test@test.com'},
-        {name: 'Pallavi', email: 'ptest@test.com'},
-        {name: 'Kasturi', email: 'ktest@test.com'}
-      ]})).toBe(output)
+      expect(t.fetch({
+        people: [
+          {name: 'Uma', email: 'test@test.com'},
+          {name: 'Pallavi', email: 'ptest@test.com'},
+          {name: 'Kasturi', email: 'ktest@test.com'}
+        ]
+      })).toBe(output)
     })
 
     it('test break in foreach', function () {
