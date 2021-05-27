@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v3.1.0)
+ * jSmart JavaScript template engine (v4.0.0)
  * https://github.com/umakantp/jsmart
  *
  * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2018-10-17T13:13Z
+ * Date: 2021-05-27T09:58Z
  */
 (function (factory) {
   'use strict'
@@ -708,6 +708,8 @@
     loadTemplate: function (name, nocache) {
       var tree = []
       if (nocache || !(name in this.files)) {
+        // Add temporary blank object to enable recursive file inclusion
+        this.files[name] = {}
         var tpl = this.getTemplate(name)
         if (typeof tpl !== 'string') {
           throw new Error('No template for ' + name)
@@ -751,7 +753,7 @@
     tokens: [
       {
         // Token for variable.
-        'regex': /^\$([\w@]+)/,
+        regex: /^\$([\w@]+)/,
         parse: function (s, data) {
           var dataVar = this.parseVar(s, RegExp.$1, RegExp.$1)
           var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
@@ -764,7 +766,7 @@
       },
       {
         // Token for boolean.
-        'regex': /^(true|false)/i,
+        regex: /^(true|false)/i,
         parse: function (s, data) {
           if (data.token.match(/true/i)) {
             return this.parseBool(true)
@@ -774,7 +776,7 @@
       },
       {
         // Token for to grab data inside single quotes.
-        'regex': /^'([^'\\]*(?:\\.[^'\\]*)*)'/,
+        regex: /^'([^'\\]*(?:\\.[^'\\]*)*)'/,
         parse: function (s, data) {
           // Data inside single quote is like string, we do not parse it.
           var regexStr = evalString(RegExp.$1)
@@ -789,10 +791,10 @@
       {
         // Token for to grab data inside double quotes.
         // We parse data inside double quotes.
-        'regex': /^"([^"\\]*(?:\\.[^"\\]*)*)"/,
+        regex: /^"([^"\\]*(?:\\.[^"\\]*)*)"/,
         parse: function (s, data) {
           var v = evalString(RegExp.$1)
-          var isVar = v.match(this.tokens[0]['regex'])
+          var isVar = v.match(this.tokens[0].regex)
           if (isVar) {
             var newData = this.parseVar(v, isVar[1], isVar[0])
             if (newData.token.length === v.length) {
@@ -816,7 +818,7 @@
       },
       {
         // Token for func().
-        'regex': /^(\w+)\s*[(]([)]?)/,
+        regex: /^(\w+)\s*[(]([)]?)/,
         parse: function (s, data) {
           var funcName = RegExp.$1
           var noArgs = RegExp.$2
@@ -832,7 +834,7 @@
       },
       {
         // Token for expression in parentheses.
-        'regex': /^\s*\(\s*/,
+        regex: /^\s*\(\s*/,
         parse: function (s, data) {
           // We do not know way of manupilating the tree here.
           return 'parenStart'
@@ -840,7 +842,7 @@
       },
       {
         // Token for end of func() or (expr).
-        'regex': /^\s*\)\s*/,
+        regex: /^\s*\)\s*/,
         parse: function (s, data) {
           // We do not know way of manupilating the tree here.
           return 'parenEnd'
@@ -848,7 +850,7 @@
       },
       {
         // Token for increment operator.
-        'regex': /^\s*(\+\+|--)\s*/,
+        regex: /^\s*(\+\+|--)\s*/,
         parse: function (s, data) {
           if (this.lastTreeInExpression.length && this.lastTreeInExpression[this.lastTreeInExpression.length - 1].type === 'var') {
             return this.parseOperator(RegExp.$1, 'post-unary', 1)
@@ -859,14 +861,14 @@
       },
       {
         // Regex for strict equal, strict not equal, equal and not equal operator.
-        'regex': /^\s*(===|!==|==|!=)\s*/,
+        regex: /^\s*(===|!==|==|!=)\s*/,
         parse: function (s, data) {
           return this.parseOperator(RegExp.$1, 'binary', 6)
         }
       },
       {
         // Regex for equal, not equal operator.
-        'regex': /^\s+(eq|ne|neq)\s+/i,
+        regex: /^\s+(eq|ne|neq)\s+/i,
         parse: function (s, data) {
           var op = RegExp.$1.replace(/ne(q)?/, '!=').replace(/eq/, '==')
           return this.parseOperator(op, 'binary', 6)
@@ -874,42 +876,42 @@
       },
       {
         // Regex for NOT operator.
-        'regex': /^\s*!\s*/,
+        regex: /^\s*!\s*/,
         parse: function (s, data) {
           return this.parseOperator('!', 'pre-unary', 2)
         }
       },
       {
         // Regex for NOT operator.
-        'regex': /^\s+not\s+/i,
+        regex: /^\s+not\s+/i,
         parse: function (s, data) {
           return this.parseOperator('!', 'pre-unary', 2)
         }
       },
       {
         // Regex for =, +=, *=, /=, %= operator.
-        'regex': /^\s*(=|\+=|-=|\*=|\/=|%=)\s*/,
+        regex: /^\s*(=|\+=|-=|\*=|\/=|%=)\s*/,
         parse: function (s, data) {
           return this.parseOperator(RegExp.$1, 'binary', 10)
         }
       },
       {
         // Regex for *, /, % binary operator.
-        'regex': /^\s*(\*|\/|%)\s*/,
+        regex: /^\s*(\*|\/|%)\s*/,
         parse: function (s, data) {
           return this.parseOperator(RegExp.$1, 'binary', 3)
         }
       },
       {
         // Regex for mod operator.
-        'regex': /^\s+mod\s+/i,
+        regex: /^\s+mod\s+/i,
         parse: function (s, data) {
           return this.parseOperator('%', 'binary', 3)
         }
       },
       {
         // Regex for +/- operator.
-        'regex': /^\s*(\+|-)\s*/,
+        regex: /^\s*(\+|-)\s*/,
         parse: function (s, data) {
           if (!this.lastTreeInExpression.length || this.lastTreeInExpression[this.lastTreeInExpression.length - 1].name === 'operator') {
             return this.parseOperator(RegExp.$1, 'pre-unary', 4)
@@ -920,14 +922,14 @@
       },
       {
         // Regex for less than, greater than, less than equal, reather than equal.
-        'regex': /^\s*(<=|>=|<>|<|>)\s*/,
+        regex: /^\s*(<=|>=|<>|<|>)\s*/,
         parse: function (s, data) {
           return this.parseOperator(RegExp.$1.replace(/<>/, '!='), 'binary', 5)
         }
       },
       {
         // Regex for less than, greater than, less than equal, reather than equal.
-        'regex': /^\s+(lt|lte|le|gt|gte|ge)\s+/i,
+        regex: /^\s+(lt|lte|le|gt|gte|ge)\s+/i,
         parse: function (s, data) {
           var op = RegExp.$1.replace(/l(t)?e/, '<').replace(/lt/, '<=').replace(/g(t)?e/, '>').replace(/gt/, '>=')
           return this.parseOperator(op, 'binary', 5)
@@ -935,14 +937,14 @@
       },
       {
         // Regex for short hand "is (not) div by".
-        'regex': /^\s+(is\s+(not\s+)?div\s+by)\s+/i,
+        regex: /^\s+(is\s+(not\s+)?div\s+by)\s+/i,
         parse: function (s, data) {
           return this.parseOperator(RegExp.$2 ? 'div_not' : 'div', 'binary', 7)
         }
       },
       {
         // Regex for short hand "is (not) even/odd by".
-        'regex': /^\s+is\s+(not\s+)?(even|odd)(\s+by\s+)?\s*/i,
+        regex: /^\s+is\s+(not\s+)?(even|odd)(\s+by\s+)?\s*/i,
         parse: function (s, data) {
           var op = RegExp.$1 ? ((RegExp.$2 === 'odd') ? 'even' : 'even_not') : ((RegExp.$2 === 'odd') ? 'even_not' : 'even')
           var tree = this.parseOperator(op, 'binary', 7)
@@ -954,42 +956,42 @@
       },
       {
         // Regex for AND operator.
-        'regex': /^\s*(&&)\s*/,
+        regex: /^\s*(&&)\s*/,
         parse: function (s, data) {
           return this.parseOperator(RegExp.$1, 'binary', 8)
         }
       },
       {
         // Regex for OR operator.
-        'regex': /^\s*(\|\|)\s*/,
+        regex: /^\s*(\|\|)\s*/,
         parse: function (s, data) {
           return this.parseOperator(RegExp.$1, 'binary', 9)
         }
       },
       {
         // Regex for AND operator.
-        'regex': /^\s+and\s+/i,
+        regex: /^\s+and\s+/i,
         parse: function (s, data) {
           return this.parseOperator('&&', 'binary', 11)
         }
       },
       {
         // Regex for XOR operator.
-        'regex': /^\s+xor\s+/i,
+        regex: /^\s+xor\s+/i,
         parse: function (s, data) {
           return this.parseOperator('xor', 'binary', 12)
         }
       },
       {
         // Regex for OR operator.
-        'regex': /^\s+or\s+/i,
+        regex: /^\s+or\s+/i,
         parse: function (s, data) {
           return this.parseOperator('||', 'binary', 13)
         }
       },
       {
         // Regex for config variable.
-        'regex': /^#(\w+)#/,
+        regex: /^#(\w+)#/,
         parse: function (s, data) {
           var dataVar = this.parseVar('.config.' + RegExp.$1, 'smarty', '$smarty')
           var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
@@ -1002,7 +1004,7 @@
       },
       {
         // Regex for array.
-        'regex': /^\s*\[\s*/,
+        regex: /^\s*\[\s*/,
         parse: function (s, data) {
           var params = this.parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/)
           var tree = this.parsePluginFunc('__array', params)
@@ -1016,7 +1018,7 @@
       },
       {
         // Regex for number.
-        'regex': /^[\d.]+/,
+        regex: /^[\d.]+/,
         parse: function (s, data) {
           if (data.token.indexOf('.') > -1) {
             data.token = parseFloat(data.token)
@@ -1033,7 +1035,7 @@
       },
       {
         // Regex for static.
-        'regex': /^\w+/,
+        regex: /^\w+/,
         parse: function (s, data) {
           var textTree = this.parseText(data.token)
           var dataMod = this.parseModifiers(s, textTree)
@@ -1097,7 +1099,7 @@
       },
 
       config_load: {
-        'type': 'function',
+        type: 'function',
         parse: function (params) {
           var file = trimAllQuotes(params.file ? params.file : params[0])
           var content = this.getConfig(file)
@@ -1114,7 +1116,7 @@
       },
 
       append: {
-        'type': 'function',
+        type: 'function',
         parse: function (params) {
           return {
             type: 'build-in',
@@ -1125,7 +1127,7 @@
       },
 
       assign: {
-        'type': 'function',
+        type: 'function',
         parse: function (params) {
           return {
             type: 'build-in',
@@ -1135,8 +1137,8 @@
         }
       },
 
-      'break': {
-        'type': 'function',
+      break: {
+        type: 'function',
         parse: function (params) {
           return {
             type: 'build-in',
@@ -1146,8 +1148,8 @@
         }
       },
 
-      'continue': {
-        'type': 'function',
+      continue: {
+        type: 'function',
         parse: function (params) {
           return {
             type: 'build-in',
@@ -1157,8 +1159,8 @@
         }
       },
 
-      'call': {
-        'type': 'function',
+      call: {
+        type: 'function',
         parse: function (params) {
           return {
             type: 'build-in',
@@ -1169,7 +1171,7 @@
       },
 
       capture: {
-        'type': 'block',
+        type: 'block',
         parse: function (params, content) {
           var tree = this.parse(content)
           return {
@@ -1182,7 +1184,7 @@
       },
 
       nocache: {
-        'type': 'block',
+        type: 'block',
         parse: function (params, content) {
           var tree = this.parse(content)
           return {
@@ -1194,15 +1196,15 @@
         }
       },
 
-      'eval': {
-        'type': 'function',
+      eval: {
+        type: 'function',
         parse: function (params) {
           return this.parsePluginFunc('eval', params)
         }
       },
 
       include: {
-        'type': 'function',
+        type: 'function',
         parse: function (params) {
           var file = trimAllQuotes(params.file ? params.file : params[0])
           var nocache = (findInArray(params, 'nocache') >= 0)
@@ -1217,7 +1219,7 @@
         }
       },
 
-      'for': {
+      for: {
         type: 'block',
         parseParams: function (paramStr) {
           var res = paramStr.match(/^\s*\$(\w+)\s*=\s*([^\s]+)\s*to\s*([^\s]+)\s*(?:step\s*([^\s]+))?\s*(.*)$/)
@@ -1247,7 +1249,7 @@
         }
       },
 
-      'if': {
+      if: {
         type: 'block',
         parse: function (params, content) {
           var subTreeIf = []
@@ -1259,7 +1261,7 @@
             content = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*if(.*)/)
             if (findElseIf) {
-              subTreeElse = this.buildInFunctions['if'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+              subTreeElse = this.buildInFunctions.if.parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
             } else {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
@@ -1276,7 +1278,7 @@
         }
       },
 
-      'foreach': {
+      foreach: {
         type: 'block',
         parseParams: function (paramStr) {
           var res = paramStr.match(/^\s*([$].+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i)
@@ -1310,7 +1312,7 @@
         }
       },
 
-      'function': {
+      function: {
         type: 'block',
         parse: function (params, content) {
           /* It is the case where we generate tree and keep it aside
@@ -1335,7 +1337,7 @@
         }
       },
 
-      'extends': {
+      extends: {
         type: 'function',
         parse: function (params) {
           return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
@@ -1412,7 +1414,7 @@
         }
       },
 
-      'while': {
+      while: {
         type: 'block',
         parse: function (params, content) {
           return {
@@ -1436,7 +1438,7 @@
    */
   function isEmptyObject (hash) {
     for (var i in hash) {
-      if (hash.hasOwnProperty(i)) {
+      if (Object.prototype.hasOwnProperty.call(hash, i)) {
         return false
       }
     }
@@ -1447,7 +1449,7 @@
   function countProperties (ob) {
     var count = 0
     for (var name in ob) {
-      if (ob.hasOwnProperty(name)) {
+      if (Object.prototype.hasOwnProperty.call(ob, name)) {
         count++
       }
     }
@@ -1519,7 +1521,7 @@
     },
 
     // Process the tree and apply data.
-    process: function (tree, data) {
+    process: function (tree, data, ret) {
       var res = ''
       var s
       var node
@@ -1543,6 +1545,11 @@
             // so copy it back to data.
             s = tmp.tpl
             data = tmp.data
+            if (tmp.return && ret) {
+              // well in case of variable is being set, consider its return value
+              // otherwise it was returning blank.
+              s = tmp.return
+            }
           } else {
             // If tmp is string means it has not modified data.
             s = tmp
@@ -1550,7 +1557,7 @@
         } else if (node.type === 'plugin') {
           if (this.runTimePlugins[node.name]) {
             // Thats call for {function}.
-            tmp = this.buildInFunctions['function'].process.call(this, node, data)
+            tmp = this.buildInFunctions.function.process.call(this, node, data)
             if (typeof tmp.tpl !== 'undefined') {
               // If tmp is object, which means it has modified, data also
               // so copy it back to data.
@@ -1632,12 +1639,12 @@
       return data
     },
 
-    getActualParamValues: function (params, data) {
+    getActualParamValues: function (params, data, ret) {
       var actualParams = []
       var v
       for (var name in params.__parsed) {
-        if (params.__parsed.hasOwnProperty(name)) {
-          v = this.process([params.__parsed[name]], data)
+        if (Object.prototype.hasOwnProperty.call(params.__parsed, name)) {
+          v = this.process([params.__parsed[name]], data, ret)
           if (typeof v !== 'undefined') {
             data = v.data
             v = v.tpl
@@ -1766,7 +1773,7 @@
                 window.__t = function () { return res }
               } else {
                 // Node.js like environment?!
-                global['__t'] = function () { return res }
+                global.__t = function () { return res }
               }
               res = this.process(this.tplModifiers[this.tplModifiers.length - 1], data)
               if (typeof res !== 'undefined') {
@@ -1853,8 +1860,8 @@
             if (node.op === '=') {
               // Var value is returned, but also set inside data.
               // we use the data and override ours.
-              this.getVarValue(node.params.__parsed[0], data, arg2)
-              return {tpl: '', data: data}
+              var val = this.getVarValue(node.params.__parsed[0], data, arg2)
+              return {tpl: '', data: data, return: val}
             } else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/)) {
               arg1 = this.getVarValue(node.params.__parsed[0], data)
               switch (node.op) {
@@ -2062,7 +2069,7 @@
         }
       },
 
-      'for': {
+      for: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var from = parseInt(params.__get('from'), 10)
@@ -2105,9 +2112,9 @@
         }
       },
 
-      'if': {
+      if: {
         process: function (node, data) {
-          var value = this.getActualParamValues(node.params, data)[0]
+          var value = this.getActualParamValues(node.params, data, true)[0]
           // Zero length arrays or empty associative arrays are false in PHP.
           if (value && !((value instanceof Array && value.length === 0) ||
             (typeof value === 'object' && isEmptyObject(value)))
@@ -2125,7 +2132,7 @@
         }
       },
 
-      'foreach': {
+      foreach: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var a = params.from
@@ -2147,7 +2154,7 @@
           var s = ''
           var i = 0
           for (var key in a) {
-            if (!a.hasOwnProperty(key)) {
+            if (!Object.prototype.hasOwnProperty.call(a, key)) {
               continue
             }
 
@@ -2194,7 +2201,7 @@
         }
       },
 
-      'break': {
+      break: {
         process: function (node, data) {
           data.smarty.break = true
           return {
@@ -2204,7 +2211,7 @@
         }
       },
 
-      'continue': {
+      continue: {
         process: function (node, data) {
           data.smarty.continue = true
           return {
@@ -2275,12 +2282,12 @@
         }
       },
 
-      'call': {
+      call: {
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var name = params.__get('name') ? params.__get('name') : params.__get('0')
           var newNode = {name: name, params: node.params}
-          var s = this.buildInFunctions['function'].process.call(this, newNode, data)
+          var s = this.buildInFunctions.function.process.call(this, newNode, data)
           var assignTo = params.__get('assign', false)
           if (assignTo) {
             return {tpl: '', data: this.assignVar(assignTo, s, data)}
@@ -2312,7 +2319,7 @@
         }
       },
 
-      'function': {
+      function: {
         process: function (node, data) {
           var funcData = this.runTimePlugins[node.name]
           var defaults = this.getActualParamValues(funcData.defaultParams, data)
@@ -2328,7 +2335,7 @@
         }
       },
 
-      'while': {
+      while: {
         process: function (node, data) {
           var s = ''
           while (this.getActualParamValues(node.params, data)[0]) {
@@ -2348,7 +2355,7 @@
       }
     }
   }
-var version = '3.1.0'
+var version = '4.0.0'
 
   /*
    Define jsmart constructor. jSmart object just stores,
@@ -2368,13 +2375,13 @@ var version = '3.1.0'
       block: {},
 
       // Used to store state of break;
-      'break': false,
+      break: false,
 
       // All the capture blocks in the current smarty object.
       capture: {},
 
       // Used to store state of continue
-      'continue': false,
+      continue: false,
 
       // Current counter information. Smarty like feature.
       counter: {},
@@ -2383,7 +2390,7 @@ var version = '3.1.0'
       cycle: {},
 
       // All the foreach blocks in the current smarty object.
-      'foreach': {},
+      foreach: {},
 
       // All the section blocks in the current smarty object.
       section: {},
@@ -2392,7 +2399,7 @@ var version = '3.1.0'
       now: Math.floor(((new Date()).getTime() / 1000)),
 
       // All the constants defined the current smarty object.
-      'const': {},
+      const: {},
 
       // Current configuration.
       config: {},
@@ -2456,15 +2463,15 @@ var version = '3.1.0'
     // Filters which are applied to all variables are in 'variable'.
     // Filters which are applied after processing whole template are in 'post'.
     filters: {
-      'variable': [],
-      'post': []
+      variable: [],
+      post: []
     },
 
     // Global filters. pre, post and variable. All of them.
     filtersGlobal: {
-      'pre': [],
-      'variable': [],
-      'post': []
+      pre: [],
+      variable: [],
+      post: []
     },
 
     // Cached value for all default and global variable filters.
@@ -2613,7 +2620,7 @@ var version = '3.1.0'
       if (toPrint instanceof Object) {
         s = 'Object (\n'
         for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
+          if (Object.prototype.hasOwnProperty.call(toPrint, name)) {
             s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
           }
         }
@@ -2622,7 +2629,7 @@ var version = '3.1.0'
       } else if (toPrint instanceof Array) {
         s = 'Array (\n'
         for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
+          if (Object.prototype.hasOwnProperty.call(toPrint, name)) {
             s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
           }
         }
@@ -2644,7 +2651,7 @@ var version = '3.1.0'
       if (type === 'modifier') {
         this.modifiers[name] = callback
       } else {
-        this.plugins[name] = {'type': type, 'process': callback}
+        this.plugins[name] = {type: type, process: callback}
       }
     },
 
@@ -2831,7 +2838,7 @@ var version = '3.1.0'
 
     // ascii decimals to real symbols
     for (decimal in entities) {
-      if (entities.hasOwnProperty(decimal)) {
+      if (Object.prototype.hasOwnProperty.call(entities, decimal)) {
         hashMap[String.fromCharCode(decimal)] = entities[decimal]
       }
     }
@@ -2979,8 +2986,11 @@ var version = '3.1.0'
         // Note: casts negative numbers to positive ones
         var number = value >>> 0
         prefix = (prefix && number && {
+          // eslint-disable-next-line quote-props
           '2': '0b',
+          // eslint-disable-next-line quote-props
           '8': '0',
+          // eslint-disable-next-line quote-props
           '16': '0x'
         }[base]) || ''
         value = prefix + _pad(number.toString(base), precision || 0, '0', false)
@@ -3355,21 +3365,21 @@ var version = '3.1.0'
 
       date = now ? new Date(now * 1000) : new Date()
       days = {
-        'sun': 0,
-        'mon': 1,
-        'tue': 2,
-        'wed': 3,
-        'thu': 4,
-        'fri': 5,
-        'sat': 6
+        sun: 0,
+        mon: 1,
+        tue: 2,
+        wed: 3,
+        thu: 4,
+        fri: 5,
+        sat: 6
       }
       ranges = {
-        'yea': 'FullYear',
-        'mon': 'Month',
-        'day': 'Date',
-        'hou': 'Hours',
-        'min': 'Minutes',
-        'sec': 'Seconds'
+        yea: 'FullYear',
+        mon: 'Month',
+        day: 'Date',
+        hou: 'Hours',
+        min: 'Minutes',
+        sec: 'Seconds'
       }
 
       function lastNext (type, range, modifier) {
@@ -3403,7 +3413,7 @@ var version = '3.1.0'
           num *= parseInt(type, 10)
         }
 
-        if (ranges.hasOwnProperty(range) && !splt[1].match(/^mon(day|\.)?$/i)) {
+        if (Object.prototype.hasOwnProperty.call(ranges, range) && !splt[1].match(/^mon(day|\.)?$/i)) {
           return date['set' + ranges[range]](date['get' + ranges[range]]() + num)
         }
 
@@ -3607,8 +3617,8 @@ var version = '3.1.0'
       var _date = (typeof timestamp === 'undefined')
         ? new Date()
         : (timestamp instanceof Date)
-          ? new Date(timestamp)
-          : new Date(timestamp * 1000)
+            ? new Date(timestamp)
+            : new Date(timestamp * 1000)
 
       var _aggregates = {
         c: 'locale',
@@ -3704,7 +3714,7 @@ var version = '3.1.0'
         } else {
           var l = 0
           for (var k in a) {
-            if (a.hasOwnProperty(k)) {
+            if (Object.prototype.hasOwnProperty.call(a, k)) {
               ++l
             }
           }
@@ -3776,7 +3786,6 @@ var version = '3.1.0'
     'modifier',
     'debug_print_var',
     function (s) {
-      console.log(s + '--')
       // Determining environment first. If its node, we do console.logs
       // else we open new windows for browsers.
       var env = ''
@@ -3790,6 +3799,9 @@ var version = '3.1.0'
         return ''
       }
       if (env === 'browser') {
+        if (console && console.log) {
+          console.log(s)
+        }
         return jSmart.prototype.printR(s)
       } else {
         console.log(s)
@@ -4128,7 +4140,7 @@ jSmart.prototype.registerPlugin(
     function (params, data) {
       var a = []
       for (var name in params) {
-        if (params.hasOwnProperty(name) && params[name] && typeof params[name] !== 'function') {
+        if (Object.prototype.hasOwnProperty.call(params, name) && params[name] && typeof params[name] !== 'function') {
           a[name] = params[name]
         }
       }
@@ -4150,14 +4162,14 @@ jSmart.prototype.registerPlugin(
       }
 
       if (('__owner' in data && params.name in data.__owner)) {
-        fname = data['__owner']
+        fname = data.__owner
         if (params.length) {
           return fname[params.name].apply(fname, params)
         } else {
           // When function doesn't has arguments.
           return fname[params.name].apply(fname)
         }
-      } else if (jSmart.prototype.modifiers.hasOwnProperty(params.name)) {
+      } else if (Object.prototype.hasOwnProperty.call(jSmart.prototype.modifiers, params.name)) {
         fname = jSmart.prototype.modifiers[params.name]
         return fname.apply(fname, paramData)
       } else {
@@ -4193,7 +4205,7 @@ jSmart.prototype.registerPlugin(
       if (name in data.smarty.counter) {
         var counter = data.smarty.counter[name]
         if ('start' in params) {
-          counter.value = parseInt(params['start'], 10)
+          counter.value = parseInt(params.start, 10)
         } else {
           counter.value = parseInt(counter.value, 10)
           counter.skip = parseInt(counter.skip, 10)
@@ -4404,7 +4416,7 @@ jSmart.prototype.registerPlugin(
       }
 
       for (p in values) {
-        if (values.hasOwnProperty(p)) {
+        if (Object.prototype.hasOwnProperty.call(values, p)) {
           value = (useName ? p : values[p])
           id = realName + '_' + value
           s = (labels ? (labelIds ? '<label for="' + id + '">' : '<label>') : '')
@@ -4445,7 +4457,7 @@ jSmart.prototype.registerPlugin(
       var p
 
       for (p in params) {
-        if (params.hasOwnProperty(p) && typeof params[p] === 'string') {
+        if (Object.prototype.hasOwnProperty.call(params, p) && typeof params[p] === 'string') {
           if (!(p in paramNames)) {
             s += ' ' + p + '="' + params[p] + '"'
           }
@@ -4478,7 +4490,7 @@ jSmart.prototype.registerPlugin(
         // We convert each value of array to string because values
         // is array of string. Otherwise comparision fails.
         for (j in selected) {
-          if (selected.hasOwnProperty(j)) {
+          if (Object.prototype.hasOwnProperty.call(selected, j)) {
             selected[j] = selected[j] + ''
           }
         }
@@ -4487,7 +4499,7 @@ jSmart.prototype.registerPlugin(
       }
 
       for (p in values) {
-        if (values.hasOwnProperty(p)) {
+        if (Object.prototype.hasOwnProperty.call(values, p)) {
           s = '<option value="' + (useName ? p : values[p]) + '"'
           if (selected && selected.indexOf((useName ? p : values[p])) !== -1) {
             s += ' selected="selected"'
@@ -4585,7 +4597,7 @@ jSmart.prototype.registerPlugin(
         loop = params.loop
       } else {
         for (p in params.loop) {
-          if (params.loop.hasOwnProperty(p)) {
+          if (Object.prototype.hasOwnProperty.call(params.loop, p)) {
             loop.push(params.loop[p])
           }
         }
@@ -4598,7 +4610,7 @@ jSmart.prototype.registerPlugin(
       if (isNaN(cols)) {
         if (typeof cols === 'object') {
           for (p in cols) {
-            if (cols.hasOwnProperty(p)) {
+            if (Object.prototype.hasOwnProperty.call(cols, p)) {
               colNames.push(cols[p])
             }
           }
