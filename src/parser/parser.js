@@ -641,6 +641,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     loadTemplate: function (name, nocache) {
       var tree = []
       if (nocache || !(name in this.files)) {
+        this.files[name] = {}
         var tpl = this.getTemplate(name)
         if (typeof tpl !== 'string') {
           throw new Error('No template for ' + name)
