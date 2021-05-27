@@ -465,5 +465,17 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
+  jSmart.prototype.registerPlugin('function','dump',(params,data) => {
+    var output = '';
+    delete params.__get;
+    for(var i in params) {
+        output += '<div style="background:#aaa; padding:5px; margin:5px; color:#000;"><pre>'+util.inspect(params[i])+'</pre></div>';
+    }
+    if(!output) {
+        output += '<div style="background:#aaa; padding:5px; margin:5px; color:#000;"><pre>'+util.inspect(data)+'</pre></div>';
+    }
+    return output;
+  });
+
   return jSmart
 })
