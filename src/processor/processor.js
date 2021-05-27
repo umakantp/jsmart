@@ -65,7 +65,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
     },
 
     // Process the tree and apply data.
-    process: function (tree, data) {
+    process: function (tree, data, ret) {
       var res = ''
       var s
       var node
@@ -89,7 +89,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             // so copy it back to data.
             s = tmp.tpl
             data = tmp.data
-            if (tmp.return && node.name === 'if') {
+            if (tmp.return && ret) {
               // well in case of variable is being set, consider its return value
               // otherwise it was returning blank.
               s = tmp.return
@@ -183,12 +183,12 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       return data
     },
 
-    getActualParamValues: function (params, data) {
+    getActualParamValues: function (params, data, ret) {
       var actualParams = []
       var v
       for (var name in params.__parsed) {
         if (Object.prototype.hasOwnProperty.call(params.__parsed, name)) {
-          v = this.process([params.__parsed[name]], data)
+          v = this.process([params.__parsed[name]], data, ret)
           if (typeof v !== 'undefined') {
             data = v.data
             v = v.tpl
@@ -658,7 +658,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
       if: {
         process: function (node, data) {
-          var value = this.getActualParamValues(node.params, data)[0]
+          var value = this.getActualParamValues(node.params, data, true)[0]
           // Zero length arrays or empty associative arrays are false in PHP.
           if (value && !((value instanceof Array && value.length === 0) ||
             (typeof value === 'object' && isEmptyObject(value)))
