@@ -38,8 +38,18 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (
       tpl += '{else}'
       tpl += 'and it works'
       tpl += '{/if}'
+      tpl += '|'
+      tpl += '{if $x = 5}'
+      tpl += '--{$x}--'
+      tpl += '{/if}'
+      tpl += '|'
+      tpl += '{if $x = 0}'
+      tpl += 'blank'
+      tpl += '{elseif $y = 6}'
+      tpl += '--{$y}--'
+      tpl += '{/if}'
 
-      var output = 'it works|yo works|and it works'
+      var output = 'it works|yo works|and it works|--5--|--6--'
 
       var t = new jSmart(tpl)
 

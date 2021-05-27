@@ -74,5 +74,22 @@ define(['jSmart'], function (jSmart) {
       t = new jSmart(tpl)
       expect(t.fetch()).toBe(output)
     })
+
+    it('test include inside include', function () {
+      jSmart.prototype.getTemplate = function (name) {
+        if (name === 'rchild.tpl') {
+          return 'include1-{include file="rchild2.tpl"}-include1'
+        }
+        if (name === 'rchild2.tpl') {
+          return 'deep-include'
+        }
+      }
+
+      tpl = 'main-{include file="rchild.tpl"}-main'
+
+      output = 'main-include1-deep-include-include1-main'
+      t = new jSmart(tpl)
+      expect(t.fetch()).toBe(output)
+    })
   })
 })
