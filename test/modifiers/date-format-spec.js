@@ -1,13 +1,14 @@
 define(['jSmart'], function (jSmart) {
   describe('Test modifier:: date_format', function () {
-    var tpl
-    var output
-    var t
     var allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    var d = new Date()
-    var month = allMonths[d.getMonth()]
 
     it('test date_format', function () {
+      var tpl
+      var output
+      var t
+      var d = new Date()
+      var month = allMonths[d.getMonth()]
+
       tpl = '{$smarty.now|date_format}'
       var da = d.getDate()
       if ((da + '').length < 2) {
@@ -20,6 +21,12 @@ define(['jSmart'], function (jSmart) {
     })
 
     it('test date_format', function () {
+      var tpl
+      var output
+      var t
+      var d = new Date()
+      var month = allMonths[d.getMonth()]
+
       tpl = '{$smarty.now|date_format:"%D"}'
       var m = d.getMonth()
       m++
@@ -37,6 +44,12 @@ define(['jSmart'], function (jSmart) {
     })
 
     it('test date_format', function () {
+      var tpl
+      var output
+      var t
+      var d = new Date()
+      var month = allMonths[d.getMonth()]
+
       tpl = '{$yesterday|date_format}'
 
       d.setTime(1473695667000)

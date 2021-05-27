@@ -32,34 +32,43 @@ define(['jSmart'], function (jSmart) {
       expect(t.fetch({p: 'yo'})).toBe(output)
     })
 
-    it('test include cache', function () {
-      // Old child.tpl had 'child' text. in test 1
+    it('test include cache/nocache', function () {
+      jSmart.prototype.getTemplate = function (name) {
+        if (name === 'child3.tpl') {
+          return 'child'
+        }
+      }
+      tpl = 'parent:'
+      tpl += '{include "child3.tpl"}'
+      t = new jSmart(tpl)
+      output = 'parent:child'
+      expect(t.fetch()).toBe(output)
+
+      // Old child3.tpl had 'child' text. in test 1
       // Now we modified child.tpl. But new value won't be fetched
       // as old is cached and we wont use nocache.
       jSmart.prototype.getTemplate = function (name) {
-        if (name === 'child.tpl') {
+        if (name === 'child3.tpl') {
           return 'new child'
         }
       }
       tpl = 'parent:'
-      tpl += '{include "child.tpl"}'
+      tpl += '{include "child3.tpl"}'
       // Output should come from old value.
       output = 'parent:child'
       t = new jSmart(tpl)
       expect(t.fetch()).toBe(output)
-    })
 
-    it('test include nocache', function () {
-      // Old child.tpl had 'child' text. in test 1
+      // Old child3.tpl had 'child' text. in test 1
       // Now we modified child.tpl. But new value will be fetched
       // as we will use now nocache.
       jSmart.prototype.getTemplate = function (name) {
-        if (name === 'child.tpl') {
+        if (name === 'child3.tpl') {
           return 'new child'
         }
       }
       tpl = 'parent:'
-      tpl += '{include "child.tpl" nocache}'
+      tpl += '{include "child3.tpl" nocache}'
       // Output should come from old value.
       output = 'parent:new child'
       t = new jSmart(tpl)
