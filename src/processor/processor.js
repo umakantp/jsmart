@@ -89,6 +89,11 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             // so copy it back to data.
             s = tmp.tpl
             data = tmp.data
+            if (tmp.return && node.name === 'if') {
+              // well in case of variable is being set, consider its return value
+              // otherwise it was returning blank.
+              s = tmp.return
+            }
           } else {
             // If tmp is string means it has not modified data.
             s = tmp
@@ -399,8 +404,8 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             if (node.op === '=') {
               // Var value is returned, but also set inside data.
               // we use the data and override ours.
-              this.getVarValue(node.params.__parsed[0], data, arg2)
-              return {tpl: '', data: data}
+              var val = this.getVarValue(node.params.__parsed[0], data, arg2)
+              return {tpl: '', data: data, return: val}
             } else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/)) {
               arg1 = this.getVarValue(node.params.__parsed[0], data)
               switch (node.op) {
