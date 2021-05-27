@@ -641,6 +641,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     loadTemplate: function (name, nocache) {
       var tree = []
       if (nocache || !(name in this.files)) {
+        // Add temporary blank object to enable recursive file inclusion
         this.files[name] = {}
         var tpl = this.getTemplate(name)
         if (typeof tpl !== 'string') {
