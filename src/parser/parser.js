@@ -1,4 +1,4 @@
-define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '../util/findinarray'], function (objectMerge, trimAllQuotes, evalString, findInArray) {
+define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '../util/findinarray', '../util/escaperegexp'], function (objectMerge, trimAllQuotes, evalString, findInArray, escapeRegExp) {
   // Parser object. Plain object which just does parsing.
   var jSmartParser = {
 
@@ -657,8 +657,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
     // Remove comments. We do not want to parse them anyway.
     removeComments: function (tpl) {
-      var ldelim = new RegExp(this.ldelim + '\\*')
-      var rdelim = new RegExp('\\*' + this.rdelim)
+      var ldelim = new RegExp(escapeRegExp(this.ldelim) + '\\*')
+      var rdelim = new RegExp('\\*' + escapeRegExp(this.rdelim))
       var newTpl = ''
 
       for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim)) {

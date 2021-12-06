@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v4.0.0)
+ * jSmart JavaScript template engine (v4.0.1)
  * https://github.com/umakantp/jsmart
  *
- * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
+ * Copyright 2011-2021, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2021-05-27T10:17Z
+ * Date: 2021-12-06T20:54Z
  */
 (function (factory) {
   'use strict'
@@ -65,6 +65,11 @@
       }
     }
     return -1
+  }
+
+
+  function escapeRegExp (s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // $& means the whole matched string
   }
 // Parser object. Plain object which just does parsing.
   var jSmartParser = {
@@ -724,8 +729,8 @@
 
     // Remove comments. We do not want to parse them anyway.
     removeComments: function (tpl) {
-      var ldelim = new RegExp(this.ldelim + '\\*')
-      var rdelim = new RegExp('\\*' + this.rdelim)
+      var ldelim = new RegExp(escapeRegExp(this.ldelim) + '\\*')
+      var rdelim = new RegExp('\\*' + escapeRegExp(this.rdelim))
       var newTpl = ''
 
       for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim)) {
@@ -2355,7 +2360,7 @@
       }
     }
   }
-var version = '4.0.0'
+var version = '4.0.1'
 
   /*
    Define jsmart constructor. jSmart object just stores,
