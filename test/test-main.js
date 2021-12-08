@@ -28,6 +28,7 @@ require.config({
     'util/objectmerge': 'src/util/objectmerge',
     'util/executebyobject': 'src/util/executebyobject',
     'util/trimallquotes': 'src/util/trimallquotes',
+    'util/escaperegexp': 'src/util/escaperegexp',
     'util/evalstring': 'src/util/evalstring',
     'util/findinarray': 'src/util/findinarray',
     'util/isemptyobject': 'src/util/isemptyobject',
