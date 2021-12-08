@@ -5,6 +5,17 @@ define(['jSmart'], function (jSmart) {
     var parent
     var child
 
+    it('test standalone (as is) block', function () {
+      parent = '<b>'
+      parent += 'wow '
+      parent += '{block name="t"}Default title{/block}'
+      parent += '</b>'
+
+      output = '<b>wow Default title</b>'
+      t = new jSmart(parent)
+      expect(t.fetch()).toBe(output)
+    })
+
     it('test simple block', function () {
       parent = '<b>'
       parent += 'wow '
@@ -72,7 +83,7 @@ define(['jSmart'], function (jSmart) {
       parent += '</b>'
 
       child = "ignore this {extends file='parent'}"
-      child += '{block name="t" append}'
+      child += '{block name="t"}'
       child += 'new title'
       child += '{/block}  see if it ignores this.. should be'
 
@@ -92,7 +103,7 @@ define(['jSmart'], function (jSmart) {
       parent += '</b>'
 
       child = "ignore this {extends file='parent'}"
-      child += '{block name="t" append}'
+      child += '{block name="t"}'
       child += '** {$smarty.block.parent} **'
       child += '{/block}  see if it ignores this.. should be'
 

@@ -769,53 +769,41 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         process: function (node, data) {
           var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
           var innerBlock = this.blocks[blockName]
-          var innerBlockContent
           var outerBlock = this.outerBlocks[blockName]
-          var outerBlockContent
           var output
 
+          function getInnerBlockContent () {
+            var innerBlockContent = this.process(innerBlock.tree, data)
+            if (typeof innerBlockContent.tpl !== 'undefined') {
+              innerBlockContent = innerBlockContent.tpl
+            }
+            return innerBlockContent
+          }
+
+          function getOuterBlockContent () {
+            var outerBlockContent = this.process(outerBlock.tree, data)
+            if (typeof outerBlockContent.tpl !== 'undefined') {
+              outerBlockContent = outerBlockContent.tpl
+            }
+            return outerBlockContent
+          }
+
           if (node.location === 'inner') {
-            if (innerBlock.params.needChild) {
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              data.smarty.block.child = outerBlockContent
-              innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
-                innerBlockContent = innerBlockContent.tpl
-              }
-              output = innerBlockContent
+            if (typeof outerBlock === 'undefined') {
+              output = getInnerBlockContent.call(this)
+            } else if (innerBlock.params.needChild) {
+              data.smarty.block.child = getOuterBlockContent.call(this)
+              output = getInnerBlockContent.call(this)
             } else if (outerBlock.params.needParent) {
-              innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
-                innerBlockContent = innerBlockContent.tpl
-              }
-              data.smarty.block.parent = innerBlockContent
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              output = outerBlockContent
+              data.smarty.block.parent = getInnerBlockContent.call(this)
+              output = getOuterBlockContent.call(this)
             } else {
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
               if (outerBlock.params.append) {
-                innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
-                  innerBlockContent = innerBlockContent.tpl
-                }
-                output = outerBlockContent + innerBlockContent
+                output = getOuterBlockContent.call(this) + getInnerBlockContent.call(this)
               } else if (outerBlock.params.prepend) {
-                innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
-                  innerBlockContent = innerBlockContent.tpl
-                }
-                output = innerBlockContent + outerBlockContent
+                output = getInnerBlockContent.call(this) + getOuterBlockContent.call(this)
               } else {
-                output = outerBlockContent
+                output = getOuterBlockContent.call(this)
               }
             }
             return output
