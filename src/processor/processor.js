@@ -27,8 +27,6 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
     outerBlocks: {},
 
-    blocks: {},
-
     // If user wants to debug.
     debugging: false,
 
@@ -40,7 +38,6 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       this.defaultModifiers = {}
       this.modifiers = {}
       this.plugins = {}
-      this.blocks = {}
       this.outerBlocks = {}
       this.debugging = false
       this.includedTemplates = []
@@ -768,12 +765,11 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       block: {
         process: function (node, data) {
           var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
-          var innerBlock = this.blocks[blockName]
           var outerBlock = this.outerBlocks[blockName]
           var output
 
           function getInnerBlockContent () {
-            var innerBlockContent = this.process(innerBlock.tree, data)
+            var innerBlockContent = this.process(node.tree, data)
             if (typeof innerBlockContent.tpl !== 'undefined') {
               innerBlockContent = innerBlockContent.tpl
             }
@@ -791,7 +787,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           if (node.location === 'inner') {
             if (typeof outerBlock === 'undefined') {
               output = getInnerBlockContent.call(this)
-            } else if (innerBlock.params.needChild) {
+            } else if (node.params.needChild) {
               data.smarty.block.child = getOuterBlockContent.call(this)
               output = getInnerBlockContent.call(this)
             } else if (outerBlock.params.needParent) {

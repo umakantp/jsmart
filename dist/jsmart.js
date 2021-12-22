@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v4.0.2)
+ * jSmart JavaScript template engine (v4.1.0)
  * https://github.com/umakantp/jsmart
  *
  * Copyright 2011-2021, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2021-12-08T02:04Z
+ * Date: 2021-12-22T23:10Z
  */
 (function (factory) {
   'use strict'
@@ -98,7 +98,9 @@
 
     outerBlocks: {},
 
-    blocks: {},
+    extendsFileMem: false,
+
+    extendsFile: false,
 
     getTemplate: function (name) {
       throw new Error('no getTemplate function defined.')
@@ -116,8 +118,9 @@
       this.plugins = {}
       this.ldelim = '{'
       this.rdelim = '}'
-      this.blocks = {}
       this.outerBlocks = {}
+      this.extendsFile = false
+      this.extendsFileMem = false
     },
 
     getTree: function (template) {
@@ -158,8 +161,6 @@
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
 
-      var blocks = this.blocks
-
       var outerBlocks = this.outerBlocks
 
       this.clear()
@@ -169,7 +170,6 @@
       return {
         tree: tree,
         runTimePlugins: runTimePlugins,
-        blocks: blocks,
         outerBlocks: outerBlocks
       }
     },
@@ -1345,7 +1345,17 @@
       extends: {
         type: 'function',
         parse: function (params) {
-          return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
+          var tree
+          var file = trimAllQuotes(((params.file) ? params.file : params[0]))
+
+          this.extendsFile = this.extendsFileMem
+
+          tree = this.loadTemplate(file, true)
+
+          this.extendsFileMem = this.extendsFile
+          this.extendsFile = file
+
+          return tree
         }
       },
 
@@ -1360,11 +1370,7 @@
           var tree = this.parse(content, [])
           var blockName = trimAllQuotes(params.name ? params.name : params[0])
           var location
-          if (!(blockName in this.blocks)) {
-            // This is block inside extends as it gets call first
-            // when the extends is processed?!
-            this.blocks[blockName] = []
-            this.blocks[blockName] = {tree: tree, params: params}
+          if (!this.extendsFile) {
             location = 'inner'
             match = content.match(/smarty.block.child/)
             params.needChild = false
@@ -1386,7 +1392,8 @@
             type: 'build-in',
             name: 'block',
             params: params,
-            location: location
+            location: location,
+            tree: tree
           }
         }
       },
@@ -1488,8 +1495,6 @@
 
     outerBlocks: {},
 
-    blocks: {},
-
     // If user wants to debug.
     debugging: false,
 
@@ -1501,7 +1506,6 @@
       this.defaultModifiers = {}
       this.modifiers = {}
       this.plugins = {}
-      this.blocks = {}
       this.outerBlocks = {}
       this.debugging = false
       this.includedTemplates = []
@@ -2229,12 +2233,11 @@
       block: {
         process: function (node, data) {
           var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
-          var innerBlock = this.blocks[blockName]
           var outerBlock = this.outerBlocks[blockName]
           var output
 
           function getInnerBlockContent () {
-            var innerBlockContent = this.process(innerBlock.tree, data)
+            var innerBlockContent = this.process(node.tree, data)
             if (typeof innerBlockContent.tpl !== 'undefined') {
               innerBlockContent = innerBlockContent.tpl
             }
@@ -2252,7 +2255,7 @@
           if (node.location === 'inner') {
             if (typeof outerBlock === 'undefined') {
               output = getInnerBlockContent.call(this)
-            } else if (innerBlock.params.needChild) {
+            } else if (node.params.needChild) {
               data.smarty.block.child = getOuterBlockContent.call(this)
               output = getInnerBlockContent.call(this)
             } else if (outerBlock.params.needParent) {
@@ -2348,7 +2351,7 @@
       }
     }
   }
-var version = '4.0.2'
+var version = '4.1.0'
 
   /*
    Define jsmart constructor. jSmart object just stores,

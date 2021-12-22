@@ -1,6 +1,7 @@
 define(['jSmart'], function (jSmart) {
   describe('Test build-in function:: block', function () {
     var output
+    var output2
     var t
     var parent
     var child
@@ -14,6 +15,31 @@ define(['jSmart'], function (jSmart) {
       output = '<b>wow Default title</b>'
       t = new jSmart(parent)
       expect(t.fetch()).toBe(output)
+    })
+
+    it('test blocks with same name in conditions', function () {
+      parent = '<b>'
+      parent += 'wow {if $default}'
+      parent += '{block name="t"}Default title{/block}'
+      parent += '{else}'
+      parent += '{block name="t"}Else title{/block}'
+      parent += '{/if}'
+      parent += '</b>'
+
+      child = "{extends file='parent'}"
+      child += '{block name="t" prepend}'
+      child += ' complete'
+      child += '{/block}'
+
+      output = '<b>wow Else title complete</b>'
+      output2 = '<b>wow Default title complete</b>'
+      jSmart.prototype.getTemplate = function () {
+        return parent
+      }
+
+      t = new jSmart(child)
+      expect(t.fetch()).toBe(output)
+      expect(t.fetch({default: true})).toBe(output2)
     })
 
     it('test simple block', function () {

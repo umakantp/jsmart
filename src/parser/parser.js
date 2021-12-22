@@ -26,7 +26,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
     outerBlocks: {},
 
-    blocks: {},
+    extendsFileMem: false,
+
+    extendsFile: false,
 
     getTemplate: function (name) {
       throw new Error('no getTemplate function defined.')
@@ -44,8 +46,9 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       this.plugins = {}
       this.ldelim = '{'
       this.rdelim = '}'
-      this.blocks = {}
       this.outerBlocks = {}
+      this.extendsFile = false
+      this.extendsFileMem = false
     },
 
     getTree: function (template) {
@@ -86,8 +89,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
 
-      var blocks = this.blocks
-
       var outerBlocks = this.outerBlocks
 
       this.clear()
@@ -97,7 +98,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return {
         tree: tree,
         runTimePlugins: runTimePlugins,
-        blocks: blocks,
         outerBlocks: outerBlocks
       }
     },
@@ -1273,7 +1273,17 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       extends: {
         type: 'function',
         parse: function (params) {
-          return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
+          var tree
+          var file = trimAllQuotes(((params.file) ? params.file : params[0]))
+
+          this.extendsFile = this.extendsFileMem
+
+          tree = this.loadTemplate(file, true)
+
+          this.extendsFileMem = this.extendsFile
+          this.extendsFile = file
+
+          return tree
         }
       },
 
@@ -1288,11 +1298,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           var tree = this.parse(content, [])
           var blockName = trimAllQuotes(params.name ? params.name : params[0])
           var location
-          if (!(blockName in this.blocks)) {
-            // This is block inside extends as it gets call first
-            // when the extends is processed?!
-            this.blocks[blockName] = []
-            this.blocks[blockName] = {tree: tree, params: params}
+          if (!this.extendsFile) {
             location = 'inner'
             match = content.match(/smarty.block.child/)
             params.needChild = false
@@ -1314,7 +1320,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
             type: 'build-in',
             name: 'block',
             params: params,
-            location: location
+            location: location,
+            tree: tree
           }
         }
       },
