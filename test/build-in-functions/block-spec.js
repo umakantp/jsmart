@@ -142,6 +142,72 @@ define(['jSmart'], function (jSmart) {
       expect(t.fetch()).toBe(output)
     })
 
+    it('test multiple parent blocks (overwriting inheritance)', function () {
+      parent = {
+        parent: '<b>wow {block name="t"} Default title {/block}</b>',
+        child: "ignore this {extends file='parent'}" +
+        '{block name="t"}** bad ** ' +
+        '{/block}  see if it ignores this.. should be'
+      }
+
+      child = "ignore this {extends file='child'}"
+      child += '{block name="t"}'
+      child += '* good *'
+      child += '{/block}  see if it ignores this.. should be'
+
+      jSmart.prototype.getTemplate = function (file) {
+        return parent[file]
+      }
+
+      output = '<b>wow * good *</b>'
+      t = new jSmart(child)
+      expect(t.fetch()).toBe(output)
+    })
+
+    it('test multiple parent blocks (linear inheritance)', function () {
+      parent = {
+        parent: '<b>wow {block name="t"} Default title {/block}</b>',
+        child: "ignore this {extends file='parent'}" +
+        '{block name="t"}** {$smarty.block.parent} ** ' +
+        '{/block}  see if it ignores this.. should be'
+      }
+
+      child = "ignore this {extends file='child'}"
+      child += '{block name="t" prepend}'
+      child += '* bam *'
+      child += '{/block}  see if it ignores this.. should be'
+
+      jSmart.prototype.getTemplate = function (file) {
+        return parent[file]
+      }
+
+      output = '<b>wow **  Default title  ** * bam *</b>'
+      t = new jSmart(child)
+      expect(t.fetch()).toBe(output)
+    })
+
+    it('test multiple parent blocks (bidirectional inheritance)', function () {
+      parent = {
+        parent: '<b>wow {block name="t"} Default title {/block}</b>',
+        child: "ignore this {extends file='parent'}" +
+        '{block name="t"}** {$smarty.block.parent} ** * {$smarty.block.child} *' +
+        '{/block}  see if it ignores this.. should be'
+      }
+
+      child = "ignore this {extends file='child'}"
+      child += '{block name="t"}'
+      child += 'bam'
+      child += '{/block}  see if it ignores this.. should be'
+
+      jSmart.prototype.getTemplate = function (file) {
+        return parent[file]
+      }
+
+      output = '<b>wow **  Default title  ** * bam *</b>'
+      t = new jSmart(child)
+      expect(t.fetch()).toBe(output)
+    })
+
     jSmart.prototype.getTemplate = null
   })
 })

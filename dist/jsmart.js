@@ -6,7 +6,7 @@
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2021-12-22T23:10Z
+ * Date: 2021-12-28T06:31Z
  */
 (function (factory) {
   'use strict'
@@ -1370,23 +1370,25 @@
           var tree = this.parse(content, [])
           var blockName = trimAllQuotes(params.name ? params.name : params[0])
           var location
+
+          match = content.match(/smarty.block.child/)
+          params.needChild = false
+          if (match) {
+            params.needChild = true
+          }
+
           if (!this.extendsFile) {
             location = 'inner'
-            match = content.match(/smarty.block.child/)
-            params.needChild = false
-            if (match) {
-              params.needChild = true
-            }
           } else {
-            // this.blocks has this block, means this outer block after extends
-            this.outerBlocks[blockName] = []
-            this.outerBlocks[blockName] = {tree: tree, params: params}
-            location = 'outer'
             match = content.match(/smarty.block.parent/)
             params.needParent = false
             if (match) {
               params.needParent = true
             }
+            // this.blocks has this block, means this outer block after extends
+            this.outerBlocks[blockName] = this.outerBlocks[blockName] || []
+            this.outerBlocks[blockName].push({tree: tree, params: params})
+            location = 'outer'
           }
           return {
             type: 'build-in',
@@ -2233,48 +2235,73 @@
       block: {
         process: function (node, data) {
           var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
-          var outerBlock = this.outerBlocks[blockName]
-          var output
+          var outerBlocks = typeof this.outerBlocks[blockName] === 'undefined'
+            ? false
+            : [].concat(this.outerBlocks[blockName])
+
+          if (node.location !== 'inner') {
+            // Outer block should not be printed it just used to
+            // capture the content
+            return ''
+          }
+
+          if (typeof this.outerBlocks[blockName] === 'undefined') {
+            return getInnerBlockContent.call(this)
+          }
+
+          if (node.params.needChild) {
+            data.smarty.block.child = getOuterBlockContent.call(this)
+            return getInnerBlockContent.call(this)
+          } else {
+            return getOuterBlockContent.call(this)
+          }
+
+          function processHelper (tree) {
+            var blockContent = this.process(tree, data)
+            if (typeof blockContent.tpl !== 'undefined') {
+              blockContent = blockContent.tpl
+            }
+            return blockContent
+          }
 
           function getInnerBlockContent () {
-            var innerBlockContent = this.process(node.tree, data)
-            if (typeof innerBlockContent.tpl !== 'undefined') {
-              innerBlockContent = innerBlockContent.tpl
-            }
-            return innerBlockContent
+            return processHelper.call(this, node.tree)
           }
 
           function getOuterBlockContent () {
-            var outerBlockContent = this.process(outerBlock.tree, data)
-            if (typeof outerBlockContent.tpl !== 'undefined') {
-              outerBlockContent = outerBlockContent.tpl
-            }
-            return outerBlockContent
-          }
+            var outerBlock = outerBlocks.pop()
+            var parentBlock = outerBlocks.pop()
+            var childBlock = false
 
-          if (node.location === 'inner') {
-            if (typeof outerBlock === 'undefined') {
-              output = getInnerBlockContent.call(this)
-            } else if (node.params.needChild) {
-              data.smarty.block.child = getOuterBlockContent.call(this)
-              output = getInnerBlockContent.call(this)
-            } else if (outerBlock.params.needParent) {
-              data.smarty.block.parent = getInnerBlockContent.call(this)
-              output = getOuterBlockContent.call(this)
-            } else {
-              if (outerBlock.params.append) {
-                output = getOuterBlockContent.call(this) + getInnerBlockContent.call(this)
-              } else if (outerBlock.params.prepend) {
-                output = getInnerBlockContent.call(this) + getOuterBlockContent.call(this)
+            if (!outerBlock) {
+              return false
+            }
+
+            if (parentBlock) {
+              if (!parentBlock.params.needChild) {
+                outerBlocks.push(parentBlock)
               } else {
-                output = getOuterBlockContent.call(this)
+                childBlock = processHelper.call(this, outerBlock.tree)
+                outerBlocks.push(outerBlock)
+                outerBlock = parentBlock
+                parentBlock = false
               }
             }
-            return output
+
+            parentBlock = (parentBlock && getOuterBlockContent.call(this)) || getInnerBlockContent.call(this)
+            if (outerBlock.params.needParent) {
+              data.smarty.block.parent = parentBlock
+            }
+            if (childBlock) {
+              data.smarty.block.child = childBlock
+            }
+
+            return [
+              (outerBlock.params.prepend ? parentBlock : ''),
+              processHelper.call(this, outerBlock.tree),
+              (outerBlock.params.append ? parentBlock : '')
+            ].join('')
           }
-          // Outer block should not be printed it just used to
-          // capture the content
-          return ''
         }
       },
 

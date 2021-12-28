@@ -1298,23 +1298,25 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           var tree = this.parse(content, [])
           var blockName = trimAllQuotes(params.name ? params.name : params[0])
           var location
+
+          match = content.match(/smarty.block.child/)
+          params.needChild = false
+          if (match) {
+            params.needChild = true
+          }
+
           if (!this.extendsFile) {
             location = 'inner'
-            match = content.match(/smarty.block.child/)
-            params.needChild = false
-            if (match) {
-              params.needChild = true
-            }
           } else {
-            // this.blocks has this block, means this outer block after extends
-            this.outerBlocks[blockName] = []
-            this.outerBlocks[blockName] = {tree: tree, params: params}
-            location = 'outer'
             match = content.match(/smarty.block.parent/)
             params.needParent = false
             if (match) {
               params.needParent = true
             }
+            // this.blocks has this block, means this outer block after extends
+            this.outerBlocks[blockName] = this.outerBlocks[blockName] || []
+            this.outerBlocks[blockName].push({tree: tree, params: params})
+            location = 'outer'
           }
           return {
             type: 'build-in',
