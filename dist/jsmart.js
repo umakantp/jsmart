@@ -1,12 +1,12 @@
 /*!
- * jSmart JavaScript template engine (v4.0.0)
+ * jSmart JavaScript template engine (v4.1.0)
  * https://github.com/umakantp/jsmart
  *
- * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
+ * Copyright 2011-2021, Umakant Patil <me at umakantpatil dot com>
  *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
- * Date: 2021-05-27T10:17Z
+ * Date: 2021-12-28T06:31Z
  */
 (function (factory) {
   'use strict'
@@ -66,6 +66,11 @@
     }
     return -1
   }
+
+
+  function escapeRegExp (s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // $& means the whole matched string
+  }
 // Parser object. Plain object which just does parsing.
   var jSmartParser = {
 
@@ -93,7 +98,9 @@
 
     outerBlocks: {},
 
-    blocks: {},
+    extendsFileMem: false,
+
+    extendsFile: false,
 
     getTemplate: function (name) {
       throw new Error('no getTemplate function defined.')
@@ -111,8 +118,9 @@
       this.plugins = {}
       this.ldelim = '{'
       this.rdelim = '}'
-      this.blocks = {}
       this.outerBlocks = {}
+      this.extendsFile = false
+      this.extendsFileMem = false
     },
 
     getTree: function (template) {
@@ -153,8 +161,6 @@
       // Copy so far runtime plugins were generated.
       runTimePlugins = this.runTimePlugins
 
-      var blocks = this.blocks
-
       var outerBlocks = this.outerBlocks
 
       this.clear()
@@ -164,7 +170,6 @@
       return {
         tree: tree,
         runTimePlugins: runTimePlugins,
-        blocks: blocks,
         outerBlocks: outerBlocks
       }
     },
@@ -724,8 +729,8 @@
 
     // Remove comments. We do not want to parse them anyway.
     removeComments: function (tpl) {
-      var ldelim = new RegExp(this.ldelim + '\\*')
-      var rdelim = new RegExp('\\*' + this.rdelim)
+      var ldelim = new RegExp(escapeRegExp(this.ldelim) + '\\*')
+      var rdelim = new RegExp('\\*' + escapeRegExp(this.rdelim))
       var newTpl = ''
 
       for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim)) {
@@ -1340,7 +1345,17 @@
       extends: {
         type: 'function',
         parse: function (params) {
-          return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
+          var tree
+          var file = trimAllQuotes(((params.file) ? params.file : params[0]))
+
+          this.extendsFile = this.extendsFileMem
+
+          tree = this.loadTemplate(file, true)
+
+          this.extendsFileMem = this.extendsFile
+          this.extendsFile = file
+
+          return tree
         }
       },
 
@@ -1355,33 +1370,32 @@
           var tree = this.parse(content, [])
           var blockName = trimAllQuotes(params.name ? params.name : params[0])
           var location
-          if (!(blockName in this.blocks)) {
-            // This is block inside extends as it gets call first
-            // when the extends is processed?!
-            this.blocks[blockName] = []
-            this.blocks[blockName] = {tree: tree, params: params}
+
+          match = content.match(/smarty.block.child/)
+          params.needChild = false
+          if (match) {
+            params.needChild = true
+          }
+
+          if (!this.extendsFile) {
             location = 'inner'
-            match = content.match(/smarty.block.child/)
-            params.needChild = false
-            if (match) {
-              params.needChild = true
-            }
           } else {
-            // this.blocks has this block, means this outer block after extends
-            this.outerBlocks[blockName] = []
-            this.outerBlocks[blockName] = {tree: tree, params: params}
-            location = 'outer'
             match = content.match(/smarty.block.parent/)
             params.needParent = false
             if (match) {
               params.needParent = true
             }
+            // this.blocks has this block, means this outer block after extends
+            this.outerBlocks[blockName] = this.outerBlocks[blockName] || []
+            this.outerBlocks[blockName].push({tree: tree, params: params})
+            location = 'outer'
           }
           return {
             type: 'build-in',
             name: 'block',
             params: params,
-            location: location
+            location: location,
+            tree: tree
           }
         }
       },
@@ -1483,8 +1497,6 @@
 
     outerBlocks: {},
 
-    blocks: {},
-
     // If user wants to debug.
     debugging: false,
 
@@ -1496,7 +1508,6 @@
       this.defaultModifiers = {}
       this.modifiers = {}
       this.plugins = {}
-      this.blocks = {}
       this.outerBlocks = {}
       this.debugging = false
       this.includedTemplates = []
@@ -2224,61 +2235,73 @@
       block: {
         process: function (node, data) {
           var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
-          var innerBlock = this.blocks[blockName]
-          var innerBlockContent
-          var outerBlock = this.outerBlocks[blockName]
-          var outerBlockContent
-          var output
+          var outerBlocks = typeof this.outerBlocks[blockName] === 'undefined'
+            ? false
+            : [].concat(this.outerBlocks[blockName])
 
-          if (node.location === 'inner') {
-            if (innerBlock.params.needChild) {
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              data.smarty.block.child = outerBlockContent
-              innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
-                innerBlockContent = innerBlockContent.tpl
-              }
-              output = innerBlockContent
-            } else if (outerBlock.params.needParent) {
-              innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
-                innerBlockContent = innerBlockContent.tpl
-              }
-              data.smarty.block.parent = innerBlockContent
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              output = outerBlockContent
-            } else {
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              if (outerBlock.params.append) {
-                innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
-                  innerBlockContent = innerBlockContent.tpl
-                }
-                output = outerBlockContent + innerBlockContent
-              } else if (outerBlock.params.prepend) {
-                innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
-                  innerBlockContent = innerBlockContent.tpl
-                }
-                output = innerBlockContent + outerBlockContent
+          if (node.location !== 'inner') {
+            // Outer block should not be printed it just used to
+            // capture the content
+            return ''
+          }
+
+          if (typeof this.outerBlocks[blockName] === 'undefined') {
+            return getInnerBlockContent.call(this)
+          }
+
+          if (node.params.needChild) {
+            data.smarty.block.child = getOuterBlockContent.call(this)
+            return getInnerBlockContent.call(this)
+          } else {
+            return getOuterBlockContent.call(this)
+          }
+
+          function processHelper (tree) {
+            var blockContent = this.process(tree, data)
+            if (typeof blockContent.tpl !== 'undefined') {
+              blockContent = blockContent.tpl
+            }
+            return blockContent
+          }
+
+          function getInnerBlockContent () {
+            return processHelper.call(this, node.tree)
+          }
+
+          function getOuterBlockContent () {
+            var outerBlock = outerBlocks.pop()
+            var parentBlock = outerBlocks.pop()
+            var childBlock = false
+
+            if (!outerBlock) {
+              return false
+            }
+
+            if (parentBlock) {
+              if (!parentBlock.params.needChild) {
+                outerBlocks.push(parentBlock)
               } else {
-                output = outerBlockContent
+                childBlock = processHelper.call(this, outerBlock.tree)
+                outerBlocks.push(outerBlock)
+                outerBlock = parentBlock
+                parentBlock = false
               }
             }
-            return output
+
+            parentBlock = (parentBlock && getOuterBlockContent.call(this)) || getInnerBlockContent.call(this)
+            if (outerBlock.params.needParent) {
+              data.smarty.block.parent = parentBlock
+            }
+            if (childBlock) {
+              data.smarty.block.child = childBlock
+            }
+
+            return [
+              (outerBlock.params.prepend ? parentBlock : ''),
+              processHelper.call(this, outerBlock.tree),
+              (outerBlock.params.append ? parentBlock : '')
+            ].join('')
           }
-          // Outer block should not be printed it just used to
-          // capture the content
-          return ''
         }
       },
 
@@ -2355,7 +2378,7 @@
       }
     }
   }
-var version = '4.0.0'
+var version = '4.1.0'
 
   /*
    Define jsmart constructor. jSmart object just stores,

@@ -27,8 +27,6 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
     outerBlocks: {},
 
-    blocks: {},
-
     // If user wants to debug.
     debugging: false,
 
@@ -40,7 +38,6 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       this.defaultModifiers = {}
       this.modifiers = {}
       this.plugins = {}
-      this.blocks = {}
       this.outerBlocks = {}
       this.debugging = false
       this.includedTemplates = []
@@ -768,61 +765,73 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       block: {
         process: function (node, data) {
           var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
-          var innerBlock = this.blocks[blockName]
-          var innerBlockContent
-          var outerBlock = this.outerBlocks[blockName]
-          var outerBlockContent
-          var output
+          var outerBlocks = typeof this.outerBlocks[blockName] === 'undefined'
+            ? false
+            : [].concat(this.outerBlocks[blockName])
 
-          if (node.location === 'inner') {
-            if (innerBlock.params.needChild) {
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              data.smarty.block.child = outerBlockContent
-              innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
-                innerBlockContent = innerBlockContent.tpl
-              }
-              output = innerBlockContent
-            } else if (outerBlock.params.needParent) {
-              innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
-                innerBlockContent = innerBlockContent.tpl
-              }
-              data.smarty.block.parent = innerBlockContent
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              output = outerBlockContent
-            } else {
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
-                outerBlockContent = outerBlockContent.tpl
-              }
-              if (outerBlock.params.append) {
-                innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
-                  innerBlockContent = innerBlockContent.tpl
-                }
-                output = outerBlockContent + innerBlockContent
-              } else if (outerBlock.params.prepend) {
-                innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
-                  innerBlockContent = innerBlockContent.tpl
-                }
-                output = innerBlockContent + outerBlockContent
+          if (node.location !== 'inner') {
+            // Outer block should not be printed it just used to
+            // capture the content
+            return ''
+          }
+
+          if (typeof this.outerBlocks[blockName] === 'undefined') {
+            return getInnerBlockContent.call(this)
+          }
+
+          if (node.params.needChild) {
+            data.smarty.block.child = getOuterBlockContent.call(this)
+            return getInnerBlockContent.call(this)
+          } else {
+            return getOuterBlockContent.call(this)
+          }
+
+          function processHelper (tree) {
+            var blockContent = this.process(tree, data)
+            if (typeof blockContent.tpl !== 'undefined') {
+              blockContent = blockContent.tpl
+            }
+            return blockContent
+          }
+
+          function getInnerBlockContent () {
+            return processHelper.call(this, node.tree)
+          }
+
+          function getOuterBlockContent () {
+            var outerBlock = outerBlocks.pop()
+            var parentBlock = outerBlocks.pop()
+            var childBlock = false
+
+            if (!outerBlock) {
+              return false
+            }
+
+            if (parentBlock) {
+              if (!parentBlock.params.needChild) {
+                outerBlocks.push(parentBlock)
               } else {
-                output = outerBlockContent
+                childBlock = processHelper.call(this, outerBlock.tree)
+                outerBlocks.push(outerBlock)
+                outerBlock = parentBlock
+                parentBlock = false
               }
             }
-            return output
+
+            parentBlock = (parentBlock && getOuterBlockContent.call(this)) || getInnerBlockContent.call(this)
+            if (outerBlock.params.needParent) {
+              data.smarty.block.parent = parentBlock
+            }
+            if (childBlock) {
+              data.smarty.block.child = childBlock
+            }
+
+            return [
+              (outerBlock.params.prepend ? parentBlock : ''),
+              processHelper.call(this, outerBlock.tree),
+              (outerBlock.params.append ? parentBlock : '')
+            ].join('')
           }
-          // Outer block should not be printed it just used to
-          // capture the content
-          return ''
         }
       },
 
