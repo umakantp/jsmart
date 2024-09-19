@@ -1,0 +1,26 @@
+{
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.insertSpaces": true,
+  "editor.defaultFormatter": "vscode.typescript-language-features",
+  "editor.formatOnSaveMode": "modifications",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll.eslint": "explicit"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.vscode": true,
+    "prisma/migrations": true,
+  },
+  "tslint.jsEnable": true,
+  "typescript.validate.enable": true,
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.importModuleSpecifierEnding": "minimal",
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+}
