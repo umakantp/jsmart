@@ -1,0 +1,9 @@
+{
+  "name": "jsmart-simple-node-example",
+  "description": "Demo showing jSmart working in node js",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "jsmart": "5.0.0"
+  }
+}

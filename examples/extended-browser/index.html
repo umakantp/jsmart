@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>jSmart example</title>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsmart@4.0.0/dist/jsmart.min.js"></script>
+</head>
+<body>
+  <script id="single-hello.tpl" type="text/x-jsmart-tpl">
+    Hello People..
+
+This template is rendered from Node.js using jSmart {$version}
+
+By {$name}
+  </script>
+
+  <script id="hello.tpl" type="text/x-jsmart-tpl">
+    Hello People..
+
+This template is rendered from Node.js using jSmart {$version}
+
+{include file='by.tpl'}
+  </script>
+  <script id="by.tpl" type="text/x-jsmart-tpl">
+
+By {$name}
+  </script>
+
+  <script type="text/javascript">
+    function syncSmartyRender() {
+      const smarty = new jSmart()
+
+      smarty.setEscapeHtml(true);
+      // this could be replaced by literally if you have existing string pulled from
+      // some ajax/fetch call.
+      const compiled = smarty.compile(document.getElementById('single-hello.tpl').innerHTML);
+      return compiled;
+    }
+    syncSmartyRender().assign('version', 'v5').display({ name: 'Umakant' })
+  </script>
+
+  <script type="text/javascript">
+    const asyncSmartyRender = async () => {
+      const smarty = new jSmart()
+      smarty.getTemplate = (tplName) => {
+        // Add sync fetch like call/load templates in advance in DOM/variable.
+        return document.getElementById(tplName).innerHTML
+        /*
+          Or make use this as function async and can make fetch calls here to get replates by name.
+          return await fetch(`/files/get-templates.php?tpl=${tplName}`)
+        */
+      }
+
+      const compiled = await smarty.compileFile('hello.tpl');
+      return compiled;
+    }
+    asyncSmartyRender()
+      .then((smartyCompiled) => {
+        smartyCompiled.assign('version', 'v5')
+        smartyCompiled.display({ name: 'Umakant' })
+      })
+  </script>
+</body>
+</html>
