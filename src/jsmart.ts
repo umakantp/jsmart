@@ -1,13 +1,19 @@
 import Compiler from 'src/lib/compiler';
+import { AUTO_LITERAL, LEFT_DELIMITER, RIGHT_DELIMITER } from 'src/lib/defaults';
 import Renderer from 'src/lib/renderer';
 import { Variables } from 'src/lib/types';
+import { removeComments } from 'src/lib/utils';
 
 class Smarty {
+  version = '@version';
+
   data: Variables = {};
 
-  leftDelimiter: string = '{';
+  autoLiteral: boolean = AUTO_LITERAL;
 
-  rightDelimiter: string = '}';
+  leftDelimiter: string = LEFT_DELIMITER;
+
+  rightDelimiter: string = RIGHT_DELIMITER;
 
   setLeftDelimiter(newDelimiter: string) {
     const leftDelimiter = newDelimiter.trim();
@@ -23,16 +29,20 @@ class Smarty {
     const c = new Compiler({
       leftDelimiter: this.leftDelimiter,
       rightDelimiter: this.rightDelimiter,
+      autoLiteral: this.autoLiteral,
     });
-    return c.process(tplString);
+    // TODO:: Remove smarty comments before parsing.
+    tplString = removeComments(this.leftDelimiter, this.rightDelimiter, tplString);
+    tplString = tplString.replace(/\r\n/g, '\n');
+    return c.compile(tplString);
   }
 
-  // TODO:: For now value is any. Should we limit what can be value?
+  // TODO:: For now value is any. Should we limit what can be a value?
   assign(key: string, value: any) {
-    this.data[key] = value;
+    this.data[`$${key}`] = value;
   }
 
-  display(compiledData: string[], moreData?: Variables) {
+  display(compiledData: string, moreData?: Variables) {
     if (moreData) {
       Object.keys(moreData).forEach(moreDataKey => {
         this.data[moreDataKey] = moreData[moreDataKey];
