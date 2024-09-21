@@ -2,7 +2,6 @@ jSmart - Smarty template engine in JavaScript
 ======
 [![Build Status](https://travis-ci.org/umakantp/jsmart.png?branch=master)](https://travis-ci.org/umakantp/jsmart)
 [![npm version](https://img.shields.io/npm/v/jsmart.svg)](https://www.npmjs.com/package/jsmart)
-[![David](https://img.shields.io/david/dev/umakantp/jsmart.svg)](https://www.npmjs.com/package/jsmart)
 [![npm](https://img.shields.io/npm/dw/jsmart.svg)](https://www.npmjs.com/package/jsmart)
 [![npm](https://img.shields.io/npm/l/jsmart.svg)](https://github.com/umakantp/jsmart/blob/master/LICENSE)
 
@@ -121,18 +120,17 @@ define(['jSmart', 'text!some/good/template.tpl'], function (jSmart, goodTpl) {
   Best is open a issue first. Then send a pull request referencing the issue number. Before sending pull request make sure you add test case for the fix. Make sure all test cases are passing and eslint tests pass.
 
 * Test cases:-
-  ```grunt karma```
+  ```npm run test```
 
 * ES Lint tests:-
-  ```grunt eslint```
+  ```npm run lint```
 
-* Run lint, run test, build, compress, distribution package and update examples in one command:-
-  ```grunt```
+* Output a build:-
+  ```npm run build```
+
+* Run lint, run test, build, compress, and distribution package in one command:-
+  ```yet to created```
 
 ### LICENSE
 
 [MIT](https://raw.githubusercontent.com/umakantp/jsmart/master/LICENSE)
-
-### NOTICE
-
-Project originally was created by [miroshnikov](https://github.com/miroshnikov). Since author was not active on project very frequently. I have forked and planned on pushing further improvements and features on my own fork.
