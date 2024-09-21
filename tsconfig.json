@@ -8,7 +8,7 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
 
     /* Strictness */
     "strict": true,
@@ -24,6 +24,16 @@
     "declaration": true,
 
     /* If your code doesn't run in the DOM: */
-    "lib": ["es2022"]
+    "lib": ["es2022"],
+
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "src": ["src"],
+      "test": ["test"],
+    },
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
   }
 }

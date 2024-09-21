@@ -1,14 +1,14 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-	<title>jSmart example</title>
+	<title>Jsmart example</title>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsmart@4.0.0/dist/jsmart.min.js"></script>
 </head>
 <body>
   <script id="single-hello.tpl" type="text/x-jsmart-tpl">
     Hello People..
 
-This template is rendered from Node.js using jSmart {$version}
+This template is rendered from Node.js using Jsmart {$version}
 
 By {$name}
   </script>
@@ -16,7 +16,7 @@ By {$name}
   <script id="hello.tpl" type="text/x-jsmart-tpl">
     Hello People..
 
-This template is rendered from Node.js using jSmart {$version}
+This template is rendered from Node.js using Jsmart {$version}
 
 {include file='by.tpl'}
   </script>
@@ -27,7 +27,7 @@ By {$name}
 
   <script type="text/javascript">
     function syncSmartyRender() {
-      const smarty = new jSmart()
+      const smarty = new Jsmart()
 
       smarty.setEscapeHtml(true);
       // this could be replaced by literally if you have existing string pulled from
@@ -40,7 +40,7 @@ By {$name}
 
   <script type="text/javascript">
     const asyncSmartyRender = async () => {
-      const smarty = new jSmart()
+      const smarty = new Jsmart()
       smarty.getTemplate = (tplName) => {
         // Add sync fetch like call/load templates in advance in DOM/variable.
         return document.getElementById(tplName).innerHTML
