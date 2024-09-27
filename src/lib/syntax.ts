@@ -9,12 +9,13 @@ export const grammer: Grammer = {
       if $foo
       if $foo = 10
     */
-    re: /^if\s*/,
+    re: /^(if|elseif) \s*/,
     process: (result: BuiltInMatchResult, options: GrammerOptions) => {
       if (result[0]) {
         let processedLength = 0;
         let restTpl = options.content.substring(result[0].length);
-        let fullVariable = `${result[0]} (`;
+        const jsElseIf = result[0].replace('elseif', 'else if');
+        let fullVariable = result[1] === 'elseif' ? `} ${jsElseIf} (` : `${jsElseIf} (`;
         processedLength += result[0].length;
         // loop until while we are processing
         while (restTpl.length > 0) {
@@ -32,8 +33,14 @@ export const grammer: Grammer = {
       return { result: '', content: options.content };
     }
   },
+  ifElse: {
+    re: /^else$/,
+    process: (_result: BuiltInMatchResult, options: GrammerOptions) => {
+      return { result: '} else { ', content: options.content };
+    }
+  },
   ifClose: {
-    re: /\s*\/if\s*/,
+    re: /^\s*\/if\s*/,
     process: (_result: BuiltInMatchResult, options: GrammerOptions) => {
       return { result: '} ', content: options.content };
     }
@@ -181,7 +188,12 @@ export const grammer: Grammer = {
     }
   },
 
-  // TODO:: Handle =, +=, *=, /=, %= operator.
+  progrmammingOtherOperator: {
+    re: /^\s*(\+=|-=|\*=|\/=|%=)\s*/,
+    process: (result: BuiltInMatchResult, options: GrammerOptions) => {
+      return { result: result[0], content: options.content.substring(0, result[0].length) };
+    }
+  },
 
   basicMathOperators: {
     re: /^\s*(\+|-|\/|\*|%)\s*/,
@@ -281,6 +293,10 @@ export const grammer: Grammer = {
   },
 
   number: {
+    /*
+      Just the numbers.
+      10, 100, -56, 34.12
+     */
     re: /^[\d.]+/,
     process: (result: BuiltInMatchResult, options: GrammerOptions) => {
       if (result[0]) {
