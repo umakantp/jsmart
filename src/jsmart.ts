@@ -5,6 +5,8 @@ import { Variables } from 'src/lib/types';
 import { removeComments } from 'src/lib/utils';
 
 class Smarty {
+  // Smarty version and also can be used as cache version, so if we change
+  // anything in future version, should have new cache.
   version = '@version';
 
   data: Variables = {};
@@ -31,15 +33,16 @@ class Smarty {
       rightDelimiter: this.rightDelimiter,
       autoLiteral: this.autoLiteral,
     });
-    // TODO:: Remove smarty comments before parsing.
+
     tplString = removeComments(this.leftDelimiter, this.rightDelimiter, tplString);
     tplString = tplString.replace(/\r\n/g, '\n');
+
     return c.compile(tplString);
   }
 
   // TODO:: For now value is any. Should we limit what can be a value?
   assign(key: string, value: any) {
-    this.data[`$${key}`] = value;
+    this.data[key] = value;
   }
 
   display(compiledData: string, moreData?: Variables) {

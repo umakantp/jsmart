@@ -10,6 +10,8 @@ class Renderer {
     const fnKeys = Object.keys(data);
     const args = fnKeys.join(', ');
     const body =  `var $JSMART = \'\'; ${this.compiledData} return $JSMART; `;
+    // console.log('args: ', args);
+    // console.log('body: ', body);
     const template = new Function(args, body);
     return template(...(Object.values(data)));
   }

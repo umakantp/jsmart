@@ -1,7 +1,7 @@
 import { AUTO_LITERAL, LEFT_DELIMITER, RIGHT_DELIMITER } from 'src/lib/defaults';
+import syntaxChecker from 'src/lib/syntax';
 import { Node, NodeType, SmartyConfig } from 'src/lib/types';
-import { assignToJsmart, findCloseDelimiter, findOpenDelimiter } from 'src/lib/utils';
-
+import { assignVarToJsmart, findCloseDelimiter, findOpenDelimiter } from 'src/lib/utils';
 
 class Compiler {
   config: SmartyConfig = {
@@ -29,7 +29,10 @@ class Compiler {
       // Find first opening tag in the string.
       const startIndex = findOpenDelimiter(ldelim, tplString, this.config.autoLiteral);
       // Anything before open delimiter is a string. If no open delimiter, then its all string.
-      parsedTpl.push({ type: NodeType.Text, content: startIndex === -1 ? tplString : tplString.substring(0, startIndex) });
+      parsedTpl.push({
+        type: NodeType.Text,
+        content: startIndex === -1 ? tplString : tplString.substring(0, startIndex)
+      });
       if (startIndex === -1) {
         // Nothing left to parse, so clear string and we will break from while
         tplString = '';
@@ -43,7 +46,10 @@ class Compiler {
           throw new Error(`Missing ${rdelim} after ${tplString.substring(10)}`);
         }
         // Anything before close delimiter is a tag..
-        parsedTpl.push({ type: NodeType.Smarty, content: tplString.substring(0, endIndex) });
+        parsedTpl.push({
+          type: NodeType.Smarty,
+          content: tplString.substring(0, endIndex).trim()
+        });
         // Remove close delimiter
         tplString = tplString.substring(endIndex + rdelim.length);
       }
@@ -55,7 +61,14 @@ class Compiler {
     let parsedTagsTpl = '';
     for (const node of parsedTpl) {
       if (node.type === NodeType.Text) {
-        parsedTagsTpl += assignToJsmart(`'${node.content}'`);
+        parsedTagsTpl += assignVarToJsmart(`\`${node.content}\``, true);
+      } else if (node.type === NodeType.Smarty) {
+        const syntax = syntaxChecker(node.content);
+        const processed = syntax.item.process(
+          syntax.match,
+          { content: node.content, shouldWrap: true }
+        );
+        parsedTagsTpl += processed.result;
       }
     }
     return parsedTagsTpl;

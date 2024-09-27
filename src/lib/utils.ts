@@ -1,6 +1,6 @@
 
 export const findOpenDelimiter = (delimiter: string, tplString: string, autoLiteral: boolean) => {
-  const re = new RegExp(autoLiteral ? `${delimiter}([\\s]+)` : delimiter);
+  const re = new RegExp(autoLiteral ? `${delimiter}(?!\\s)` : delimiter);
   const firstMatch = tplString.match(re);
   if (firstMatch) {
     return firstMatch.index !== undefined ? firstMatch.index : -1;
@@ -9,7 +9,7 @@ export const findOpenDelimiter = (delimiter: string, tplString: string, autoLite
 };
 
 export const findCloseDelimiter = (delimiter: string, tplString: string, autoLiteral: boolean) => {
-  const re = new RegExp(autoLiteral ? `([\\s]+)${delimiter}` : delimiter);
+  const re = new RegExp(autoLiteral ? `(?!\\s)${delimiter}` : delimiter);
   const firstMatch = tplString.match(re);
   if (firstMatch) {
     return firstMatch.index !== undefined ? firstMatch.index : -1;
@@ -35,6 +35,9 @@ export const removeComments = (ldelim: string, rdelim: string, tplString: string
   return newTplString + tplString;
 };
 
-export const assignToJsmart = (processString: string) => {
-  return `$JSMART += ${processString}; `;
+export const assignVarToJsmart = (processString: string, shouldWrap?: boolean) => {
+  if (shouldWrap) {
+    return `$JSMART += ${processString}; `;
+  }
+  return processString;
 };

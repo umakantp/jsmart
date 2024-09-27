@@ -25,6 +25,7 @@
     "@types/assert": "^1.5.10",
     "@types/chai": "^4.3.19",
     "@types/mocha": "^10.0.8",
+    "@types/node": "^22.5.5",
     "assert": "^2.1.0",
     "chai": "^4.5.0",
     "eslint": "^9.10.0",

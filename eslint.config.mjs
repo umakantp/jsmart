@@ -11,7 +11,9 @@ export default [
   ...tseslint.configs.recommended,
   {
     rules: {
+      'indent': ['error', 2],
       'quotes': ['error', 'single'],
+      'no-console': 'warn',
       'semi': ['error', 'always'],
       '@typescript-eslint/no-explicit-any': 0,
       '@typescript-eslint/no-unused-vars': [

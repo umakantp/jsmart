@@ -15,3 +15,11 @@ export enum NodeType {
 }
 
 export type Node = { type: NodeType, content: string, }
+
+export type BuiltInMatchResult = RegExpMatchArray;
+
+export type GrammerOptions = { content: string, shouldWrap?: boolean };
+
+export type GrammerResponse = { content: string, result: string };
+
+export type Grammer = Record<string, { re: RegExp, process: (result: BuiltInMatchResult, options: GrammerOptions) => GrammerResponse }>;
