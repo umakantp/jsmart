@@ -35,9 +35,3 @@ export const removeComments = (ldelim: string, rdelim: string, tplString: string
   return newTplString + tplString;
 };
 
-export const assignVarToJsmart = (processString: string, shouldWrap?: boolean) => {
-  if (shouldWrap) {
-    return `$JSMART += ${processString}; `;
-  }
-  return processString;
-};

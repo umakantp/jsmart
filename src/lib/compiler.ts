@@ -1,7 +1,7 @@
 import { AUTO_LITERAL, LEFT_DELIMITER, RIGHT_DELIMITER } from 'src/lib/defaults';
-import syntaxChecker from 'src/lib/syntax';
+import Tokenizer from 'src/lib/tokenizer';
 import { Node, NodeType, SmartyConfig } from 'src/lib/types';
-import { assignVarToJsmart, findCloseDelimiter, findOpenDelimiter } from 'src/lib/utils';
+import { findCloseDelimiter, findOpenDelimiter } from 'src/lib/utils';
 
 class Compiler {
   config: SmartyConfig = {
@@ -18,7 +18,7 @@ class Compiler {
     // First we convert normal text to basic tokens
     const parsedTpl = this.parse(tplString);
     // Convert basic tokens to better named tokens having detailed parsing
-    return this.parseTags(parsedTpl);
+    return this.convertToTokens(parsedTpl);
   }
 
   parse(tplString: string) {
@@ -57,18 +57,19 @@ class Compiler {
     return parsedTpl;
   }
 
-  parseTags(parsedTpl: Node[]) {
+  convertToTokens(parsedTpl: Node[]) {
     let parsedTagsTpl = '';
     for (const node of parsedTpl) {
       if (node.type === NodeType.Text) {
-        parsedTagsTpl += assignVarToJsmart(`\`${node.content}\``, true);
+        parsedTagsTpl +=  `$JSMART += \`${node.content}\`; `;
       } else if (node.type === NodeType.Smarty) {
-        const syntax = syntaxChecker(node.content);
-        const processed = syntax.item.process(
-          syntax.match,
-          { content: node.content, shouldWrap: true }
-        );
-        parsedTagsTpl += processed.result;
+        const tokenizer = new Tokenizer(node.content);
+        const processed = tokenizer.stringify();
+        if (processed.wrap) {
+          parsedTagsTpl +=  `$JSMART += ${processed.data}; `;
+        } else {
+          parsedTagsTpl +=  `${processed.data} `;
+        }
       }
     }
     return parsedTagsTpl;

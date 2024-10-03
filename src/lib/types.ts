@@ -16,10 +16,16 @@ export enum NodeType {
 
 export type Node = { type: NodeType, content: string, }
 
+export type Token = {
+  // Type of token
+  // TODO:: type is key of Grammer, fix the type.
+  type: string,
+  // Processed output
+  data: string,
+  // Processed template string,
+  tpl: string,
+}
+
 export type BuiltInMatchResult = RegExpMatchArray;
 
-export type GrammerOptions = { content: string, shouldWrap?: boolean };
-
-export type GrammerResponse = { content: string, result: string };
-
-export type Grammer = Record<string, { re: RegExp, process: (result: BuiltInMatchResult, options: GrammerOptions) => GrammerResponse }>;
+export type Grammer = Record<string, { re: RegExp, process: (result: BuiltInMatchResult, tpl: string) => Omit<Token, 'type'> }>;

@@ -7,6 +7,7 @@ describe('variable', function () {
     assert.strictEqual(smarty.render('Hello {$name}!', { name: 'World' }), 'Hello World!');
   });
 
+
   it('should print array dot notation variables', function () {
     const smarty = new Jsmart();
     assert.strictEqual(smarty.render('Hello {$obj.name}!', { obj: { name : 'Dot Notation'} }), 'Hello Dot Notation!');
