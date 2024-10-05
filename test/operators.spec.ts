@@ -2,7 +2,6 @@ import assert from 'assert';
 import Jsmart from 'src/jsmart';
 
 describe('operators', function () {
-
   it('should support simple math operators', function () {
     const smarty = new Jsmart();
     assert.strictEqual(smarty.render('{$foo + 4}', { foo: 12 }), '16');
@@ -82,7 +81,7 @@ describe('operators', function () {
     );
   });
 
-  it('should support \`is [not] even [by]\`', function () {
+  it('should support \'is [not] even [by]\'', function () {
     const smarty = new Jsmart();
     assert.strictEqual(
       smarty.render('{if $c is not even}test-1{/if} {if $b is even}test0{/if} {if $a is not even by $b}test1{/if} {if $a is even by $c}test2{/if} {if ($a/$b) % 2  != 0}test3{/if} {if ($a/$c)%2 == 0}test4{/if}', { a: 6, b: 2, c: 3 }),
@@ -118,6 +117,38 @@ describe('operators', function () {
     assert.strictEqual(
       smarty.render('{if ($a || $b) && !($a && $b)}test1{/if} {if ($a || $c) && !($a && $c)}test2{/if}', { a: false, b: true, c: false, d: true }),
       'test1 '
+    );
+  });
+
+  it('should support \'is [not] in\'', function () {
+    const smarty = new Jsmart();
+    assert.strictEqual(
+      smarty.render('{if $a is in $b}test1{/if} {if \'foo\' is in $b}test2{/if} {if $c is not in $b}test3{/if} {if \'baz\' is not in $b}test4{/if}', { a: 'foo', b: ['bar', 'foo'], c: 'baz' }),
+      'test1 test2 test3 test4'
+    );
+  });
+
+  it('should support simple ternary operator', function () {
+    const smarty = new Jsmart();
+    assert.strictEqual(
+      smarty.render('{$foo ? \'ok1\': \'fail1\'} {$bar === false ? \'ok2\': \'fail2\'} {$baz !== \'okay\' ? \'ok3\': \'fail3\'}', { foo: '', bar: false, baz: 'okay' }),
+      'fail1 ok2 fail3'
+    );
+  });
+
+  it('should support short hand ternary operator', function () {
+    const smarty = new Jsmart();
+    assert.strictEqual(
+      smarty.render('{$foo ?: \'empty1\'} {$bar ?: $baz} {$qux ?: $fred}', { foo: '', bar: '', baz: 'empty2', qux: 'filledin', fred: 'empty3' }),
+      'empty1 empty2 filledin'
+    );
+  });
+
+  it('should support null coalescing operator', function () {
+    const smarty = new Jsmart();
+    assert.strictEqual(
+      smarty.render('{$foo ?? \'empty1\'} {$bar ?? $baz} {$qux ?? $fred}', { foo: null, bar: undefined, baz: 'empty2', qux: 'filledin', fred: 'empty3' }),
+      'empty1 empty2 filledin'
     );
   });
 });

@@ -74,6 +74,36 @@ export const grammer: Grammer = {
     }
   },
 
+  nullCoalescingOperator: {
+    re: /^\s*(\?)(\?)\s*/,
+    process: (result: BuiltInMatchResult, tpl: string) => {
+      return {
+        data: `${result[1]} __fill__ :`,
+        tpl: tpl.substring(0, result[0].length)
+      };
+    }
+  },
+
+  shortHandTernaryOperator: {
+    re: /^\s*(\?)(\:)\s*/,
+    process: (result: BuiltInMatchResult, tpl: string) => {
+      return {
+        data: `${result[1]} __fill__ ${result[2]}`,
+        tpl: tpl.substring(0, result[0].length)
+      };
+    }
+  },
+
+  ternaryOperator: {
+    re: /^\s*(\?|\:)\s*/,
+    process: (result: BuiltInMatchResult, tpl: string) => {
+      return {
+        data: result[0],
+        tpl: tpl.substring(0, result[0].length)
+      };
+    }
+  },
+
   incDecOperators: {
     re: /^\s*(\+\+|--)\s*/,
     process: (result: BuiltInMatchResult, tpl: string) => {
@@ -210,6 +240,32 @@ export const grammer: Grammer = {
           }
         }
       }
+      return {
+        data: variable,
+        tpl: tpl.substring(0, length)
+      };
+    }
+  },
+
+  shortHandIsIn: {
+    re: /^\s+is\s+in\s*/i,
+    process: (result: BuiltInMatchResult, tpl: string) => {
+      const resolved = grammerResolver(tpl.substring(result[0].length));
+      const variable = resolved.variable;
+      const length = result[0].length + resolved.tpl.length;
+      return {
+        data: variable,
+        tpl: tpl.substring(0, length)
+      };
+    }
+  },
+
+  shortHandIsNotIn: {
+    re: /^\s+is\s+not\s+in\s*/i,
+    process: (result: BuiltInMatchResult, tpl: string) => {
+      const resolved = grammerResolver(tpl.substring(result[0].length));
+      const variable = resolved.variable;
+      const length = result[0].length + resolved.tpl.length;
       return {
         data: variable,
         tpl: tpl.substring(0, length)

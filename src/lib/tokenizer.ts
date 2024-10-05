@@ -30,6 +30,21 @@ class Tokenizer {
         // Short hand is not odd even by needs opening tag.
         this.tokens[this.tokens.length - 1]!.data = `(${this.tokens[this.tokens.length - 1]!.data}`;
       }
+      if (definition.key === 'nullCoalescingOperator') {
+        const lastVar = this.tokens[this.tokens.length - 1]!.data;
+        processed.data = processed.data.replace('__fill__', lastVar);
+        this.tokens[this.tokens.length - 1]!.data = `(${lastVar} !== undefined && ${lastVar} !== null)`;
+      }
+      if (definition.key === 'shortHandTernaryOperator') {
+        processed.data = processed.data.replace('__fill__', this.tokens[this.tokens.length - 1]!.data);
+      }
+      if (definition.key === 'shortHandIsNotIn' || definition.key === 'shortHandIsIn') {
+        // very bad
+        // need to change the overall flow of how we process tree.
+        const tmp =  this.tokens[this.tokens.length - 1]!.data;
+        this.tokens[this.tokens.length - 1]!.data = `${definition.key === 'shortHandIsNotIn' ? '!' : ''}${processed.data}`;
+        processed.data = `.includes(${tmp})`;
+      }
       if (definition.key === 'xorOperator') {
         // xor is not present in js, to put it work we do !foo ^ !bar
         this.tokens[this.tokens.length - 1]!.data = `!${this.tokens[this.tokens.length - 1]!.data}`;
